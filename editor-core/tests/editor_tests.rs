@@ -611,3 +611,94 @@ fn test_editor_move_cursor_right_at_end() {
     editor.execute_command(Command::MoveCursorRight).unwrap();
     assert_eq!(editor.cursor().column, 1);
 }
+
+#[test]
+fn test_editor_indent_and_dedent_line() {
+    let mut editor = EditorState::new();
+    for ch in "text".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+
+    editor.execute_command(Command::Indent).unwrap();
+    assert_eq!(editor.buffer().content(), "    text");
+    assert_eq!(editor.cursor().column, 8);
+
+    editor.execute_command(Command::Dedent).unwrap();
+    assert_eq!(editor.buffer().content(), "text");
+    assert_eq!(editor.cursor().column, 4);
+}
+
+#[test]
+fn test_editor_auto_indent_new_line() {
+    let mut editor = EditorState::new();
+    for ch in "    line".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+
+    editor.execute_command(Command::NewLine).unwrap();
+    assert_eq!(editor.buffer().content(), "    line\n    ");
+    assert_eq!(editor.cursor().line, 1);
+    assert_eq!(editor.cursor().column, 4);
+}
+
+#[test]
+fn test_editor_overwrite_mode() {
+    let mut editor = EditorState::new();
+    for ch in "hello".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+
+    editor.execute_command(Command::MoveToStartOfLine).unwrap();
+    editor
+        .execute_command(Command::ToggleOverwriteMode)
+        .unwrap();
+    editor.execute_command(Command::InsertChar('Y')).unwrap();
+    assert_eq!(editor.buffer().content(), "Yello");
+    assert!(editor.overwrite_mode());
+
+    editor.execute_command(Command::MoveToEndOfLine).unwrap();
+    editor.execute_command(Command::InsertChar('!')).unwrap();
+    assert_eq!(editor.buffer().content(), "Yello!");
+}
+
+#[test]
+fn test_editor_hard_wrap() {
+    let mut editor = EditorState::new();
+    for ch in "abcdefghij".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+
+    editor.execute_command(Command::HardWrap(4)).unwrap();
+    assert_eq!(editor.buffer().content(), "abcd\nefgh\nij");
+}
+
+#[test]
+fn test_editor_soft_wrap_lines() {
+    let mut editor = EditorState::new();
+    for ch in "wraptext".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+
+    editor.execute_command(Command::SetSoftWrap(3)).unwrap();
+    let lines = editor.soft_wrapped_lines();
+    assert_eq!(
+        lines,
+        vec!["wra".to_string(), "pte".to_string(), "xt".to_string()]
+    );
+    assert_eq!(editor.buffer().content(), "wraptext");
+}
+
+#[test]
+fn test_editor_trim_trailing_whitespace() {
+    let mut editor = EditorState::new();
+    for ch in "abc  \nline\t\n".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+
+    editor
+        .execute_command(Command::TrimTrailingWhitespace)
+        .unwrap();
+    assert_eq!(editor.buffer().content(), "abc\nline\n");
+    assert_eq!(editor.cursor().line, 2);
+    assert_eq!(editor.cursor().column, 0);
+}

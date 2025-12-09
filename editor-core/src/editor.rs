@@ -9,6 +9,8 @@ pub struct EditorState {
     cursor: CursorPosition,
     viewport_top: usize,
     status_message: String,
+    overwrite_mode: bool,
+    soft_wrap_width: Option<usize>,
 }
 
 impl EditorState {
@@ -18,6 +20,8 @@ impl EditorState {
             cursor: CursorPosition::zero(),
             viewport_top: 0,
             status_message: String::new(),
+            overwrite_mode: false,
+            soft_wrap_width: None,
         }
     }
 
@@ -28,6 +32,8 @@ impl EditorState {
             cursor: CursorPosition::zero(),
             viewport_top: 0,
             status_message: String::new(),
+            overwrite_mode: false,
+            soft_wrap_width: None,
         })
     }
 
@@ -38,6 +44,8 @@ impl EditorState {
             Command::Backspace => self.backspace(),
             Command::NewLine => self.new_line(),
             Command::DeleteLine => self.delete_line(),
+            Command::Indent => self.indent_line(),
+            Command::Dedent => self.dedent_line(),
 
             Command::MoveCursorUp => self.move_cursor_up(),
             Command::MoveCursorDown => self.move_cursor_down(),
@@ -51,6 +59,11 @@ impl EditorState {
             Command::MoveCursorWordRight => self.move_cursor_word_right(),
             Command::PageUp => self.page_up(20),
             Command::PageDown => self.page_down(20),
+
+            Command::ToggleOverwriteMode => self.toggle_overwrite_mode(),
+            Command::HardWrap(width) => self.hard_wrap(width),
+            Command::SetSoftWrap(width) => self.set_soft_wrap(width),
+            Command::TrimTrailingWhitespace => self.trim_trailing_whitespace(),
 
             Command::Open(path) => self.open_file(path),
             Command::Save => self.save(),
@@ -67,6 +80,16 @@ impl EditorState {
     }
 
     fn insert_char(&mut self, ch: char) -> Result<()> {
+        if ch == '\n' {
+            return self.new_line();
+        }
+
+        let line_len = self.buffer.line_len(self.cursor.line)?;
+        if self.overwrite_mode && self.cursor.column < line_len {
+            self.buffer
+                .delete_char(self.cursor.line, self.cursor.column)?;
+        }
+
         self.buffer
             .insert_char(self.cursor.line, self.cursor.column, ch)?;
         self.cursor.column += 1;
@@ -96,10 +119,19 @@ impl EditorState {
     }
 
     fn new_line(&mut self) -> Result<()> {
+        let indent = self.current_line_indentation()?;
+
         self.buffer
             .insert_char(self.cursor.line, self.cursor.column, '\n')?;
         self.cursor.line += 1;
         self.cursor.column = 0;
+
+        if !indent.is_empty() {
+            self.buffer
+                .insert_str(self.cursor.line, self.cursor.column, &indent)?;
+            self.cursor.column = indent.chars().count();
+        }
+
         Ok(())
     }
 
@@ -120,6 +152,43 @@ impl EditorState {
         }
 
         self.cursor.column = 0;
+        Ok(())
+    }
+
+    fn indent_line(&mut self) -> Result<()> {
+        let indent = "    ";
+        self.buffer.insert_str(self.cursor.line, 0, indent)?;
+        self.cursor.column += indent.len();
+        Ok(())
+    }
+
+    fn dedent_line(&mut self) -> Result<()> {
+        let line = self.buffer.line(self.cursor.line)?;
+        let trimmed = line.trim_end_matches('\n');
+        let mut remove_count = 0;
+
+        for ch in trimmed.chars() {
+            match ch {
+                ' ' if remove_count < 4 => remove_count += 1,
+                '\t' => {
+                    remove_count = 1;
+                    break;
+                }
+                _ => break,
+            }
+        }
+
+        if remove_count > 0 {
+            self.buffer
+                .delete_range(self.cursor.line, 0, self.cursor.line, remove_count)?;
+
+            if self.cursor.column < remove_count {
+                self.cursor.column = 0;
+            } else {
+                self.cursor.column -= remove_count;
+            }
+        }
+
         Ok(())
     }
 
@@ -303,6 +372,69 @@ impl EditorState {
         }
     }
 
+    fn toggle_overwrite_mode(&mut self) -> Result<()> {
+        self.overwrite_mode = !self.overwrite_mode;
+        Ok(())
+    }
+
+    fn hard_wrap(&mut self, width: usize) -> Result<()> {
+        if width == 0 {
+            return Err(EditorError::InvalidOperation(
+                "Wrap width must be greater than zero".to_string(),
+            ));
+        }
+
+        let content = self.buffer.content();
+        let ends_with_newline = content.ends_with('\n');
+        let mut wrapped_lines = Vec::new();
+
+        for line in content.split('\n') {
+            let chunks = self.wrap_line_to_width(line, width);
+            if chunks.is_empty() {
+                wrapped_lines.push(String::new());
+            } else {
+                wrapped_lines.extend(chunks);
+            }
+        }
+
+        let mut new_content = wrapped_lines.join("\n");
+        if ends_with_newline {
+            new_content.push('\n');
+        }
+
+        self.buffer.set_content(new_content);
+        self.clamp_cursor_after_edit()?;
+        Ok(())
+    }
+
+    fn set_soft_wrap(&mut self, width: usize) -> Result<()> {
+        if width == 0 {
+            self.soft_wrap_width = None;
+        } else {
+            self.soft_wrap_width = Some(width);
+        }
+        Ok(())
+    }
+
+    fn trim_trailing_whitespace(&mut self) -> Result<()> {
+        let content = self.buffer.content();
+        let ends_with_newline = content.ends_with('\n');
+
+        let lines: Vec<String> = content
+            .split('\n')
+            .map(|line| line.trim_end_matches([' ', '\t']).to_string())
+            .collect();
+
+        let mut new_content = lines.join("\n");
+        if ends_with_newline && !new_content.ends_with('\n') {
+            new_content.push('\n');
+        }
+
+        self.buffer.set_content(new_content);
+        self.clamp_cursor_after_edit()?;
+        Ok(())
+    }
+
     fn open_file(&mut self, path: PathBuf) -> Result<()> {
         self.buffer = Buffer::from_file(path)?;
         self.cursor = CursorPosition::zero();
@@ -355,6 +487,88 @@ impl EditorState {
         } else if self.cursor.line >= self.viewport_top + viewport_height {
             self.viewport_top = self.cursor.line - viewport_height + 1;
         }
+    }
+
+    pub fn overwrite_mode(&self) -> bool {
+        self.overwrite_mode
+    }
+
+    pub fn soft_wrap_width(&self) -> Option<usize> {
+        self.soft_wrap_width
+    }
+
+    pub fn soft_wrapped_lines(&self) -> Vec<String> {
+        let content = self.buffer.content();
+        let width = self.soft_wrap_width;
+
+        let mut lines = Vec::new();
+        for line in content.split('\n') {
+            if let Some(wrap_width) = width {
+                if wrap_width > 0 {
+                    lines.extend(self.wrap_line_to_width(line, wrap_width));
+                    continue;
+                }
+            }
+            lines.push(line.to_string());
+        }
+
+        lines
+    }
+
+    fn current_line_indentation(&self) -> Result<String> {
+        let line = self.buffer.line(self.cursor.line)?;
+        let trimmed = line.trim_end_matches('\n');
+        let mut indent = String::new();
+
+        for ch in trimmed.chars() {
+            if ch == ' ' || ch == '\t' {
+                indent.push(ch);
+            } else {
+                break;
+            }
+        }
+
+        Ok(indent)
+    }
+
+    fn wrap_line_to_width(&self, line: &str, width: usize) -> Vec<String> {
+        if width == 0 {
+            return vec![line.to_string()];
+        }
+
+        let mut chunks = Vec::new();
+        let mut current = String::new();
+        let mut count = 0;
+
+        for ch in line.chars() {
+            current.push(ch);
+            count += 1;
+
+            if count == width {
+                chunks.push(current);
+                current = String::new();
+                count = 0;
+            }
+        }
+
+        if !current.is_empty() || line.is_empty() {
+            chunks.push(current);
+        }
+
+        chunks
+    }
+
+    fn clamp_cursor_after_edit(&mut self) -> Result<()> {
+        if self.cursor.line >= self.buffer.line_count() {
+            self.cursor.line = self.buffer.line_count().saturating_sub(1);
+        }
+
+        let line_len = self.buffer.line_len(self.cursor.line)?;
+        if self.cursor.column > line_len {
+            self.cursor.column = line_len;
+        }
+
+        Ok(())
     }
 }
 

@@ -7,6 +7,8 @@ pub enum Command {
     Backspace,
     NewLine,
     DeleteLine,
+    Indent,
+    Dedent,
 
     MoveCursorUp,
     MoveCursorDown,
@@ -20,6 +22,11 @@ pub enum Command {
     MoveCursorWordRight,
     PageUp,
     PageDown,
+
+    ToggleOverwriteMode,
+    HardWrap(usize),
+    SetSoftWrap(usize),
+    TrimTrailingWhitespace,
 
     Open(PathBuf),
     Save,
@@ -54,6 +61,12 @@ impl Command {
                 | Command::Backspace
                 | Command::NewLine
                 | Command::DeleteLine
+                | Command::Indent
+                | Command::Dedent
+                | Command::ToggleOverwriteMode
+                | Command::HardWrap(_)
+                | Command::SetSoftWrap(_)
+                | Command::TrimTrailingWhitespace
                 | Command::Paste
         )
     }

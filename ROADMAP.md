@@ -79,12 +79,12 @@
 - [x] Write tests for cursor movement
 
 ### 2.4 Text Editing Enhancements
-- [ ] Implement indentation/dedentation (Tab/Shift+Tab)
-- [ ] Implement auto-indentation on new line
-- [ ] Implement line wrapping (soft wrap and hard wrap)
-- [ ] Implement insert vs overwrite mode
-- [ ] Implement trim trailing whitespace
-- [ ] Write tests for text editing enhancements
+- [x] Implement indentation/dedentation (Tab/Shift+Tab)
+- [x] Implement auto-indentation on new line
+- [x] Implement line wrapping (soft wrap and hard wrap)
+- [x] Implement insert vs overwrite mode
+- [x] Implement trim trailing whitespace
+- [x] Write tests for text editing enhancements
 
 ### 2.3 Multi-Cursor Support (Optional for v1)
 - [ ] Design multi-cursor data structure

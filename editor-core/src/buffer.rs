@@ -100,6 +100,11 @@ impl Buffer {
         }
     }
 
+    pub fn set_content(&mut self, content: String) {
+        self.rope = Rope::from_str(&content);
+        self.modified = true;
+    }
+
     pub fn line_count(&self) -> usize {
         self.rope.len_lines()
     }

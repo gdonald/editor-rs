@@ -8,6 +8,12 @@ fn test_command_is_editing_command() {
     assert!(Command::Backspace.is_editing_command());
     assert!(Command::NewLine.is_editing_command());
     assert!(Command::DeleteLine.is_editing_command());
+    assert!(Command::Indent.is_editing_command());
+    assert!(Command::Dedent.is_editing_command());
+    assert!(Command::ToggleOverwriteMode.is_editing_command());
+    assert!(Command::HardWrap(5).is_editing_command());
+    assert!(Command::SetSoftWrap(5).is_editing_command());
+    assert!(Command::TrimTrailingWhitespace.is_editing_command());
     assert!(Command::Paste.is_editing_command());
 
     assert!(!Command::MoveCursorUp.is_editing_command());
