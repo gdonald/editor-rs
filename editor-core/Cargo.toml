@@ -10,3 +10,4 @@ repository.workspace = true
 ropey.workspace = true
 
 [dev-dependencies]
+tempfile = "3.8"

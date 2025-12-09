@@ -1,4 +1,5 @@
 use editor_core::{Command, CursorPosition, EditorState};
+use std::path::PathBuf;
 
 #[test]
 fn test_editor_new() {
@@ -326,4 +327,207 @@ fn test_editor_new_buffer() {
 
     assert_eq!(editor.buffer().content(), "");
     assert_eq!(editor.cursor(), &CursorPosition::zero());
+}
+
+#[test]
+fn test_editor_from_file() {
+    use std::fs;
+    use tempfile::NamedTempFile;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_path_buf();
+    fs::write(&path, "Test file content").unwrap();
+
+    let editor = EditorState::from_file(path).unwrap();
+    assert_eq!(editor.buffer().content(), "Test file content");
+    assert_eq!(editor.cursor(), &CursorPosition::zero());
+}
+
+#[test]
+fn test_editor_from_file_nonexistent() {
+    let path = PathBuf::from("/nonexistent/file.txt");
+    let result = EditorState::from_file(path);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_editor_open_file() {
+    use std::fs;
+    use tempfile::NamedTempFile;
+
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::InsertChar('O')).unwrap();
+    editor.execute_command(Command::InsertChar('l')).unwrap();
+    editor.execute_command(Command::InsertChar('d')).unwrap();
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_path_buf();
+    fs::write(&path, "New file content").unwrap();
+
+    editor.execute_command(Command::Open(path)).unwrap();
+    assert_eq!(editor.buffer().content(), "New file content");
+    assert_eq!(editor.cursor(), &CursorPosition::zero());
+    assert_eq!(editor.viewport_top(), 0);
+}
+
+#[test]
+fn test_editor_save() {
+    use std::fs;
+    use tempfile::NamedTempFile;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_path_buf();
+    fs::write(&path, "").unwrap();
+
+    let mut editor = EditorState::from_file(path.clone()).unwrap();
+    editor.execute_command(Command::InsertChar('T')).unwrap();
+    editor.execute_command(Command::InsertChar('e')).unwrap();
+    editor.execute_command(Command::InsertChar('s')).unwrap();
+    editor.execute_command(Command::InsertChar('t')).unwrap();
+
+    editor.execute_command(Command::Save).unwrap();
+    assert_eq!(editor.status_message(), "File saved");
+
+    let content = fs::read_to_string(&path).unwrap();
+    assert_eq!(content, "Test");
+}
+
+#[test]
+fn test_editor_save_as() {
+    use tempfile::NamedTempFile;
+
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::InsertChar('D')).unwrap();
+    editor.execute_command(Command::InsertChar('a')).unwrap();
+    editor.execute_command(Command::InsertChar('t')).unwrap();
+    editor.execute_command(Command::InsertChar('a')).unwrap();
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_path_buf();
+
+    editor
+        .execute_command(Command::SaveAs(path.clone()))
+        .unwrap();
+    assert_eq!(editor.status_message(), "File saved");
+
+    let content = std::fs::read_to_string(&path).unwrap();
+    assert_eq!(content, "Data");
+}
+
+#[test]
+fn test_editor_close_command() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::Close);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_editor_unimplemented_command() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::Copy);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_editor_default() {
+    let editor = EditorState::default();
+    assert_eq!(editor.cursor(), &CursorPosition::zero());
+    assert_eq!(editor.buffer().line_count(), 1);
+}
+
+#[test]
+fn test_editor_buffer_accessor() {
+    let editor = EditorState::new();
+    let buffer = editor.buffer();
+    assert_eq!(buffer.line_count(), 1);
+}
+
+#[test]
+fn test_editor_viewport_top_accessor() {
+    let editor = EditorState::new();
+    assert_eq!(editor.viewport_top(), 0);
+}
+
+#[test]
+fn test_editor_delete_line_last_line() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::InsertChar('L')).unwrap();
+    editor.execute_command(Command::InsertChar('1')).unwrap();
+    editor.execute_command(Command::NewLine).unwrap();
+    editor.execute_command(Command::InsertChar('L')).unwrap();
+    editor.execute_command(Command::InsertChar('2')).unwrap();
+
+    editor.execute_command(Command::DeleteLine).unwrap();
+    assert_eq!(editor.buffer().content(), "L1\n");
+    assert_eq!(editor.cursor().column, 0);
+}
+
+#[test]
+fn test_editor_page_up_at_top() {
+    let mut editor = EditorState::new();
+    for i in 0..10 {
+        if i > 0 {
+            editor.execute_command(Command::NewLine).unwrap();
+        }
+        editor.execute_command(Command::InsertChar('A')).unwrap();
+    }
+    editor.execute_command(Command::MoveToStartOfFile).unwrap();
+    editor.execute_command(Command::PageUp).unwrap();
+    assert_eq!(editor.cursor().line, 0);
+}
+
+#[test]
+fn test_editor_page_down_at_bottom() {
+    let mut editor = EditorState::new();
+    for i in 0..10 {
+        if i > 0 {
+            editor.execute_command(Command::NewLine).unwrap();
+        }
+        editor.execute_command(Command::InsertChar('A')).unwrap();
+    }
+    editor.execute_command(Command::PageDown).unwrap();
+    assert_eq!(editor.cursor().line, 9);
+}
+
+#[test]
+fn test_editor_move_to_end_of_file_empty_buffer() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::MoveToEndOfFile).unwrap();
+    assert_eq!(editor.cursor().line, 0);
+}
+
+#[test]
+fn test_editor_delete_line_empty_buffer() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::DeleteLine).unwrap();
+    assert_eq!(editor.buffer().content(), "");
+}
+
+#[test]
+fn test_editor_move_cursor_up_at_top() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::MoveCursorUp).unwrap();
+    assert_eq!(editor.cursor().line, 0);
+}
+
+#[test]
+fn test_editor_move_cursor_down_at_bottom() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::MoveCursorDown).unwrap();
+    assert_eq!(editor.cursor().line, 0);
+}
+
+#[test]
+fn test_editor_move_cursor_left_at_start() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::MoveCursorLeft).unwrap();
+    assert_eq!(editor.cursor(), &CursorPosition::zero());
+}
+
+#[test]
+fn test_editor_move_cursor_right_at_end() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::InsertChar('A')).unwrap();
+    editor.execute_command(Command::MoveCursorRight).unwrap();
+    assert_eq!(editor.cursor().column, 1);
 }

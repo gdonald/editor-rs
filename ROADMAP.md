@@ -59,24 +59,24 @@
 ## Phase 2: Core Text Buffer Implementation
 
 ### 2.1 Basic Buffer Operations
-- [ ] Implement `Buffer` struct with rope or gap buffer
-- [ ] Implement insert character at position
-- [ ] Implement delete character at position
-- [ ] Implement insert string at position
-- [ ] Implement delete range
-- [ ] Implement line-based operations (get line, line count)
-- [ ] Write comprehensive tests for buffer operations
+- [x] Implement `Buffer` struct with rope or gap buffer
+- [x] Implement insert character at position
+- [x] Implement delete character at position
+- [x] Implement insert string at position
+- [x] Implement delete range
+- [x] Implement line-based operations (get line, line count)
+- [x] Write comprehensive tests for buffer operations
 
 ### 2.2 Cursor Management
-- [ ] Implement `Cursor` struct (line, column)
-- [ ] Implement cursor movement (up, down, left, right)
-- [ ] Implement cursor movement (start of line, end of line)
-- [ ] Implement cursor movement (start of file, end of file)
+- [x] Implement `Cursor` struct (line, column)
+- [x] Implement cursor movement (up, down, left, right)
+- [x] Implement cursor movement (start of line, end of line)
+- [x] Implement cursor movement (start of file, end of file)
 - [ ] Implement cursor movement (word forward, word backward)
-- [ ] Implement cursor movement (page up, page down)
-- [ ] Handle cursor bounds checking
-- [ ] Implement virtual cursor column (maintain column when moving up/down)
-- [ ] Write tests for cursor movement
+- [x] Implement cursor movement (page up, page down)
+- [x] Handle cursor bounds checking
+- [x] Implement virtual cursor column (maintain column when moving up/down)
+- [x] Write tests for cursor movement
 
 ### 2.4 Text Editing Enhancements
 - [ ] Implement indentation/dedentation (Tab/Shift+Tab)
@@ -96,22 +96,22 @@
 ## Phase 3: File Operations
 
 ### 3.1 File I/O
-- [ ] Implement file reading into buffer
-- [ ] Implement buffer writing to file
+- [x] Implement file reading into buffer
+- [x] Implement buffer writing to file
 - [ ] Handle different line endings (LF, CRLF)
 - [ ] Implement encoding detection (UTF-8, etc.)
 - [ ] Handle large files efficiently
-- [ ] Add error handling for I/O operations
-- [ ] Write tests for file operations
+- [x] Add error handling for I/O operations
+- [x] Write tests for file operations
 
 ### 3.2 File Metadata
-- [ ] Track file path
-- [ ] Track modified state (dirty flag)
+- [x] Track file path
+- [x] Track modified state (dirty flag)
 - [ ] Track file permissions
-- [ ] Implement unsaved changes detection
+- [x] Implement unsaved changes detection
 - [ ] Implement read-only file handling
 - [ ] Implement binary file detection
-- [ ] Write tests for metadata tracking
+- [x] Write tests for metadata tracking
 
 ### 3.3 File Safety and Recovery
 - [ ] Implement auto-save functionality
