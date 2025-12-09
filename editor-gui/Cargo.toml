@@ -1,0 +1,10 @@
+[package]
+name = "editor-gui"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+editor-core = { path = "../editor-core" }

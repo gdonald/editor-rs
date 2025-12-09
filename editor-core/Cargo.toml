@@ -1,0 +1,12 @@
+[package]
+name = "editor-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+ropey.workspace = true
+
+[dev-dependencies]

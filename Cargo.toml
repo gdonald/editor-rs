@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = [
+    "editor-core",
+    "editor-tui",
+    "editor-gui",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["editor-rs contributors"]
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/yourusername/editor-rs"
+
+[workspace.dependencies]
+ropey = "1.6"
