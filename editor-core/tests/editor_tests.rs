@@ -175,6 +175,52 @@ fn test_editor_move_cursor_right_wraps_to_next_line() {
 }
 
 #[test]
+fn test_editor_move_cursor_word_right() {
+    let mut editor = EditorState::new();
+    for ch in "hello  world".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+    editor.execute_command(Command::MoveToStartOfLine).unwrap();
+
+    editor
+        .execute_command(Command::MoveCursorWordRight)
+        .unwrap();
+    assert_eq!(editor.cursor().line, 0);
+    assert_eq!(editor.cursor().column, 7);
+
+    editor
+        .execute_command(Command::MoveCursorWordRight)
+        .unwrap();
+    assert_eq!(editor.cursor().line, 0);
+    assert_eq!(editor.cursor().column, 12);
+}
+
+#[test]
+fn test_editor_move_cursor_word_right_across_lines() {
+    let mut editor = EditorState::new();
+    for ch in "hello".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+    editor.execute_command(Command::NewLine).unwrap();
+    for ch in "world".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+    editor.execute_command(Command::MoveToStartOfFile).unwrap();
+
+    editor
+        .execute_command(Command::MoveCursorWordRight)
+        .unwrap();
+    assert_eq!(editor.cursor().line, 1);
+    assert_eq!(editor.cursor().column, 0);
+
+    editor
+        .execute_command(Command::MoveCursorWordRight)
+        .unwrap();
+    assert_eq!(editor.cursor().line, 1);
+    assert_eq!(editor.cursor().column, 5);
+}
+
+#[test]
 fn test_editor_move_to_start_of_line() {
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('A')).unwrap();
@@ -195,6 +241,40 @@ fn test_editor_move_to_end_of_line() {
 
     editor.execute_command(Command::MoveToEndOfLine).unwrap();
     assert_eq!(editor.cursor().column, 3);
+}
+
+#[test]
+fn test_editor_move_cursor_word_left() {
+    let mut editor = EditorState::new();
+    for ch in "hello  world".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+    editor.execute_command(Command::MoveToEndOfLine).unwrap();
+
+    editor.execute_command(Command::MoveCursorWordLeft).unwrap();
+    assert_eq!(editor.cursor().line, 0);
+    assert_eq!(editor.cursor().column, 7);
+
+    editor.execute_command(Command::MoveCursorWordLeft).unwrap();
+    assert_eq!(editor.cursor().line, 0);
+    assert_eq!(editor.cursor().column, 0);
+}
+
+#[test]
+fn test_editor_move_cursor_word_left_across_lines() {
+    let mut editor = EditorState::new();
+    for ch in "first".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+    editor.execute_command(Command::NewLine).unwrap();
+    for ch in "second".chars() {
+        editor.execute_command(Command::InsertChar(ch)).unwrap();
+    }
+    editor.execute_command(Command::GotoLine(1)).unwrap();
+
+    editor.execute_command(Command::MoveCursorWordLeft).unwrap();
+    assert_eq!(editor.cursor().line, 0);
+    assert_eq!(editor.cursor().column, 0);
 }
 
 #[test]

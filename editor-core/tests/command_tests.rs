@@ -24,6 +24,8 @@ fn test_command_is_navigation_command() {
     assert!(Command::MoveToEndOfLine.is_navigation_command());
     assert!(Command::MoveToStartOfFile.is_navigation_command());
     assert!(Command::MoveToEndOfFile.is_navigation_command());
+    assert!(Command::MoveCursorWordLeft.is_navigation_command());
+    assert!(Command::MoveCursorWordRight.is_navigation_command());
     assert!(Command::PageUp.is_navigation_command());
     assert!(Command::PageDown.is_navigation_command());
     assert!(Command::GotoLine(5).is_navigation_command());

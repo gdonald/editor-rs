@@ -145,6 +145,38 @@ impl Buffer {
         self.rope.to_string()
     }
 
+    pub fn len_chars(&self) -> usize {
+        self.rope.len_chars()
+    }
+
+    pub fn char_at(&self, idx: usize) -> Option<char> {
+        self.rope.get_char(idx)
+    }
+
+    pub fn char_index(&self, line: usize, column: usize) -> Result<usize> {
+        self.line_col_to_char_idx(line, column)
+    }
+
+    pub fn char_to_line_col(&self, idx: usize) -> Result<(usize, usize)> {
+        if idx > self.rope.len_chars() {
+            return Err(EditorError::InvalidPosition {
+                line: self.line_count().saturating_sub(1),
+                column: 0,
+            });
+        }
+
+        let line = self.rope.char_to_line(idx);
+        let line_start = self.rope.line_to_char(line);
+        let column = idx - line_start;
+        let line_len = self.line_len(line)?;
+
+        if column > line_len {
+            Err(EditorError::InvalidPosition { line, column })
+        } else {
+            Ok((line, column))
+        }
+    }
+
     fn line_col_to_char_idx(&self, line: usize, column: usize) -> Result<usize> {
         if line >= self.line_count() {
             return Err(EditorError::InvalidPosition { line, column });

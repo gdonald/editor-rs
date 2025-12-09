@@ -47,6 +47,8 @@ impl EditorState {
             Command::MoveToEndOfLine => self.move_to_end_of_line(),
             Command::MoveToStartOfFile => self.move_to_start_of_file(),
             Command::MoveToEndOfFile => self.move_to_end_of_file(),
+            Command::MoveCursorWordLeft => self.move_cursor_word_left(),
+            Command::MoveCursorWordRight => self.move_cursor_word_right(),
             Command::PageUp => self.page_up(20),
             Command::PageDown => self.page_down(20),
 
@@ -161,6 +163,71 @@ impl EditorState {
             self.cursor.line += 1;
             self.cursor.column = 0;
         }
+        Ok(())
+    }
+
+    fn move_cursor_word_left(&mut self) -> Result<()> {
+        if self.buffer.len_chars() == 0 {
+            return Ok(());
+        }
+
+        let mut idx = self
+            .buffer
+            .char_index(self.cursor.line, self.cursor.column)?;
+
+        if idx == 0 {
+            return Ok(());
+        }
+
+        idx -= 1;
+
+        while !is_word_char(self.buffer.char_at(idx).unwrap()) {
+            if idx == 0 {
+                let (line, column) = self.buffer.char_to_line_col(0)?;
+                self.cursor.line = line;
+                self.cursor.column = column;
+                return Ok(());
+            }
+            idx -= 1;
+        }
+
+        while idx > 0 && is_word_char(self.buffer.char_at(idx - 1).unwrap()) {
+            idx -= 1;
+        }
+
+        let (line, column) = self.buffer.char_to_line_col(idx)?;
+        self.cursor.line = line;
+        self.cursor.column = column;
+        Ok(())
+    }
+
+    fn move_cursor_word_right(&mut self) -> Result<()> {
+        if self.buffer.len_chars() == 0 {
+            return Ok(());
+        }
+
+        let mut idx = self
+            .buffer
+            .char_index(self.cursor.line, self.cursor.column)?;
+        let total = self.buffer.len_chars();
+
+        if idx >= total {
+            return Ok(());
+        }
+
+        if is_word_char(self.buffer.char_at(idx).unwrap()) {
+            while idx < total && is_word_char(self.buffer.char_at(idx).unwrap()) {
+                idx += 1;
+            }
+        }
+
+        while idx < total && !is_word_char(self.buffer.char_at(idx).unwrap()) {
+            idx += 1;
+        }
+
+        let (line, column) = self.buffer.char_to_line_col(idx)?;
+        self.cursor.line = line;
+        self.cursor.column = column;
         Ok(())
     }
 
@@ -295,4 +362,8 @@ impl Default for EditorState {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn is_word_char(ch: char) -> bool {
+    ch.is_alphanumeric() || ch == '_'
 }

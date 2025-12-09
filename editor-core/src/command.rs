@@ -16,6 +16,8 @@ pub enum Command {
     MoveToEndOfLine,
     MoveToStartOfFile,
     MoveToEndOfFile,
+    MoveCursorWordLeft,
+    MoveCursorWordRight,
     PageUp,
     PageDown,
 
@@ -67,6 +69,8 @@ impl Command {
                 | Command::MoveToEndOfLine
                 | Command::MoveToStartOfFile
                 | Command::MoveToEndOfFile
+                | Command::MoveCursorWordLeft
+                | Command::MoveCursorWordRight
                 | Command::PageUp
                 | Command::PageDown
                 | Command::GotoLine(_)

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 fn test_buffer_new() {
     let buffer = Buffer::new();
     assert_eq!(buffer.line_count(), 1);
-    assert_eq!(buffer.is_modified(), false);
+    assert!(!buffer.is_modified());
     assert_eq!(buffer.file_path(), None);
 }
 
@@ -22,7 +22,7 @@ fn test_buffer_insert_char() {
     let mut buffer = Buffer::from_string("Hello");
     buffer.insert_char(0, 5, '!').unwrap();
     assert_eq!(buffer.line(0).unwrap(), "Hello!");
-    assert_eq!(buffer.is_modified(), true);
+    assert!(buffer.is_modified());
 }
 
 #[test]
@@ -30,7 +30,7 @@ fn test_buffer_delete_char() {
     let mut buffer = Buffer::from_string("Hello");
     buffer.delete_char(0, 4).unwrap();
     assert_eq!(buffer.line(0).unwrap(), "Hell");
-    assert_eq!(buffer.is_modified(), true);
+    assert!(buffer.is_modified());
 }
 
 #[test]
@@ -38,7 +38,7 @@ fn test_buffer_insert_str() {
     let mut buffer = Buffer::from_string("Hello");
     buffer.insert_str(0, 5, " World").unwrap();
     assert_eq!(buffer.line(0).unwrap(), "Hello World");
-    assert_eq!(buffer.is_modified(), true);
+    assert!(buffer.is_modified());
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn test_buffer_delete_range() {
     let mut buffer = Buffer::from_string("Hello World");
     buffer.delete_range(0, 5, 0, 11).unwrap();
     assert_eq!(buffer.line(0).unwrap(), "Hello");
-    assert_eq!(buffer.is_modified(), true);
+    assert!(buffer.is_modified());
 }
 
 #[test]
@@ -132,7 +132,7 @@ fn test_buffer_from_file() {
     let buffer = Buffer::from_file(path.clone()).unwrap();
     assert_eq!(buffer.content(), "Test content");
     assert_eq!(buffer.file_path(), Some(&path));
-    assert_eq!(buffer.is_modified(), false);
+    assert!(!buffer.is_modified());
 }
 
 #[test]
@@ -151,10 +151,10 @@ fn test_buffer_save() {
 
     let mut buffer = Buffer::from_file(path.clone()).unwrap();
     buffer.insert_str(0, 0, "New content").unwrap();
-    assert_eq!(buffer.is_modified(), true);
+    assert!(buffer.is_modified());
 
     buffer.save().unwrap();
-    assert_eq!(buffer.is_modified(), false);
+    assert!(!buffer.is_modified());
 
     let content = std::fs::read_to_string(&path).unwrap();
     assert_eq!(content, "New content");
@@ -184,7 +184,7 @@ fn test_buffer_save_as() {
 
     buffer.save_as(path.clone()).unwrap();
     assert_eq!(buffer.file_path(), Some(&path));
-    assert_eq!(buffer.is_modified(), false);
+    assert!(!buffer.is_modified());
 
     let content = std::fs::read_to_string(&path).unwrap();
     assert_eq!(content, "Original content");
@@ -243,5 +243,5 @@ fn test_buffer_delete_range_start_equals_end() {
 fn test_buffer_default() {
     let buffer = Buffer::default();
     assert_eq!(buffer.line_count(), 1);
-    assert_eq!(buffer.is_modified(), false);
+    assert!(!buffer.is_modified());
 }

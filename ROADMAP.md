@@ -46,7 +46,7 @@
 - [x] Create binary crate for GUI frontend (`editor-gui`)
 - [x] Set up workspace in root `Cargo.toml`
 - [x] Configure dependencies for each crate
-- [ ] Set up CI/CD pipeline configuration
+- [x] Set up CI/CD pipeline configuration
 
 ### 1.2 Core Architecture Design
 - [x] Define `EditorState` structure
@@ -72,7 +72,7 @@
 - [x] Implement cursor movement (up, down, left, right)
 - [x] Implement cursor movement (start of line, end of line)
 - [x] Implement cursor movement (start of file, end of file)
-- [ ] Implement cursor movement (word forward, word backward)
+- [x] Implement cursor movement (word forward, word backward)
 - [x] Implement cursor movement (page up, page down)
 - [x] Handle cursor bounds checking
 - [x] Implement virtual cursor column (maintain column when moving up/down)
