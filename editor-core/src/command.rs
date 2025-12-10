@@ -1,6 +1,13 @@
 use crate::cursor::CursorPosition;
 use std::path::PathBuf;
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum CaseMode {
+    Upper,
+    Lower,
+    Title,
+}
+
 #[derive(Debug, Clone)]
 pub enum Command {
     InsertChar(char),
@@ -8,6 +15,13 @@ pub enum Command {
     Backspace,
     NewLine,
     DeleteLine,
+    DuplicateLine,
+    MoveLinesUp,
+    MoveLinesDown,
+    JoinLines,
+    SortLines { numerical: bool },
+    ChangeCase { mode: CaseMode },
+    TransposeCharacters,
     Indent,
     Dedent,
 
@@ -65,6 +79,13 @@ impl Command {
                 | Command::Backspace
                 | Command::NewLine
                 | Command::DeleteLine
+                | Command::DuplicateLine
+                | Command::MoveLinesUp
+                | Command::MoveLinesDown
+                | Command::JoinLines
+                | Command::SortLines { .. }
+                | Command::ChangeCase { .. }
+                | Command::TransposeCharacters
                 | Command::Indent
                 | Command::Dedent
                 | Command::ToggleOverwriteMode

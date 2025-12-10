@@ -1,5 +1,5 @@
 use crate::buffer::Buffer;
-use crate::command::Command;
+use crate::command::{CaseMode, Command};
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::{EditorError, Result};
 use crate::session::{OpenFileState, Session};
@@ -46,6 +46,13 @@ impl EditorState {
             Command::Backspace => self.backspace(),
             Command::NewLine => self.new_line(),
             Command::DeleteLine => self.delete_line(),
+            Command::DuplicateLine => self.duplicate_line(),
+            Command::MoveLinesUp => self.move_lines_up(),
+            Command::MoveLinesDown => self.move_lines_down(),
+            Command::JoinLines => self.join_lines(),
+            Command::SortLines { numerical } => self.sort_lines(numerical),
+            Command::ChangeCase { mode } => self.change_case(mode),
+            Command::TransposeCharacters => self.transpose_characters(),
             Command::Indent => self.indent_line(),
             Command::Dedent => self.dedent_line(),
 
@@ -270,6 +277,262 @@ impl EditorState {
             if pos.column > line_len {
                 pos.column = line_len;
             }
+
+            Ok(pos)
+        })
+    }
+
+    fn duplicate_line(&mut self) -> Result<()> {
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+        lines.reverse();
+
+        for line in lines {
+            let line_content = self.buffer.line(line)?.trim_end_matches('\n').to_string();
+            let insert_line = line + 1;
+            if insert_line >= self.buffer.line_count() {
+                self.buffer
+                    .insert_char(line, self.buffer.line_len(line)?, '\n')?;
+                self.buffer.insert_str(insert_line, 0, &line_content)?;
+            } else {
+                self.buffer.insert_str(insert_line, 0, &line_content)?;
+                self.buffer
+                    .insert_char(insert_line, line_content.chars().count(), '\n')?;
+            }
+        }
+
+        let mut positions = Vec::with_capacity(self.cursors.positions().len());
+        for pos in self.cursors.positions() {
+            positions.push(CursorPosition::new(pos.line + 1, pos.column));
+        }
+        self.cursors.set_positions(positions);
+        self.clamp_cursors_after_edit()?;
+        Ok(())
+    }
+
+    fn move_lines_up(&mut self) -> Result<()> {
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+
+        if lines.is_empty() || lines[0] == 0 {
+            return Ok(());
+        }
+
+        let total_lines = self.buffer.line_count();
+        let mut all_lines: Vec<String> = Vec::new();
+        for i in 0..total_lines {
+            let line = self.buffer.line(i)?;
+            all_lines.push(line.trim_end_matches('\n').to_string());
+        }
+
+        for line in lines.iter() {
+            if *line > 0 && *line < all_lines.len() {
+                all_lines.swap(line - 1, *line);
+            }
+        }
+
+        let new_content = all_lines.join("\n");
+        self.buffer.set_content(new_content)?;
+
+        let mut positions = Vec::with_capacity(self.cursors.positions().len());
+        for pos in self.cursors.positions() {
+            if pos.line > 0 {
+                positions.push(CursorPosition::new(pos.line - 1, pos.column));
+            } else {
+                positions.push(*pos);
+            }
+        }
+        self.cursors.set_positions(positions);
+        self.clamp_cursors_after_edit()?;
+        Ok(())
+    }
+
+    fn move_lines_down(&mut self) -> Result<()> {
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+        lines.reverse();
+
+        let total_lines = self.buffer.line_count();
+        let last_line = total_lines.saturating_sub(1);
+        if lines.is_empty() || lines[0] == last_line {
+            return Ok(());
+        }
+
+        let mut all_lines: Vec<String> = Vec::new();
+        for i in 0..total_lines {
+            let line = self.buffer.line(i)?;
+            all_lines.push(line.trim_end_matches('\n').to_string());
+        }
+
+        for line in lines.iter() {
+            if *line < all_lines.len().saturating_sub(1) {
+                all_lines.swap(*line, line + 1);
+            }
+        }
+
+        let new_content = all_lines.join("\n");
+        self.buffer.set_content(new_content)?;
+
+        let mut positions = Vec::with_capacity(self.cursors.positions().len());
+        for pos in self.cursors.positions() {
+            let new_line = (pos.line + 1).min(last_line);
+            positions.push(CursorPosition::new(new_line, pos.column));
+        }
+        self.cursors.set_positions(positions);
+        self.clamp_cursors_after_edit()?;
+        Ok(())
+    }
+
+    fn join_lines(&mut self) -> Result<()> {
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+        lines.reverse();
+
+        for line in lines.iter() {
+            if *line >= self.buffer.line_count().saturating_sub(1) {
+                continue;
+            }
+
+            let current_line = self.buffer.line(*line)?.trim_end_matches('\n').to_string();
+            let next_line = self
+                .buffer
+                .line(line + 1)?
+                .trim_end_matches('\n')
+                .to_string();
+            let trimmed_next = next_line.trim_start();
+
+            let joined = if trimmed_next.is_empty() {
+                current_line
+            } else {
+                format!("{} {}", current_line, trimmed_next)
+            };
+
+            let current_len = self.buffer.line_len(*line)?;
+            let next_len = self.buffer.line_len(line + 1)?;
+
+            self.buffer.delete_range(*line, 0, *line, current_len)?;
+            self.buffer.delete_char(*line, 0)?;
+            self.buffer.delete_range(*line, 0, *line, next_len)?;
+            self.buffer.insert_str(*line, 0, &joined)?;
+        }
+
+        Ok(())
+    }
+
+    fn sort_lines(&mut self, numerical: bool) -> Result<()> {
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+
+        if lines.len() < 2 {
+            return Ok(());
+        }
+
+        let start_line = lines[0];
+        let end_line = lines[lines.len() - 1];
+
+        let mut line_contents: Vec<String> = Vec::new();
+        for line_idx in start_line..=end_line {
+            let line = self.buffer.line(line_idx)?;
+            line_contents.push(line.trim_end_matches('\n').to_string());
+        }
+
+        if numerical {
+            line_contents.sort_by(|a, b| {
+                let a_num = a.trim().parse::<f64>().ok();
+                let b_num = b.trim().parse::<f64>().ok();
+                match (a_num, b_num) {
+                    (Some(av), Some(bv)) => {
+                        av.partial_cmp(&bv).unwrap_or(std::cmp::Ordering::Equal)
+                    }
+                    (Some(_), None) => std::cmp::Ordering::Less,
+                    (None, Some(_)) => std::cmp::Ordering::Greater,
+                    (None, None) => a.cmp(b),
+                }
+            });
+        } else {
+            line_contents.sort();
+        }
+
+        for (i, line_idx) in (start_line..=end_line).enumerate() {
+            let line_len = self.buffer.line_len(line_idx)?;
+            self.buffer.delete_range(line_idx, 0, line_idx, line_len)?;
+            self.buffer.insert_str(line_idx, 0, &line_contents[i])?;
+        }
+
+        Ok(())
+    }
+
+    fn change_case(&mut self, mode: CaseMode) -> Result<()> {
+        self.map_cursors(|state, pos| {
+            let line_content = state
+                .buffer
+                .line(pos.line)?
+                .trim_end_matches('\n')
+                .to_string();
+            let transformed = match mode {
+                CaseMode::Upper => line_content.to_uppercase(),
+                CaseMode::Lower => line_content.to_lowercase(),
+                CaseMode::Title => {
+                    let mut result = String::new();
+                    let mut capitalize_next = true;
+                    for ch in line_content.chars() {
+                        if ch.is_whitespace() {
+                            result.push(ch);
+                            capitalize_next = true;
+                        } else if capitalize_next {
+                            result.push_str(&ch.to_uppercase().to_string());
+                            capitalize_next = false;
+                        } else {
+                            result.push_str(&ch.to_lowercase().to_string());
+                        }
+                    }
+                    result
+                }
+            };
+
+            let line_len = state.buffer.line_len(pos.line)?;
+            state.buffer.delete_range(pos.line, 0, pos.line, line_len)?;
+            state.buffer.insert_str(pos.line, 0, &transformed)?;
+
+            Ok(pos)
+        })
+    }
+
+    fn transpose_characters(&mut self) -> Result<()> {
+        self.map_cursors(|state, mut pos| {
+            let line_content = state
+                .buffer
+                .line(pos.line)?
+                .trim_end_matches('\n')
+                .to_string();
+            let line_len = line_content.chars().count();
+
+            if line_len < 2 {
+                return Ok(pos);
+            }
+
+            let mut chars: Vec<char> = line_content.chars().collect();
+
+            if pos.column == 0 || pos.column == 1 {
+                chars.swap(0, 1);
+                pos.column = 1;
+            } else if pos.column >= line_len {
+                if line_len >= 2 {
+                    chars.swap(line_len - 2, line_len - 1);
+                }
+            } else {
+                chars.swap(pos.column - 2, pos.column - 1);
+            }
+
+            let new_line: String = chars.into_iter().collect();
+            let old_len = state.buffer.line_len(pos.line)?;
+            state.buffer.delete_range(pos.line, 0, pos.line, old_len)?;
+            state.buffer.insert_str(pos.line, 0, &new_line)?;
 
             Ok(pos)
         })

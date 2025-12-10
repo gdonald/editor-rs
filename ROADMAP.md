@@ -134,18 +134,18 @@
 ## Phase 4: Editor Commands
 
 ### 4.1 Basic Editing Commands
-- [ ] Implement `InsertChar` command
-- [ ] Implement `DeleteChar` command
-- [ ] Implement `Backspace` command
-- [ ] Implement `NewLine` command
-- [ ] Implement `DeleteLine` command
-- [ ] Implement `DuplicateLine` command
-- [ ] Implement `MoveLinesUp/Down` command
-- [ ] Implement `JoinLines` command
-- [ ] Implement `SortLines` command (alphabetical, numerical)
-- [ ] Implement `ChangeCase` commands (upper, lower, title)
-- [ ] Implement `TransposeCharacters` command
-- [ ] Write tests for editing commands
+- [x] Implement `InsertChar` command
+- [x] Implement `DeleteChar` command
+- [x] Implement `Backspace` command
+- [x] Implement `NewLine` command
+- [x] Implement `DeleteLine` command
+- [x] Implement `DuplicateLine` command
+- [x] Implement `MoveLinesUp/Down` command
+- [x] Implement `JoinLines` command
+- [x] Implement `SortLines` command (alphabetical, numerical)
+- [x] Implement `ChangeCase` commands (upper, lower, title)
+- [x] Implement `TransposeCharacters` command
+- [x] Write tests for editing commands
 
 ### 4.1b Mouse Interaction Commands
 - [ ] Implement mouse click to position cursor
