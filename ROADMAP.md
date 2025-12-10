@@ -156,13 +156,13 @@
 - [x] Write tests for mouse interactions
 
 ### 4.2 Navigation Commands
-- [ ] Implement cursor movement commands
-- [ ] Implement page up/down commands
-- [ ] Implement goto line command
-- [ ] Implement jump to matching bracket/paren
+- [x] Implement cursor movement commands
+- [x] Implement page up/down commands
+- [x] Implement goto line command
+- [x] Implement jump to matching bracket/paren
 - [ ] Implement jump to definition (basic, before LSP)
-- [ ] Implement scroll with offset (keep N lines visible)
-- [ ] Write tests for navigation commands
+- [x] Implement scroll with offset (keep N lines visible)
+- [x] Write tests for navigation commands
 
 ### 4.2b Bookmarks and Markers
 - [ ] Implement bookmark creation/deletion

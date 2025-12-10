@@ -74,6 +74,7 @@ pub enum Command {
     Replace { find: String, replace: String },
 
     GotoLine(usize),
+    JumpToMatchingBracket,
 
     Quit,
 }
@@ -130,6 +131,7 @@ impl Command {
                 | Command::MouseDoubleClick(_)
                 | Command::MouseTripleClick(_)
                 | Command::ToggleBlockSelection
+                | Command::JumpToMatchingBracket
         )
     }
 

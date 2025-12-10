@@ -224,10 +224,79 @@ impl EditorState {
         }
 
         let primary = self.cursors.primary();
-        if primary.line < self.viewport_top {
-            self.viewport_top = primary.line;
-        } else if primary.line >= self.viewport_top + viewport_height {
-            self.viewport_top = primary.line.saturating_sub(viewport_height - 1);
+        let offset = self.scroll_offset.min(viewport_height / 2);
+
+        if primary.line < self.viewport_top + offset {
+            self.viewport_top = primary.line.saturating_sub(offset);
+        } else if primary.line >= self.viewport_top + viewport_height - offset {
+            self.viewport_top = primary.line.saturating_sub(viewport_height - offset - 1);
         }
+    }
+
+    pub(super) fn jump_to_matching_bracket(&mut self) -> Result<()> {
+        self.map_cursors(|state, pos| {
+            let char_idx = state.buffer.char_index(pos.line, pos.column)?;
+
+            if char_idx >= state.buffer.len_chars() {
+                return Ok(pos);
+            }
+
+            let current_char = state.buffer.char_at(char_idx);
+            if current_char.is_none() {
+                return Ok(pos);
+            }
+            let current_char = current_char.unwrap();
+
+            let (opening, closing, direction) = match current_char {
+                '(' => ('(', ')', 1),
+                ')' => ('(', ')', -1),
+                '[' => ('[', ']', 1),
+                ']' => ('[', ']', -1),
+                '{' => ('{', '}', 1),
+                '}' => ('{', '}', -1),
+                '<' => ('<', '>', 1),
+                '>' => ('<', '>', -1),
+                _ => return Ok(pos),
+            };
+
+            let mut depth = 0;
+            let mut idx = char_idx as isize;
+            let len = state.buffer.len_chars() as isize;
+
+            loop {
+                if direction == 1 {
+                    if idx >= len {
+                        break;
+                    }
+                } else if idx < 0 {
+                    break;
+                }
+
+                if let Some(ch) = state.buffer.char_at(idx as usize) {
+                    if ch == opening {
+                        if direction == 1 {
+                            depth += 1;
+                        } else {
+                            depth -= 1;
+                        }
+                    } else if ch == closing {
+                        if direction == 1 {
+                            depth -= 1;
+                        } else {
+                            depth += 1;
+                        }
+                    }
+
+                    if depth == 0 && idx != char_idx as isize {
+                        let (line, column) = state.buffer.char_to_line_col(idx as usize)?;
+                        return Ok(CursorPosition::new(line, column));
+                    }
+                }
+
+                idx += direction;
+            }
+
+            Ok(pos)
+        })
     }
 }

@@ -371,7 +371,7 @@ fn test_editor_adjust_viewport() {
 
     editor.execute_command(Command::GotoLine(30)).unwrap();
     editor.adjust_viewport(20);
-    assert_eq!(editor.viewport_top(), 11);
+    assert_eq!(editor.viewport_top(), 16);
 }
 
 #[test]

@@ -9,6 +9,7 @@ pub struct EditorState {
     pub(super) buffer: Buffer,
     pub(super) cursors: MultiCursor,
     pub(super) viewport_top: usize,
+    pub(super) scroll_offset: usize,
     pub(super) status_message: String,
     pub(super) overwrite_mode: bool,
     pub(super) soft_wrap_width: Option<usize>,
@@ -22,6 +23,7 @@ impl EditorState {
             buffer: Buffer::new(),
             cursors: MultiCursor::new(),
             viewport_top: 0,
+            scroll_offset: 5,
             status_message: String::new(),
             overwrite_mode: false,
             soft_wrap_width: None,
@@ -36,6 +38,7 @@ impl EditorState {
             buffer,
             cursors: MultiCursor::new(),
             viewport_top: 0,
+            scroll_offset: 5,
             status_message: String::new(),
             overwrite_mode: false,
             soft_wrap_width: None,
@@ -88,6 +91,7 @@ impl EditorState {
             Command::Close => Ok(()),
 
             Command::GotoLine(line) => self.goto_line(line),
+            Command::JumpToMatchingBracket => self.jump_to_matching_bracket(),
             Command::AddCursor(position) => self.add_cursor(position),
             Command::RemoveCursor(index) => self.remove_cursor(index),
             Command::ClearSecondaryCursors => self.clear_secondary_cursors(),
@@ -170,6 +174,14 @@ impl EditorState {
 
     pub fn soft_wrap_width(&self) -> Option<usize> {
         self.soft_wrap_width
+    }
+
+    pub fn scroll_offset(&self) -> usize {
+        self.scroll_offset
+    }
+
+    pub fn set_scroll_offset(&mut self, offset: usize) {
+        self.scroll_offset = offset;
     }
 
     pub fn file_path(&self) -> Option<&Path> {
