@@ -8,6 +8,8 @@ pub enum EditorError {
     InvalidOperation(String),
     FileNotFound(String),
     EncodingError(String),
+    ReadOnlyFile(String),
+    BinaryFile(String),
 }
 
 impl fmt::Display for EditorError {
@@ -20,6 +22,8 @@ impl fmt::Display for EditorError {
             EditorError::InvalidOperation(msg) => write!(f, "Invalid operation: {}", msg),
             EditorError::FileNotFound(path) => write!(f, "File not found: {}", path),
             EditorError::EncodingError(msg) => write!(f, "Encoding error: {}", msg),
+            EditorError::ReadOnlyFile(path) => write!(f, "Cannot modify read-only file: {}", path),
+            EditorError::BinaryFile(path) => write!(f, "Cannot edit binary file: {}", path),
         }
     }
 }

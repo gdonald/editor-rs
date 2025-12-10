@@ -324,7 +324,7 @@ fn test_set_line_ending() {
     assert_eq!(buffer.line_ending(), LineEnding::Lf);
     assert!(!buffer.is_modified());
 
-    buffer.set_line_ending(LineEnding::Crlf);
+    buffer.set_line_ending(LineEnding::Crlf).unwrap();
     assert_eq!(buffer.line_ending(), LineEnding::Crlf);
     assert!(buffer.is_modified());
 }
@@ -375,4 +375,217 @@ fn test_encoding_invalid_utf8() {
     assert!(result.is_err());
 
     std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_detection() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly.txt");
+    std::fs::write(&path, "Test content").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let buffer = Buffer::from_file(path.clone()).unwrap();
+    assert!(buffer.is_read_only());
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_prevents_insert_char() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly_insert.txt");
+    std::fs::write(&path, "Test").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    let result = buffer.insert_char(0, 0, 'x');
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_prevents_delete_char() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly_delete.txt");
+    std::fs::write(&path, "Test").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    let result = buffer.delete_char(0, 0);
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_prevents_insert_str() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly_insert_str.txt");
+    std::fs::write(&path, "Test").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    let result = buffer.insert_str(0, 0, "Hello");
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_prevents_delete_range() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly_delete_range.txt");
+    std::fs::write(&path, "Test").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    let result = buffer.delete_range(0, 0, 0, 2);
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_prevents_set_content() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly_set_content.txt");
+    std::fs::write(&path, "Test").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    let result = buffer.set_content("New content".to_string());
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_prevents_set_line_ending() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly_set_line_ending.txt");
+    std::fs::write(&path, "Test").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    let result = buffer.set_line_ending(LineEnding::Crlf);
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_read_only_prevents_save() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_readonly_save.txt");
+    std::fs::write(&path, "Test").unwrap();
+
+    let mut perms = std::fs::metadata(&path).unwrap().permissions();
+    perms.set_readonly(true);
+    std::fs::set_permissions(&path, perms).unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    let result = buffer.save();
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_set_read_only() {
+    let mut buffer = Buffer::new();
+    assert!(!buffer.is_read_only());
+
+    buffer.set_read_only(true);
+    assert!(buffer.is_read_only());
+
+    let result = buffer.insert_char(0, 0, 'x');
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::ReadOnlyFile(_)));
+
+    buffer.set_read_only(false);
+    assert!(!buffer.is_read_only());
+
+    let result = buffer.insert_char(0, 0, 'x');
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_binary_file_detection_null_byte() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_binary_null.bin");
+    std::fs::write(&path, b"Hello\x00World").unwrap();
+
+    let result = Buffer::from_file(path.clone());
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::BinaryFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_binary_file_detection_control_chars() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_binary_control.bin");
+    std::fs::write(&path, b"Hello\x01\x02\x03").unwrap();
+
+    let result = Buffer::from_file(path.clone());
+    assert!(result.is_err());
+    assert!(matches!(result.unwrap_err(), EditorError::BinaryFile(_)));
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_text_file_with_tabs_and_newlines() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_text_tabs.txt");
+    std::fs::write(&path, "Hello\tWorld\nLine 2\r\n").unwrap();
+
+    let result = Buffer::from_file(path.clone());
+    assert!(result.is_ok());
+    let buffer = result.unwrap();
+    assert!(!buffer.is_binary());
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_binary_flag_on_new_buffer() {
+    let buffer = Buffer::new();
+    assert!(!buffer.is_binary());
+}
+
+#[test]
+fn test_binary_flag_on_string_buffer() {
+    let buffer = Buffer::from_string("Hello\nWorld");
+    assert!(!buffer.is_binary());
 }

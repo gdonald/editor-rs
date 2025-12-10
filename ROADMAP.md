@@ -107,10 +107,10 @@
 ### 3.2 File Metadata
 - [x] Track file path
 - [x] Track modified state (dirty flag)
-- [ ] Track file permissions
+- [x] Track file permissions
 - [x] Implement unsaved changes detection
-- [ ] Implement read-only file handling
-- [ ] Implement binary file detection
+- [x] Implement read-only file handling
+- [x] Implement binary file detection
 - [x] Write tests for metadata tracking
 
 ### 3.3 File Safety and Recovery

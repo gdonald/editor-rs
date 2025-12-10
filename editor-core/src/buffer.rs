@@ -37,6 +37,8 @@ pub struct Buffer {
     modified: bool,
     line_ending: LineEnding,
     encoding: Encoding,
+    read_only: bool,
+    is_binary: bool,
 }
 
 impl Buffer {
@@ -47,6 +49,8 @@ impl Buffer {
             modified: false,
             line_ending: LineEnding::Lf,
             encoding: Encoding::Utf8,
+            read_only: false,
+            is_binary: false,
         }
     }
 
@@ -59,12 +63,16 @@ impl Buffer {
             modified: false,
             line_ending,
             encoding: Encoding::Utf8,
+            read_only: false,
+            is_binary: false,
         }
     }
 
     pub fn from_file(path: PathBuf) -> Result<Self> {
         let metadata = std::fs::metadata(&path)?;
         let file_size = metadata.len();
+
+        let read_only = metadata.permissions().readonly();
 
         let (content, line_ending) = if file_size > 10_000_000 {
             let mut file = std::fs::File::open(&path)?;
@@ -79,6 +87,11 @@ impl Buffer {
             (content, line_ending)
         };
 
+        let is_binary = Self::detect_binary(&content);
+        if is_binary {
+            return Err(EditorError::BinaryFile(path.to_string_lossy().to_string()));
+        }
+
         let normalized = normalize_line_endings(&content);
         Ok(Self {
             rope: Rope::from_str(&normalized),
@@ -86,10 +99,13 @@ impl Buffer {
             modified: false,
             line_ending,
             encoding: Encoding::Utf8,
+            read_only,
+            is_binary,
         })
     }
 
     pub fn save(&mut self) -> Result<()> {
+        self.check_read_only()?;
         if let Some(path) = &self.file_path {
             self.write_to_file(path)?;
             self.modified = false;
@@ -133,6 +149,7 @@ impl Buffer {
     }
 
     pub fn insert_char(&mut self, line: usize, column: usize, ch: char) -> Result<()> {
+        self.check_read_only()?;
         let char_idx = self.line_col_to_char_idx(line, column)?;
         self.rope.insert_char(char_idx, ch);
         self.modified = true;
@@ -140,6 +157,7 @@ impl Buffer {
     }
 
     pub fn delete_char(&mut self, line: usize, column: usize) -> Result<()> {
+        self.check_read_only()?;
         let char_idx = self.line_col_to_char_idx(line, column)?;
         if char_idx < self.rope.len_chars() {
             self.rope.remove(char_idx..char_idx + 1);
@@ -151,6 +169,7 @@ impl Buffer {
     }
 
     pub fn insert_str(&mut self, line: usize, column: usize, s: &str) -> Result<()> {
+        self.check_read_only()?;
         let char_idx = self.line_col_to_char_idx(line, column)?;
         self.rope.insert(char_idx, s);
         self.modified = true;
@@ -164,6 +183,7 @@ impl Buffer {
         end_line: usize,
         end_col: usize,
     ) -> Result<()> {
+        self.check_read_only()?;
         let start_idx = self.line_col_to_char_idx(start_line, start_col)?;
         let end_idx = self.line_col_to_char_idx(end_line, end_col)?;
         if start_idx <= end_idx && end_idx <= self.rope.len_chars() {
@@ -178,9 +198,11 @@ impl Buffer {
         }
     }
 
-    pub fn set_content(&mut self, content: String) {
+    pub fn set_content(&mut self, content: String) -> Result<()> {
+        self.check_read_only()?;
         self.rope = Rope::from_str(&content);
         self.modified = true;
+        Ok(())
     }
 
     pub fn line_count(&self) -> usize {
@@ -232,9 +254,11 @@ impl Buffer {
         self.line_ending
     }
 
-    pub fn set_line_ending(&mut self, line_ending: LineEnding) {
+    pub fn set_line_ending(&mut self, line_ending: LineEnding) -> Result<()> {
+        self.check_read_only()?;
         self.line_ending = line_ending;
         self.modified = true;
+        Ok(())
     }
 
     pub fn encoding(&self) -> Encoding {
@@ -293,6 +317,46 @@ impl Buffer {
         }
 
         Ok(line_start_idx + column)
+    }
+
+    fn detect_binary(content: &str) -> bool {
+        let check_len = content.len().min(8192);
+        let bytes = &content.as_bytes()[..check_len];
+
+        for &byte in bytes {
+            if byte == 0 {
+                return true;
+            }
+            if byte < 0x20 && byte != b'\t' && byte != b'\n' && byte != b'\r' {
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn is_read_only(&self) -> bool {
+        self.read_only
+    }
+
+    pub fn is_binary(&self) -> bool {
+        self.is_binary
+    }
+
+    pub fn set_read_only(&mut self, read_only: bool) {
+        self.read_only = read_only;
+    }
+
+    fn check_read_only(&self) -> Result<()> {
+        if self.read_only {
+            let path = self
+                .file_path
+                .as_ref()
+                .map(|p| p.to_string_lossy().to_string())
+                .unwrap_or_else(|| "buffer".to_string());
+            Err(EditorError::ReadOnlyFile(path))
+        } else {
+            Ok(())
+        }
     }
 }
 

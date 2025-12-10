@@ -519,7 +519,7 @@ impl EditorState {
             new_content.push('\n');
         }
 
-        self.buffer.set_content(new_content);
+        self.buffer.set_content(new_content)?;
         self.clamp_cursors_after_edit()?;
         Ok(())
     }
@@ -547,7 +547,7 @@ impl EditorState {
             new_content.push('\n');
         }
 
-        self.buffer.set_content(new_content);
+        self.buffer.set_content(new_content)?;
         self.clamp_cursors_after_edit()?;
         Ok(())
     }
