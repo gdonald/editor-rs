@@ -124,10 +124,12 @@
 - [x] Write tests for file safety features
 
 ### 3.4 File History and Sessions
-- [ ] Implement recent files list
-- [ ] Implement session persistence (remember open files)
-- [ ] Implement session restoration on startup
-- [ ] Write tests for file history
+- [x] Implement recent files list (simple: last N opened files, configurable cap)
+- [x] Implement session persistence (remember open files with cursor positions)
+- [x] Implement session restoration on startup (auto-restore)
+- [x] Support multiple concurrent editor instances (unique session files)
+- [x] Write tests for file history and sessions
+- [ ] Future enhancement: Git-based recent files (opt-in, use git history to show recently modified files from Phase 6.5)
 
 ## Phase 4: Editor Commands
 
