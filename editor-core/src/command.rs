@@ -1,3 +1,4 @@
+use crate::cursor::CursorPosition;
 use std::path::PathBuf;
 
 #[derive(Debug, Clone)]
@@ -22,6 +23,9 @@ pub enum Command {
     MoveCursorWordRight,
     PageUp,
     PageDown,
+    AddCursor(CursorPosition),
+    RemoveCursor(usize),
+    ClearSecondaryCursors,
 
     ToggleOverwriteMode,
     HardWrap(usize),
@@ -86,6 +90,9 @@ impl Command {
                 | Command::MoveCursorWordRight
                 | Command::PageUp
                 | Command::PageDown
+                | Command::AddCursor(_)
+                | Command::RemoveCursor(_)
+                | Command::ClearSecondaryCursors
                 | Command::GotoLine(_)
         )
     }

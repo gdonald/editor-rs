@@ -1,4 +1,4 @@
-use editor_core::Command;
+use editor_core::{Command, CursorPosition};
 use std::path::PathBuf;
 
 #[test]
@@ -35,6 +35,9 @@ fn test_command_is_navigation_command() {
     assert!(Command::PageUp.is_navigation_command());
     assert!(Command::PageDown.is_navigation_command());
     assert!(Command::GotoLine(5).is_navigation_command());
+    assert!(Command::AddCursor(CursorPosition::zero()).is_navigation_command());
+    assert!(Command::RemoveCursor(0).is_navigation_command());
+    assert!(Command::ClearSecondaryCursors.is_navigation_command());
 
     assert!(!Command::InsertChar('a').is_navigation_command());
     assert!(!Command::Save.is_navigation_command());

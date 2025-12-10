@@ -1,12 +1,13 @@
 use crate::buffer::Buffer;
 use crate::command::Command;
-use crate::cursor::CursorPosition;
+use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::{EditorError, Result};
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub struct EditorState {
     buffer: Buffer,
-    cursor: CursorPosition,
+    cursors: MultiCursor,
     viewport_top: usize,
     status_message: String,
     overwrite_mode: bool,
@@ -17,7 +18,7 @@ impl EditorState {
     pub fn new() -> Self {
         Self {
             buffer: Buffer::new(),
-            cursor: CursorPosition::zero(),
+            cursors: MultiCursor::new(),
             viewport_top: 0,
             status_message: String::new(),
             overwrite_mode: false,
@@ -29,7 +30,7 @@ impl EditorState {
         let buffer = Buffer::from_file(path)?;
         Ok(Self {
             buffer,
-            cursor: CursorPosition::zero(),
+            cursors: MultiCursor::new(),
             viewport_top: 0,
             status_message: String::new(),
             overwrite_mode: false,
@@ -72,6 +73,9 @@ impl EditorState {
             Command::Close => Ok(()),
 
             Command::GotoLine(line) => self.goto_line(line),
+            Command::AddCursor(position) => self.add_cursor(position),
+            Command::RemoveCursor(index) => self.remove_cursor(index),
+            Command::ClearSecondaryCursors => self.clear_secondary_cursors(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -79,60 +83,94 @@ impl EditorState {
         }
     }
 
+    fn map_cursors<F>(&mut self, mut f: F) -> Result<()>
+    where
+        F: FnMut(&mut EditorState, CursorPosition) -> Result<CursorPosition>,
+    {
+        let positions = self.cursors.positions().to_vec();
+        let mut updated = Vec::with_capacity(positions.len());
+        for pos in positions {
+            updated.push(f(self, pos)?);
+        }
+        self.cursors.set_positions(updated);
+        Ok(())
+    }
+
+    fn map_cursors_descending<F>(&mut self, mut f: F) -> Result<()>
+    where
+        F: FnMut(&mut EditorState, CursorPosition) -> Result<CursorPosition>,
+    {
+        let mut positions = self.cursors.positions().to_vec();
+        positions.sort_by(|a, b| a.line.cmp(&b.line).then(a.column.cmp(&b.column)));
+        positions.reverse();
+
+        let mut updated = Vec::with_capacity(positions.len());
+        for pos in positions {
+            updated.push(f(self, pos)?);
+        }
+
+        self.cursors.set_positions(updated);
+        Ok(())
+    }
+
     fn insert_char(&mut self, ch: char) -> Result<()> {
         if ch == '\n' {
             return self.new_line();
         }
 
-        let line_len = self.buffer.line_len(self.cursor.line)?;
-        if self.overwrite_mode && self.cursor.column < line_len {
-            self.buffer
-                .delete_char(self.cursor.line, self.cursor.column)?;
-        }
+        self.map_cursors_descending(|state, mut pos| {
+            let line_len = state.buffer.line_len(pos.line)?;
+            if state.overwrite_mode && pos.column < line_len {
+                state.buffer.delete_char(pos.line, pos.column)?;
+            }
 
-        self.buffer
-            .insert_char(self.cursor.line, self.cursor.column, ch)?;
-        self.cursor.column += 1;
-        Ok(())
+            state.buffer.insert_char(pos.line, pos.column, ch)?;
+            pos.column += 1;
+            Ok(pos)
+        })
     }
 
     fn delete_char(&mut self) -> Result<()> {
-        self.buffer
-            .delete_char(self.cursor.line, self.cursor.column)
+        self.map_cursors_descending(|state, pos| {
+            state.buffer.delete_char(pos.line, pos.column)?;
+            Ok(pos)
+        })
     }
 
     fn backspace(&mut self) -> Result<()> {
-        if self.cursor.column > 0 {
-            self.cursor.column -= 1;
-            self.buffer
-                .delete_char(self.cursor.line, self.cursor.column)
-        } else if self.cursor.line > 0 {
-            let prev_line_len = self.buffer.line_len(self.cursor.line - 1)?;
-            self.buffer
-                .delete_char(self.cursor.line - 1, prev_line_len)?;
-            self.cursor.line -= 1;
-            self.cursor.column = prev_line_len;
-            Ok(())
-        } else {
-            Ok(())
-        }
+        self.map_cursors_descending(|state, mut pos| {
+            if pos.column > 0 {
+                pos.column -= 1;
+                state.buffer.delete_char(pos.line, pos.column)?;
+                return Ok(pos);
+            }
+
+            if pos.line > 0 {
+                let prev_line_len = state.buffer.line_len(pos.line - 1)?;
+                state.buffer.delete_char(pos.line - 1, prev_line_len)?;
+                pos.line -= 1;
+                pos.column = prev_line_len;
+            }
+
+            Ok(pos)
+        })
     }
 
     fn new_line(&mut self) -> Result<()> {
-        let indent = self.current_line_indentation()?;
+        self.map_cursors_descending(|state, mut pos| {
+            let indent = state.indentation_for_line(pos.line)?;
 
-        self.buffer
-            .insert_char(self.cursor.line, self.cursor.column, '\n')?;
-        self.cursor.line += 1;
-        self.cursor.column = 0;
+            state.buffer.insert_char(pos.line, pos.column, '\n')?;
+            pos.line += 1;
+            pos.column = 0;
 
-        if !indent.is_empty() {
-            self.buffer
-                .insert_str(self.cursor.line, self.cursor.column, &indent)?;
-            self.cursor.column = indent.chars().count();
-        }
+            if !indent.is_empty() {
+                state.buffer.insert_str(pos.line, pos.column, &indent)?;
+                pos.column = indent.chars().count();
+            }
 
-        Ok(())
+            Ok(pos)
+        })
     }
 
     fn delete_line(&mut self) -> Result<()> {
@@ -140,205 +178,266 @@ impl EditorState {
             return Ok(());
         }
 
-        let is_last_line = self.cursor.line == self.buffer.line_count() - 1;
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+        lines.reverse();
 
-        if is_last_line {
-            let line_len = self.buffer.line_len(self.cursor.line)?;
-            self.buffer
-                .delete_range(self.cursor.line, 0, self.cursor.line, line_len)?;
-        } else {
-            self.buffer
-                .delete_range(self.cursor.line, 0, self.cursor.line + 1, 0)?;
+        for line in lines {
+            let is_last_line = line == self.buffer.line_count().saturating_sub(1);
+
+            if is_last_line {
+                let line_len = self.buffer.line_len(line)?;
+                self.buffer.delete_range(line, 0, line, line_len)?;
+            } else {
+                self.buffer.delete_range(line, 0, line + 1, 0)?;
+            }
         }
 
-        self.cursor.column = 0;
+        let mut positions = Vec::with_capacity(self.cursors.positions().len());
+        for pos in self.cursors.positions() {
+            let line = pos.line.min(self.buffer.line_count().saturating_sub(1));
+            positions.push(CursorPosition::new(line, 0));
+        }
+
+        self.cursors.set_positions(positions);
+        self.clamp_cursors_after_edit()?;
         Ok(())
     }
 
     fn indent_line(&mut self) -> Result<()> {
         let indent = "    ";
-        self.buffer.insert_str(self.cursor.line, 0, indent)?;
-        self.cursor.column += indent.len();
-        Ok(())
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
+
+        for line in lines {
+            self.buffer.insert_str(line, 0, indent)?;
+        }
+
+        self.map_cursors(|state, mut pos| {
+            pos.column += indent.len();
+            let line_len = state.buffer.line_len(pos.line)?;
+            if pos.column > line_len {
+                pos.column = line_len;
+            }
+            Ok(pos)
+        })
     }
 
     fn dedent_line(&mut self) -> Result<()> {
-        let line = self.buffer.line(self.cursor.line)?;
-        let trimmed = line.trim_end_matches('\n');
-        let mut remove_count = 0;
+        let mut lines: Vec<usize> = self.cursors.positions().iter().map(|p| p.line).collect();
+        lines.sort_unstable();
+        lines.dedup();
 
-        for ch in trimmed.chars() {
-            match ch {
-                ' ' if remove_count < 4 => remove_count += 1,
-                '\t' => {
-                    remove_count = 1;
-                    break;
+        let mut removed_by_line = HashMap::new();
+
+        for line_idx in &lines {
+            let line = self.buffer.line(*line_idx)?;
+            let trimmed = line.trim_end_matches('\n');
+            let mut remove_count = 0;
+
+            for ch in trimmed.chars() {
+                match ch {
+                    ' ' if remove_count < 4 => remove_count += 1,
+                    '\t' => {
+                        remove_count = 1;
+                        break;
+                    }
+                    _ => break,
                 }
-                _ => break,
+            }
+
+            if remove_count > 0 {
+                self.buffer
+                    .delete_range(*line_idx, 0, *line_idx, remove_count)?;
+                removed_by_line.insert(*line_idx, remove_count);
             }
         }
 
-        if remove_count > 0 {
-            self.buffer
-                .delete_range(self.cursor.line, 0, self.cursor.line, remove_count)?;
+        self.map_cursors(|state, mut pos| {
+            let line_len = state.buffer.line_len(pos.line)?;
 
-            if self.cursor.column < remove_count {
-                self.cursor.column = 0;
-            } else {
-                self.cursor.column -= remove_count;
+            if let Some(amount) = removed_by_line.get(&pos.line) {
+                if pos.column < *amount {
+                    pos.column = 0;
+                } else {
+                    pos.column -= *amount;
+                }
             }
-        }
 
-        Ok(())
+            if pos.column > line_len {
+                pos.column = line_len;
+            }
+
+            Ok(pos)
+        })
     }
 
     fn move_cursor_up(&mut self) -> Result<()> {
-        if self.cursor.line > 0 {
-            self.cursor.line -= 1;
-            let line_len = self.buffer.line_len(self.cursor.line)?;
-            if self.cursor.column > line_len {
-                self.cursor.column = line_len;
+        self.map_cursors(|state, mut pos| {
+            if pos.line > 0 {
+                pos.line -= 1;
+                let line_len = state.buffer.line_len(pos.line)?;
+                if pos.column > line_len {
+                    pos.column = line_len;
+                }
             }
-        }
-        Ok(())
+            Ok(pos)
+        })
     }
 
     fn move_cursor_down(&mut self) -> Result<()> {
-        if self.cursor.line < self.buffer.line_count() - 1 {
-            self.cursor.line += 1;
-            let line_len = self.buffer.line_len(self.cursor.line)?;
-            if self.cursor.column > line_len {
-                self.cursor.column = line_len;
+        self.map_cursors(|state, mut pos| {
+            if pos.line + 1 < state.buffer.line_count() {
+                pos.line += 1;
+                let line_len = state.buffer.line_len(pos.line)?;
+                if pos.column > line_len {
+                    pos.column = line_len;
+                }
             }
-        }
-        Ok(())
+            Ok(pos)
+        })
     }
 
     fn move_cursor_left(&mut self) -> Result<()> {
-        if self.cursor.column > 0 {
-            self.cursor.column -= 1;
-        } else if self.cursor.line > 0 {
-            self.cursor.line -= 1;
-            self.cursor.column = self.buffer.line_len(self.cursor.line)?;
-        }
-        Ok(())
+        self.map_cursors(|state, mut pos| {
+            if pos.column > 0 {
+                pos.column -= 1;
+            } else if pos.line > 0 {
+                pos.line -= 1;
+                pos.column = state.buffer.line_len(pos.line)?;
+            }
+            Ok(pos)
+        })
     }
 
     fn move_cursor_right(&mut self) -> Result<()> {
-        let line_len = self.buffer.line_len(self.cursor.line)?;
-        if self.cursor.column < line_len {
-            self.cursor.column += 1;
-        } else if self.cursor.line < self.buffer.line_count() - 1 {
-            self.cursor.line += 1;
-            self.cursor.column = 0;
-        }
-        Ok(())
+        self.map_cursors(|state, mut pos| {
+            let line_len = state.buffer.line_len(pos.line)?;
+            if pos.column < line_len {
+                pos.column += 1;
+            } else if pos.line + 1 < state.buffer.line_count() {
+                pos.line += 1;
+                pos.column = 0;
+            }
+            Ok(pos)
+        })
     }
 
     fn move_cursor_word_left(&mut self) -> Result<()> {
-        if self.buffer.len_chars() == 0 {
-            return Ok(());
-        }
-
-        let mut idx = self
-            .buffer
-            .char_index(self.cursor.line, self.cursor.column)?;
-
-        if idx == 0 {
-            return Ok(());
-        }
-
-        idx -= 1;
-
-        while !is_word_char(self.buffer.char_at(idx).unwrap()) {
-            if idx == 0 {
-                let (line, column) = self.buffer.char_to_line_col(0)?;
-                self.cursor.line = line;
-                self.cursor.column = column;
-                return Ok(());
+        self.map_cursors(|state, mut pos| {
+            if state.buffer.len_chars() == 0 {
+                return Ok(pos);
             }
-            idx -= 1;
-        }
 
-        while idx > 0 && is_word_char(self.buffer.char_at(idx - 1).unwrap()) {
-            idx -= 1;
-        }
+            let mut idx = state.buffer.char_index(pos.line, pos.column)?;
 
-        let (line, column) = self.buffer.char_to_line_col(idx)?;
-        self.cursor.line = line;
-        self.cursor.column = column;
-        Ok(())
+            if idx == 0 {
+                pos.line = 0;
+                pos.column = 0;
+                return Ok(pos);
+            }
+
+            idx -= 1;
+
+            while !is_word_char(state.buffer.char_at(idx).unwrap()) {
+                if idx == 0 {
+                    let (line, column) = state.buffer.char_to_line_col(0)?;
+                    pos.line = line;
+                    pos.column = column;
+                    return Ok(pos);
+                }
+                idx -= 1;
+            }
+
+            while idx > 0 && is_word_char(state.buffer.char_at(idx - 1).unwrap()) {
+                idx -= 1;
+            }
+
+            let (line, column) = state.buffer.char_to_line_col(idx)?;
+            pos.line = line;
+            pos.column = column;
+            Ok(pos)
+        })
     }
 
     fn move_cursor_word_right(&mut self) -> Result<()> {
-        if self.buffer.len_chars() == 0 {
-            return Ok(());
-        }
+        self.map_cursors(|state, mut pos| {
+            if state.buffer.len_chars() == 0 {
+                return Ok(pos);
+            }
 
-        let mut idx = self
-            .buffer
-            .char_index(self.cursor.line, self.cursor.column)?;
-        let total = self.buffer.len_chars();
+            let mut idx = state.buffer.char_index(pos.line, pos.column)?;
+            let total = state.buffer.len_chars();
 
-        if idx >= total {
-            return Ok(());
-        }
+            if idx >= total {
+                return Ok(pos);
+            }
 
-        if is_word_char(self.buffer.char_at(idx).unwrap()) {
-            while idx < total && is_word_char(self.buffer.char_at(idx).unwrap()) {
+            if is_word_char(state.buffer.char_at(idx).unwrap()) {
+                while idx < total && is_word_char(state.buffer.char_at(idx).unwrap()) {
+                    idx += 1;
+                }
+            }
+
+            while idx < total && !is_word_char(state.buffer.char_at(idx).unwrap()) {
                 idx += 1;
             }
-        }
 
-        while idx < total && !is_word_char(self.buffer.char_at(idx).unwrap()) {
-            idx += 1;
-        }
-
-        let (line, column) = self.buffer.char_to_line_col(idx)?;
-        self.cursor.line = line;
-        self.cursor.column = column;
-        Ok(())
+            let (line, column) = state.buffer.char_to_line_col(idx)?;
+            pos.line = line;
+            pos.column = column;
+            Ok(pos)
+        })
     }
 
     fn move_to_start_of_line(&mut self) -> Result<()> {
-        self.cursor.column = 0;
-        Ok(())
+        self.map_cursors(|_, mut pos| {
+            pos.column = 0;
+            Ok(pos)
+        })
     }
 
     fn move_to_end_of_line(&mut self) -> Result<()> {
-        let line_len = self.buffer.line_len(self.cursor.line)?;
-        self.cursor.column = line_len;
-        Ok(())
+        self.map_cursors(|state, mut pos| {
+            let line_len = state.buffer.line_len(pos.line)?;
+            pos.column = line_len;
+            Ok(pos)
+        })
     }
 
     fn move_to_start_of_file(&mut self) -> Result<()> {
-        self.cursor.line = 0;
-        self.cursor.column = 0;
+        self.cursors.reset_to(CursorPosition::zero());
         self.viewport_top = 0;
         Ok(())
     }
 
     fn move_to_end_of_file(&mut self) -> Result<()> {
         if self.buffer.line_count() > 0 {
-            self.cursor.line = self.buffer.line_count() - 1;
-            self.cursor.column = self.buffer.line_len(self.cursor.line)?;
+            let last_line = self.buffer.line_count() - 1;
+            let last_len = self.buffer.line_len(last_line)?;
+            self.cursors
+                .reset_to(CursorPosition::new(last_line, last_len));
         }
         Ok(())
     }
 
     fn page_up(&mut self, lines: usize) -> Result<()> {
-        if self.cursor.line >= lines {
-            self.cursor.line -= lines;
-        } else {
-            self.cursor.line = 0;
-        }
+        self.map_cursors(|state, mut pos| {
+            if pos.line >= lines {
+                pos.line -= lines;
+            } else {
+                pos.line = 0;
+            }
 
-        let line_len = self.buffer.line_len(self.cursor.line)?;
-        if self.cursor.column > line_len {
-            self.cursor.column = line_len;
-        }
+            let line_len = state.buffer.line_len(pos.line)?;
+            if pos.column > line_len {
+                pos.column = line_len;
+            }
 
-        Ok(())
+            Ok(pos)
+        })
     }
 
     fn page_down(&mut self, lines: usize) -> Result<()> {
@@ -348,28 +447,46 @@ impl EditorState {
             0
         };
 
-        if self.cursor.line + lines <= max_line {
-            self.cursor.line += lines;
-        } else {
-            self.cursor.line = max_line;
-        }
+        self.map_cursors(|state, mut pos| {
+            if pos.line + lines <= max_line {
+                pos.line += lines;
+            } else {
+                pos.line = max_line;
+            }
 
-        let line_len = self.buffer.line_len(self.cursor.line)?;
-        if self.cursor.column > line_len {
-            self.cursor.column = line_len;
-        }
+            let line_len = state.buffer.line_len(pos.line)?;
+            if pos.column > line_len {
+                pos.column = line_len;
+            }
 
-        Ok(())
+            Ok(pos)
+        })
     }
 
     fn goto_line(&mut self, line: usize) -> Result<()> {
         if line < self.buffer.line_count() {
-            self.cursor.line = line;
-            self.cursor.column = 0;
-            Ok(())
-        } else {
-            Err(EditorError::InvalidPosition { line, column: 0 })
+            self.cursors
+                .set_positions(vec![CursorPosition::new(line, 0)]);
+            return Ok(());
         }
+        Err(EditorError::InvalidPosition { line, column: 0 })
+    }
+
+    fn add_cursor(&mut self, position: CursorPosition) -> Result<()> {
+        self.validate_position(position)?;
+        self.cursors.add_cursor(position);
+        Ok(())
+    }
+
+    fn remove_cursor(&mut self, index: usize) -> Result<()> {
+        self.cursors.remove_cursor(index);
+        self.clamp_cursors_after_edit()
+    }
+
+    fn clear_secondary_cursors(&mut self) -> Result<()> {
+        let primary = *self.cursors.primary();
+        self.cursors.reset_to(primary);
+        Ok(())
     }
 
     fn toggle_overwrite_mode(&mut self) -> Result<()> {
@@ -403,7 +520,7 @@ impl EditorState {
         }
 
         self.buffer.set_content(new_content);
-        self.clamp_cursor_after_edit()?;
+        self.clamp_cursors_after_edit()?;
         Ok(())
     }
 
@@ -431,13 +548,13 @@ impl EditorState {
         }
 
         self.buffer.set_content(new_content);
-        self.clamp_cursor_after_edit()?;
+        self.clamp_cursors_after_edit()?;
         Ok(())
     }
 
     fn open_file(&mut self, path: PathBuf) -> Result<()> {
         self.buffer = Buffer::from_file(path)?;
-        self.cursor = CursorPosition::zero();
+        self.cursors.reset_to(CursorPosition::zero());
         self.viewport_top = 0;
         Ok(())
     }
@@ -456,7 +573,7 @@ impl EditorState {
 
     fn new_buffer(&mut self) -> Result<()> {
         self.buffer = Buffer::new();
-        self.cursor = CursorPosition::zero();
+        self.cursors.reset_to(CursorPosition::zero());
         self.viewport_top = 0;
         Ok(())
     }
@@ -466,7 +583,15 @@ impl EditorState {
     }
 
     pub fn cursor(&self) -> &CursorPosition {
-        &self.cursor
+        self.cursors.primary()
+    }
+
+    pub fn cursors(&self) -> &[CursorPosition] {
+        self.cursors.positions()
+    }
+
+    pub fn cursor_count(&self) -> usize {
+        self.cursors.positions().len()
     }
 
     pub fn viewport_top(&self) -> usize {
@@ -482,10 +607,15 @@ impl EditorState {
     }
 
     pub fn adjust_viewport(&mut self, viewport_height: usize) {
-        if self.cursor.line < self.viewport_top {
-            self.viewport_top = self.cursor.line;
-        } else if self.cursor.line >= self.viewport_top + viewport_height {
-            self.viewport_top = self.cursor.line - viewport_height + 1;
+        if viewport_height == 0 {
+            return;
+        }
+
+        let primary = self.cursors.primary();
+        if primary.line < self.viewport_top {
+            self.viewport_top = primary.line;
+        } else if primary.line >= self.viewport_top + viewport_height {
+            self.viewport_top = primary.line.saturating_sub(viewport_height - 1);
         }
     }
 
@@ -515,8 +645,27 @@ impl EditorState {
         lines
     }
 
-    fn current_line_indentation(&self) -> Result<String> {
-        let line = self.buffer.line(self.cursor.line)?;
+    fn validate_position(&self, position: CursorPosition) -> Result<()> {
+        if position.line >= self.buffer.line_count() {
+            return Err(EditorError::InvalidPosition {
+                line: position.line,
+                column: position.column,
+            });
+        }
+
+        let line_len = self.buffer.line_len(position.line)?;
+        if position.column > line_len {
+            return Err(EditorError::InvalidPosition {
+                line: position.line,
+                column: position.column,
+            });
+        }
+
+        Ok(())
+    }
+
+    fn indentation_for_line(&self, line_idx: usize) -> Result<String> {
+        let line = self.buffer.line(line_idx)?;
         let trimmed = line.trim_end_matches('\n');
         let mut indent = String::new();
 
@@ -558,16 +707,35 @@ impl EditorState {
         chunks
     }
 
-    fn clamp_cursor_after_edit(&mut self) -> Result<()> {
-        if self.cursor.line >= self.buffer.line_count() {
-            self.cursor.line = self.buffer.line_count().saturating_sub(1);
+    fn clamp_cursors_after_edit(&mut self) -> Result<()> {
+        let mut positions = Vec::with_capacity(self.cursors.positions().len());
+        for mut pos in self.cursors.positions().to_vec() {
+            let line_count = self.buffer.line_count();
+            if line_count == 0 {
+                pos.line = 0;
+                pos.column = 0;
+                positions.push(pos);
+                continue;
+            }
+
+            let last_line = line_count - 1;
+            if pos.line > last_line {
+                pos.line = last_line;
+            }
+
+            let line_len = self.buffer.line_len(pos.line)?;
+            if pos.column > line_len {
+                pos.column = line_len;
+            }
+
+            positions.push(pos);
         }
 
-        let line_len = self.buffer.line_len(self.cursor.line)?;
-        if self.cursor.column > line_len {
-            self.cursor.column = line_len;
+        if positions.is_empty() {
+            positions.push(CursorPosition::zero());
         }
 
+        self.cursors.set_positions(positions);
         Ok(())
     }
 }

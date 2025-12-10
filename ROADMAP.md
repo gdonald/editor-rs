@@ -87,11 +87,11 @@
 - [x] Write tests for text editing enhancements
 
 ### 2.3 Multi-Cursor Support (Optional for v1)
-- [ ] Design multi-cursor data structure
-- [ ] Implement adding/removing cursors
-- [ ] Implement cursor merging logic
-- [ ] Update buffer operations to work with multiple cursors
-- [ ] Write tests for multi-cursor operations
+- [x] Design multi-cursor data structure
+- [x] Implement adding/removing cursors
+- [x] Implement cursor merging logic
+- [x] Update buffer operations to work with multiple cursors
+- [x] Write tests for multi-cursor operations
 
 ## Phase 3: File Operations
 

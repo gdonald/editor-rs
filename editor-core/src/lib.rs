@@ -7,7 +7,7 @@ pub mod view;
 
 pub use buffer::Buffer;
 pub use command::Command;
-pub use cursor::CursorPosition;
+pub use cursor::{CursorPosition, MultiCursor};
 pub use editor::EditorState;
 pub use error::{EditorError, Result};
 pub use view::EditorView;
