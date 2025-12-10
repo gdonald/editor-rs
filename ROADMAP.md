@@ -98,9 +98,9 @@
 ### 3.1 File I/O
 - [x] Implement file reading into buffer
 - [x] Implement buffer writing to file
-- [ ] Handle different line endings (LF, CRLF)
-- [ ] Implement encoding detection (UTF-8, etc.)
-- [ ] Handle large files efficiently
+- [x] Handle different line endings (LF, CRLF)
+- [x] Implement encoding detection (UTF-8, etc.)
+- [x] Handle large files efficiently
 - [x] Add error handling for I/O operations
 - [x] Write tests for file operations
 

@@ -5,7 +5,7 @@ pub mod editor;
 pub mod error;
 pub mod view;
 
-pub use buffer::Buffer;
+pub use buffer::{Buffer, Encoding, LineEnding};
 pub use command::Command;
 pub use cursor::{CursorPosition, MultiCursor};
 pub use editor::EditorState;

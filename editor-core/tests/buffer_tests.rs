@@ -1,4 +1,4 @@
-use editor_core::{Buffer, EditorError};
+use editor_core::{Buffer, EditorError, Encoding, LineEnding};
 use std::path::PathBuf;
 
 #[test]
@@ -244,4 +244,135 @@ fn test_buffer_default() {
     let buffer = Buffer::default();
     assert_eq!(buffer.line_count(), 1);
     assert!(!buffer.is_modified());
+}
+
+#[test]
+fn test_line_ending_detection_lf() {
+    let buffer = Buffer::from_string("Hello\nWorld\n");
+    assert_eq!(buffer.line_ending(), LineEnding::Lf);
+}
+
+#[test]
+fn test_line_ending_detection_crlf() {
+    let buffer = Buffer::from_string("Hello\r\nWorld\r\n");
+    assert_eq!(buffer.line_ending(), LineEnding::Crlf);
+}
+
+#[test]
+fn test_line_ending_normalization() {
+    let buffer = Buffer::from_string("Hello\r\nWorld\r\n");
+    assert_eq!(buffer.content(), "Hello\nWorld\n");
+}
+
+#[test]
+fn test_line_ending_save_crlf() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_line_ending_crlf.txt");
+
+    let mut buffer = Buffer::from_string("Hello\r\nWorld\r\n");
+    buffer.save_as(path.clone()).unwrap();
+
+    let saved_content = std::fs::read_to_string(&path).unwrap();
+    assert_eq!(saved_content, "Hello\r\nWorld\r\n");
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_line_ending_save_lf() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_line_ending_lf.txt");
+
+    let mut buffer = Buffer::from_string("Hello\nWorld\n");
+    buffer.save_as(path.clone()).unwrap();
+
+    let saved_content = std::fs::read_to_string(&path).unwrap();
+    assert_eq!(saved_content, "Hello\nWorld\n");
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_line_ending_from_file_crlf() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_from_file_crlf.txt");
+    std::fs::write(&path, "Hello\r\nWorld\r\n").unwrap();
+
+    let buffer = Buffer::from_file(path.clone()).unwrap();
+    assert_eq!(buffer.line_ending(), LineEnding::Crlf);
+    assert_eq!(buffer.content(), "Hello\nWorld\n");
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_line_ending_from_file_lf() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_from_file_lf.txt");
+    std::fs::write(&path, "Hello\nWorld\n").unwrap();
+
+    let buffer = Buffer::from_file(path.clone()).unwrap();
+    assert_eq!(buffer.line_ending(), LineEnding::Lf);
+    assert_eq!(buffer.content(), "Hello\nWorld\n");
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_set_line_ending() {
+    let mut buffer = Buffer::from_string("Hello\nWorld\n");
+    assert_eq!(buffer.line_ending(), LineEnding::Lf);
+    assert!(!buffer.is_modified());
+
+    buffer.set_line_ending(LineEnding::Crlf);
+    assert_eq!(buffer.line_ending(), LineEnding::Crlf);
+    assert!(buffer.is_modified());
+}
+
+#[test]
+fn test_line_ending_round_trip() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_round_trip.txt");
+    std::fs::write(&path, "Line1\r\nLine2\r\nLine3\r\n").unwrap();
+
+    let mut buffer = Buffer::from_file(path.clone()).unwrap();
+    assert_eq!(buffer.line_ending(), LineEnding::Crlf);
+
+    buffer.insert_str(1, 0, "NEW ").unwrap();
+    buffer.save().unwrap();
+
+    let saved_content = std::fs::read_to_string(&path).unwrap();
+    assert_eq!(saved_content, "Line1\r\nNEW Line2\r\nLine3\r\n");
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_encoding_utf8() {
+    let buffer = Buffer::from_string("Hello World");
+    assert_eq!(buffer.encoding(), Encoding::Utf8);
+}
+
+#[test]
+fn test_encoding_from_file() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_encoding.txt");
+    std::fs::write(&path, "UTF-8 content").unwrap();
+
+    let buffer = Buffer::from_file(path.clone()).unwrap();
+    assert_eq!(buffer.encoding(), Encoding::Utf8);
+
+    std::fs::remove_file(path).ok();
+}
+
+#[test]
+fn test_encoding_invalid_utf8() {
+    let dir = std::env::temp_dir();
+    let path = dir.join("test_invalid_utf8.txt");
+    std::fs::write(&path, &[0xFF, 0xFE, 0xFD]).unwrap();
+
+    let result = Buffer::from_file(path.clone());
+    assert!(result.is_err());
+
+    std::fs::remove_file(path).ok();
 }

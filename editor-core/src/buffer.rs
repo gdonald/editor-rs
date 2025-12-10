@@ -2,11 +2,41 @@ use crate::error::{EditorError, Result};
 use ropey::Rope;
 use std::path::PathBuf;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LineEnding {
+    Lf,
+    Crlf,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Encoding {
+    Utf8,
+}
+
+impl LineEnding {
+    pub fn as_str(&self) -> &str {
+        match self {
+            LineEnding::Lf => "\n",
+            LineEnding::Crlf => "\r\n",
+        }
+    }
+
+    fn detect(content: &str) -> Self {
+        if content.contains("\r\n") {
+            LineEnding::Crlf
+        } else {
+            LineEnding::Lf
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Buffer {
     rope: Rope,
     file_path: Option<PathBuf>,
     modified: bool,
+    line_ending: LineEnding,
+    encoding: Encoding,
 }
 
 impl Buffer {
@@ -15,29 +45,53 @@ impl Buffer {
             rope: Rope::new(),
             file_path: None,
             modified: false,
+            line_ending: LineEnding::Lf,
+            encoding: Encoding::Utf8,
         }
     }
 
     pub fn from_string(content: &str) -> Self {
+        let line_ending = LineEnding::detect(content);
+        let normalized = normalize_line_endings(content);
         Self {
-            rope: Rope::from_str(content),
+            rope: Rope::from_str(&normalized),
             file_path: None,
             modified: false,
+            line_ending,
+            encoding: Encoding::Utf8,
         }
     }
 
     pub fn from_file(path: PathBuf) -> Result<Self> {
-        let content = std::fs::read_to_string(&path)?;
+        let metadata = std::fs::metadata(&path)?;
+        let file_size = metadata.len();
+
+        let (content, line_ending) = if file_size > 10_000_000 {
+            let mut file = std::fs::File::open(&path)?;
+            let rope = Rope::from_reader(&mut file)?;
+            let sample = rope.slice(0..rope.len_chars().min(8192)).to_string();
+            let line_ending = LineEnding::detect(&sample);
+            let content = rope.to_string();
+            (content, line_ending)
+        } else {
+            let content = std::fs::read_to_string(&path)?;
+            let line_ending = LineEnding::detect(&content);
+            (content, line_ending)
+        };
+
+        let normalized = normalize_line_endings(&content);
         Ok(Self {
-            rope: Rope::from_str(&content),
+            rope: Rope::from_str(&normalized),
             file_path: Some(path),
             modified: false,
+            line_ending,
+            encoding: Encoding::Utf8,
         })
     }
 
     pub fn save(&mut self) -> Result<()> {
         if let Some(path) = &self.file_path {
-            std::fs::write(path, self.content())?;
+            self.write_to_file(path)?;
             self.modified = false;
             Ok(())
         } else {
@@ -48,9 +102,33 @@ impl Buffer {
     }
 
     pub fn save_as(&mut self, path: PathBuf) -> Result<()> {
-        std::fs::write(&path, self.content())?;
+        self.write_to_file(&path)?;
         self.file_path = Some(path);
         self.modified = false;
+        Ok(())
+    }
+
+    fn write_to_file(&self, path: &PathBuf) -> Result<()> {
+        use std::io::Write;
+
+        if self.rope.len_chars() > 10_000_000 {
+            let file = std::fs::File::create(path)?;
+            let mut writer = std::io::BufWriter::new(file);
+
+            for chunk in self.rope.chunks() {
+                match self.line_ending {
+                    LineEnding::Lf => writer.write_all(chunk.as_bytes())?,
+                    LineEnding::Crlf => {
+                        let converted = chunk.replace('\n', "\r\n");
+                        writer.write_all(converted.as_bytes())?;
+                    }
+                }
+            }
+            writer.flush()?;
+        } else {
+            let content = self.content_with_line_endings();
+            std::fs::write(path, content)?;
+        }
         Ok(())
     }
 
@@ -150,6 +228,26 @@ impl Buffer {
         self.rope.to_string()
     }
 
+    pub fn line_ending(&self) -> LineEnding {
+        self.line_ending
+    }
+
+    pub fn set_line_ending(&mut self, line_ending: LineEnding) {
+        self.line_ending = line_ending;
+        self.modified = true;
+    }
+
+    pub fn encoding(&self) -> Encoding {
+        self.encoding
+    }
+
+    fn content_with_line_endings(&self) -> String {
+        match self.line_ending {
+            LineEnding::Lf => self.rope.to_string(),
+            LineEnding::Crlf => self.rope.to_string().replace('\n', "\r\n"),
+        }
+    }
+
     pub fn len_chars(&self) -> usize {
         self.rope.len_chars()
     }
@@ -202,4 +300,8 @@ impl Default for Buffer {
     fn default() -> Self {
         Self::new()
     }
+}
+
+fn normalize_line_endings(content: &str) -> String {
+    content.replace("\r\n", "\n")
 }
