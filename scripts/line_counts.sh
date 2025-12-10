@@ -91,7 +91,7 @@ for idx in "${indices[@]}"; do
   fi
 
   # Only show files with 50+ lines
-  if [ "$count" -ge 50 ]; then
+  if [ "$count" -ge 500 ]; then
     printf "%-65s %10d\n" "$file" "$count"
     files_shown=$((files_shown + 1))
   fi

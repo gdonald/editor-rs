@@ -41,6 +41,14 @@ pub enum Command {
     RemoveCursor(usize),
     ClearSecondaryCursors,
 
+    MouseClick(CursorPosition),
+    MouseDragStart(CursorPosition),
+    MouseDrag(CursorPosition),
+    MouseDragEnd(CursorPosition),
+    MouseDoubleClick(CursorPosition),
+    MouseTripleClick(CursorPosition),
+    ToggleBlockSelection,
+
     ToggleOverwriteMode,
     HardWrap(usize),
     SetSoftWrap(usize),
@@ -115,6 +123,13 @@ impl Command {
                 | Command::RemoveCursor(_)
                 | Command::ClearSecondaryCursors
                 | Command::GotoLine(_)
+                | Command::MouseClick(_)
+                | Command::MouseDragStart(_)
+                | Command::MouseDrag(_)
+                | Command::MouseDragEnd(_)
+                | Command::MouseDoubleClick(_)
+                | Command::MouseTripleClick(_)
+                | Command::ToggleBlockSelection
         )
     }
 

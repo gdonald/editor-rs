@@ -2,6 +2,7 @@ use crate::buffer::Buffer;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
+use crate::selection::Selection;
 use std::path::{Path, PathBuf};
 
 pub struct EditorState {
@@ -11,6 +12,8 @@ pub struct EditorState {
     pub(super) status_message: String,
     pub(super) overwrite_mode: bool,
     pub(super) soft_wrap_width: Option<usize>,
+    pub(super) selection: Option<Selection>,
+    pub(super) block_selection_mode: bool,
 }
 
 impl EditorState {
@@ -22,6 +25,8 @@ impl EditorState {
             status_message: String::new(),
             overwrite_mode: false,
             soft_wrap_width: None,
+            selection: None,
+            block_selection_mode: false,
         }
     }
 
@@ -34,6 +39,8 @@ impl EditorState {
             status_message: String::new(),
             overwrite_mode: false,
             soft_wrap_width: None,
+            selection: None,
+            block_selection_mode: false,
         })
     }
 
@@ -84,6 +91,14 @@ impl EditorState {
             Command::AddCursor(position) => self.add_cursor(position),
             Command::RemoveCursor(index) => self.remove_cursor(index),
             Command::ClearSecondaryCursors => self.clear_secondary_cursors(),
+
+            Command::MouseClick(position) => self.mouse_click(position),
+            Command::MouseDragStart(position) => self.mouse_drag_start(position),
+            Command::MouseDrag(position) => self.mouse_drag(position),
+            Command::MouseDragEnd(position) => self.mouse_drag_end(position),
+            Command::MouseDoubleClick(position) => self.mouse_double_click(position),
+            Command::MouseTripleClick(position) => self.mouse_triple_click(position),
+            Command::ToggleBlockSelection => self.toggle_block_selection(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -159,6 +174,14 @@ impl EditorState {
 
     pub fn file_path(&self) -> Option<&Path> {
         self.buffer.file_path().map(|p| p.as_path())
+    }
+
+    pub fn selection(&self) -> Option<&Selection> {
+        self.selection.as_ref()
+    }
+
+    pub fn has_selection(&self) -> bool {
+        self.selection.is_some()
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {

@@ -148,12 +148,12 @@
 - [x] Write tests for editing commands
 
 ### 4.1b Mouse Interaction Commands
-- [ ] Implement mouse click to position cursor
-- [ ] Implement mouse drag to select text
-- [ ] Implement double-click to select word
-- [ ] Implement triple-click to select line
-- [ ] Implement rectangular/block selection
-- [ ] Write tests for mouse interactions
+- [x] Implement mouse click to position cursor
+- [x] Implement mouse drag to select text
+- [x] Implement double-click to select word
+- [x] Implement triple-click to select line
+- [x] Implement rectangular/block selection
+- [x] Write tests for mouse interactions
 
 ### 4.2 Navigation Commands
 - [ ] Implement cursor movement commands
