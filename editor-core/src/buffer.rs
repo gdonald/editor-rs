@@ -1,6 +1,7 @@
 use crate::error::{EditorError, Result};
 use ropey::Rope;
 use std::path::PathBuf;
+use std::time::SystemTime;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LineEnding {
@@ -39,6 +40,8 @@ pub struct Buffer {
     encoding: Encoding,
     read_only: bool,
     is_binary: bool,
+    last_saved: Option<SystemTime>,
+    auto_save_enabled: bool,
 }
 
 impl Buffer {
@@ -51,6 +54,8 @@ impl Buffer {
             encoding: Encoding::Utf8,
             read_only: false,
             is_binary: false,
+            last_saved: None,
+            auto_save_enabled: false,
         }
     }
 
@@ -65,6 +70,8 @@ impl Buffer {
             encoding: Encoding::Utf8,
             read_only: false,
             is_binary: false,
+            last_saved: None,
+            auto_save_enabled: false,
         }
     }
 
@@ -75,14 +82,28 @@ impl Buffer {
         let read_only = metadata.permissions().readonly();
 
         let (content, line_ending) = if file_size > 10_000_000 {
-            let mut file = std::fs::File::open(&path)?;
-            let rope = Rope::from_reader(&mut file)?;
+            let mut file = std::fs::File::open(&path).map_err(|e| {
+                if e.kind() == std::io::ErrorKind::InvalidData {
+                    EditorError::CorruptedFile(path.to_string_lossy().to_string())
+                } else {
+                    EditorError::Io(e)
+                }
+            })?;
+            let rope = Rope::from_reader(&mut file).map_err(|_e| {
+                EditorError::CorruptedFile(format!("{}: invalid UTF-8", path.display()))
+            })?;
             let sample = rope.slice(0..rope.len_chars().min(8192)).to_string();
             let line_ending = LineEnding::detect(&sample);
             let content = rope.to_string();
             (content, line_ending)
         } else {
-            let content = std::fs::read_to_string(&path)?;
+            let content = std::fs::read_to_string(&path).map_err(|e| {
+                if e.kind() == std::io::ErrorKind::InvalidData {
+                    EditorError::CorruptedFile(format!("{}: invalid UTF-8", path.display()))
+                } else {
+                    EditorError::Io(e)
+                }
+            })?;
             let line_ending = LineEnding::detect(&content);
             (content, line_ending)
         };
@@ -101,6 +122,8 @@ impl Buffer {
             encoding: Encoding::Utf8,
             read_only,
             is_binary,
+            last_saved: Some(SystemTime::now()),
+            auto_save_enabled: false,
         })
     }
 
@@ -109,6 +132,7 @@ impl Buffer {
         if let Some(path) = &self.file_path {
             self.write_to_file(path)?;
             self.modified = false;
+            self.last_saved = Some(SystemTime::now());
             Ok(())
         } else {
             Err(EditorError::InvalidOperation(
@@ -121,30 +145,42 @@ impl Buffer {
         self.write_to_file(&path)?;
         self.file_path = Some(path);
         self.modified = false;
+        self.last_saved = Some(SystemTime::now());
         Ok(())
     }
 
     fn write_to_file(&self, path: &PathBuf) -> Result<()> {
         use std::io::Write;
 
-        if self.rope.len_chars() > 10_000_000 {
+        let result = if self.rope.len_chars() > 10_000_000 {
             let file = std::fs::File::create(path)?;
             let mut writer = std::io::BufWriter::new(file);
 
             for chunk in self.rope.chunks() {
                 match self.line_ending {
-                    LineEnding::Lf => writer.write_all(chunk.as_bytes())?,
+                    LineEnding::Lf => writer.write_all(chunk.as_bytes()),
                     LineEnding::Crlf => {
                         let converted = chunk.replace('\n', "\r\n");
-                        writer.write_all(converted.as_bytes())?;
+                        writer.write_all(converted.as_bytes())
                     }
-                }
+                }?;
             }
-            writer.flush()?;
+            writer.flush()
         } else {
             let content = self.content_with_line_endings();
-            std::fs::write(path, content)?;
+            std::fs::write(path, content)
+        };
+
+        if let Err(e) = result {
+            if e.kind() == std::io::ErrorKind::StorageFull || e.raw_os_error() == Some(28) {
+                return Err(EditorError::DiskFull(format!(
+                    "Failed to write {}: disk full",
+                    path.display()
+                )));
+            }
+            return Err(EditorError::Io(e));
         }
+
         Ok(())
     }
 
@@ -357,6 +393,112 @@ impl Buffer {
         } else {
             Ok(())
         }
+    }
+
+    pub fn last_saved(&self) -> Option<SystemTime> {
+        self.last_saved
+    }
+
+    pub fn auto_save_enabled(&self) -> bool {
+        self.auto_save_enabled
+    }
+
+    pub fn set_auto_save(&mut self, enabled: bool) {
+        self.auto_save_enabled = enabled;
+    }
+
+    pub fn create_backup(&self) -> Result<PathBuf> {
+        let path = self.file_path.as_ref().ok_or_else(|| {
+            EditorError::InvalidOperation("No file path set for buffer".to_string())
+        })?;
+
+        let backup_path = path.with_extension(format!(
+            "{}.backup",
+            path.extension().and_then(|e| e.to_str()).unwrap_or("txt")
+        ));
+
+        self.write_to_file(&backup_path)?;
+        Ok(backup_path)
+    }
+
+    pub fn save_recovery_data(&self, recovery_dir: &PathBuf) -> Result<PathBuf> {
+        use std::fs;
+
+        fs::create_dir_all(recovery_dir)?;
+
+        let recovery_name = if let Some(path) = &self.file_path {
+            format!(
+                "{}.recovery",
+                path.file_name()
+                    .and_then(|n| n.to_str())
+                    .unwrap_or("untitled")
+            )
+        } else {
+            format!(
+                "untitled_{}.recovery",
+                SystemTime::now()
+                    .duration_since(SystemTime::UNIX_EPOCH)
+                    .unwrap_or_default()
+                    .as_secs()
+            )
+        };
+
+        let recovery_path = recovery_dir.join(recovery_name);
+        self.write_to_file(&recovery_path)?;
+        Ok(recovery_path)
+    }
+
+    pub fn load_recovery_data(recovery_path: PathBuf) -> Result<Self> {
+        Self::from_file(recovery_path)
+    }
+
+    pub fn check_external_modification(&self) -> Result<bool> {
+        if let Some(path) = &self.file_path {
+            if let Some(last_saved) = self.last_saved {
+                let metadata = std::fs::metadata(path)?;
+                let modified_time = metadata.modified()?;
+                Ok(modified_time > last_saved)
+            } else {
+                Ok(false)
+            }
+        } else {
+            Ok(false)
+        }
+    }
+
+    pub fn reload_from_disk(&mut self) -> Result<()> {
+        if let Some(path) = self.file_path.clone() {
+            let metadata = std::fs::metadata(&path)?;
+            let file_size = metadata.len();
+
+            let (content, line_ending) = if file_size > 10_000_000 {
+                let mut file = std::fs::File::open(&path)?;
+                let rope = Rope::from_reader(&mut file)?;
+                let sample = rope.slice(0..rope.len_chars().min(8192)).to_string();
+                let line_ending = LineEnding::detect(&sample);
+                let content = rope.to_string();
+                (content, line_ending)
+            } else {
+                let content = std::fs::read_to_string(&path)?;
+                let line_ending = LineEnding::detect(&content);
+                (content, line_ending)
+            };
+
+            let normalized = normalize_line_endings(&content);
+            self.rope = Rope::from_str(&normalized);
+            self.line_ending = line_ending;
+            self.modified = false;
+            self.last_saved = Some(SystemTime::now());
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "No file path set for buffer".to_string(),
+            ))
+        }
+    }
+
+    pub fn has_unsaved_changes(&self) -> bool {
+        self.modified
     }
 }
 

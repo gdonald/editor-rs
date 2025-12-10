@@ -114,14 +114,14 @@
 - [x] Write tests for metadata tracking
 
 ### 3.3 File Safety and Recovery
-- [ ] Implement auto-save functionality
-- [ ] Implement backup file creation
-- [ ] Implement crash recovery (save recovery data)
-- [ ] Implement file watching (reload on external change)
-- [ ] Implement prompt to save on quit with unsaved changes
-- [ ] Handle corrupted file scenarios
-- [ ] Handle out of disk space errors
-- [ ] Write tests for file safety features
+- [x] Implement auto-save functionality
+- [x] Implement backup file creation
+- [x] Implement crash recovery (save recovery data)
+- [x] Implement file watching (reload on external change)
+- [x] Implement prompt to save on quit with unsaved changes
+- [x] Handle corrupted file scenarios
+- [x] Handle out of disk space errors
+- [x] Write tests for file safety features
 
 ### 3.4 File History and Sessions
 - [ ] Implement recent files list
