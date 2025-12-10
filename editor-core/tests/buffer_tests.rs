@@ -369,7 +369,7 @@ fn test_encoding_from_file() {
 fn test_encoding_invalid_utf8() {
     let dir = std::env::temp_dir();
     let path = dir.join("test_invalid_utf8.txt");
-    std::fs::write(&path, &[0xFF, 0xFE, 0xFD]).unwrap();
+    std::fs::write(&path, [0xFF, 0xFE, 0xFD]).unwrap();
 
     let result = Buffer::from_file(path.clone());
     assert!(result.is_err());
