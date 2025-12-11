@@ -18,9 +18,7 @@ static GLOBAL_CLIPBOARD: once_cell::sync::Lazy<Arc<Mutex<Option<Clipboard>>>> =
     });
 
 #[cfg(test)]
-use parking_lot::Mutex;
-#[cfg(test)]
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 #[cfg(test)]
 static TEST_CLIPBOARD: once_cell::sync::Lazy<Arc<Mutex<Option<String>>>> =
@@ -38,7 +36,7 @@ impl ClipboardManager {
     pub fn clear_test_clipboard() {
         #[cfg(test)]
         {
-            *TEST_CLIPBOARD.lock() = None;
+            *TEST_CLIPBOARD.lock().unwrap() = None;
         }
     }
 
@@ -55,7 +53,7 @@ impl ClipboardManager {
 
     #[cfg(test)]
     pub fn set_text(&self, text: &str) -> Result<()> {
-        *TEST_CLIPBOARD.lock() = Some(text.to_string());
+        *TEST_CLIPBOARD.lock().unwrap() = Some(text.to_string());
         Ok(())
     }
 
@@ -73,8 +71,11 @@ impl ClipboardManager {
 
     #[cfg(test)]
     pub fn get_text(&self) -> Result<String> {
-        let clipboard = TEST_CLIPBOARD.lock();
-        Ok((*clipboard).clone().unwrap_or_default())
+        let clipboard = TEST_CLIPBOARD.lock().unwrap();
+        Ok(match &*clipboard {
+            Some(text) => text.clone(),
+            None => String::new(),
+        })
     }
 }
 
