@@ -127,6 +127,10 @@ impl EditorState {
             Command::Copy => self.copy(),
             Command::Cut => self.cut(),
             Command::Paste => self.paste(),
+            Command::ToggleLineComment => self.toggle_line_comment(),
+            Command::ToggleBlockComment => self.toggle_block_comment(),
+            Command::FoldCode => self.fold_code(),
+            Command::UnfoldCode => self.unfold_code(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),

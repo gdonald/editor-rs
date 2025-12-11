@@ -1,5 +1,6 @@
 mod bookmark_ops;
 mod clipboard_ops;
+mod code_intelligence_ops;
 mod cursor_ops;
 mod file_ops;
 mod mouse_ops;

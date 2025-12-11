@@ -161,3 +161,71 @@ fn test_auto_close_with_closing_bracket_after() {
     assert_eq!(editor.buffer().content(), "())");
     assert_eq!(editor.cursor().column, 1);
 }
+
+#[test]
+fn test_toggle_line_comment() {
+    let mut editor = EditorState::new();
+    // Simulate some code
+    editor.execute_command(Command::InsertChar('a')).unwrap();
+    editor.execute_command(Command::NewLine).unwrap();
+    editor.execute_command(Command::InsertChar('b')).unwrap();
+
+    // reset cursor
+    editor.execute_command(Command::MoveToStartOfFile).unwrap();
+
+    // Toggle comment on first line
+    editor.execute_command(Command::ToggleLineComment).unwrap();
+    assert_eq!(editor.buffer().content(), "// a\nb");
+
+    // Toggle comment again (uncomment)
+    editor.execute_command(Command::ToggleLineComment).unwrap();
+    assert_eq!(editor.buffer().content(), "a\nb");
+}
+
+#[test]
+fn test_toggle_line_comment_selection() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::InsertChar('a')).unwrap();
+    editor.execute_command(Command::NewLine).unwrap();
+    editor.execute_command(Command::InsertChar('b')).unwrap();
+
+    editor.execute_command(Command::MoveToStartOfFile).unwrap();
+    editor.execute_command(Command::SelectionStart).unwrap();
+    editor.execute_command(Command::MoveToEndOfFile).unwrap();
+    editor.execute_command(Command::SelectionEnd).unwrap();
+
+    editor.execute_command(Command::ToggleLineComment).unwrap();
+    assert_eq!(editor.buffer().content(), "// a\n// b");
+
+    editor.execute_command(Command::ToggleLineComment).unwrap();
+    assert_eq!(editor.buffer().content(), "a\nb");
+}
+
+#[test]
+fn test_toggle_line_comment_different_indentation() {
+    // This tests that we simply prepend at 0 for now based on implementation
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::InsertChar(' ')).unwrap();
+    editor.execute_command(Command::InsertChar('a')).unwrap();
+
+    editor.execute_command(Command::MoveToStartOfLine).unwrap();
+    editor.execute_command(Command::ToggleLineComment).unwrap();
+    assert_eq!(editor.buffer().content(), "//  a");
+
+    editor.execute_command(Command::ToggleLineComment).unwrap();
+    assert_eq!(editor.buffer().content(), " a");
+}
+
+#[test]
+fn test_toggle_block_comment() {
+    let mut editor = EditorState::new();
+    editor.execute_command(Command::InsertChar('a')).unwrap();
+
+    editor.execute_command(Command::MoveToStartOfLine).unwrap();
+    editor.execute_command(Command::SelectionStart).unwrap();
+    editor.execute_command(Command::MoveToEndOfLine).unwrap();
+    editor.execute_command(Command::SelectionEnd).unwrap();
+
+    editor.execute_command(Command::ToggleBlockComment).unwrap();
+    assert_eq!(editor.buffer().content(), "/*a*/");
+}

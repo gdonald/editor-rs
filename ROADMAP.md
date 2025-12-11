@@ -191,9 +191,9 @@
 ### 4.5 Code Intelligence Commands
 - [x] Implement bracket/paren matching
 - [x] Implement auto-closing brackets/quotes
-- [ ] Implement comment toggling (line comments)
-- [ ] Implement comment toggling (block comments)
-- [ ] Implement code folding (collapse/expand)
+- [x] Implement comment toggling (line comments)
+- [x] Implement comment toggling (block comments)
+- [x] Implement code folding (collapse/expand)
 - [x] Write tests for code intelligence
 
 ### 4.6 Editor Modes

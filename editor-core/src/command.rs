@@ -77,6 +77,11 @@ pub enum Command {
     JumpToMatchingBracket,
     InsertCharWithAutoClose(char),
 
+    ToggleLineComment,
+    ToggleBlockComment,
+    FoldCode,
+    UnfoldCode,
+
     ToggleBookmark,
     AddNamedBookmark(String),
     RemoveBookmark(usize),
@@ -113,6 +118,8 @@ impl Command {
                 | Command::SetSoftWrap(_)
                 | Command::TrimTrailingWhitespace
                 | Command::Paste
+                | Command::ToggleLineComment
+                | Command::ToggleBlockComment
         )
     }
 
