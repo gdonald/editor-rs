@@ -73,7 +73,8 @@ impl ClipboardManager {
 
     #[cfg(test)]
     pub fn get_text(&self) -> Result<String> {
-        Ok(TEST_CLIPBOARD.lock().clone().unwrap_or_default())
+        let clipboard = TEST_CLIPBOARD.lock();
+        Ok(clipboard.as_ref().cloned().unwrap_or_default())
     }
 }
 
