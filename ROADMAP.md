@@ -171,22 +171,22 @@
 - [x] Write tests for bookmarks
 
 ### 4.3 File Commands
-- [ ] Implement `Open` command
-- [ ] Implement `Save` command
-- [ ] Implement `SaveAs` command
-- [ ] Implement `New` command
-- [ ] Implement `Close` command
-- [ ] Write tests for file commands
+- [x] Implement `Open` command
+- [x] Implement `Save` command
+- [x] Implement `SaveAs` command
+- [x] Implement `New` command
+- [x] Implement `Close` command
+- [x] Write tests for file commands
 
 ### 4.4 Selection and Clipboard
-- [ ] Implement selection start/end
-- [ ] Implement visual selection mode
-- [ ] Implement copy command
-- [ ] Implement cut command
-- [ ] Implement paste command
-- [ ] Implement clipboard integration
+- [x] Implement selection start/end
+- [x] Implement visual selection mode
+- [x] Implement copy command
+- [x] Implement cut command
+- [x] Implement paste command
+- [x] Implement clipboard integration
 - [ ] Implement clipboard history
-- [ ] Write tests for selection and clipboard
+- [x] Write tests for selection and clipboard
 
 ### 4.5 Code Intelligence Commands
 - [ ] Implement bracket/paren matching

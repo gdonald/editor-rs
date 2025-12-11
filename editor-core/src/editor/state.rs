@@ -1,5 +1,6 @@
 use crate::bookmark::BookmarkManager;
 use crate::buffer::Buffer;
+use crate::clipboard::ClipboardManager;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
@@ -17,6 +18,7 @@ pub struct EditorState {
     pub(super) selection: Option<Selection>,
     pub(super) block_selection_mode: bool,
     pub(super) bookmarks: BookmarkManager,
+    pub(super) clipboard: ClipboardManager,
 }
 
 impl EditorState {
@@ -32,6 +34,7 @@ impl EditorState {
             selection: None,
             block_selection_mode: false,
             bookmarks: BookmarkManager::new(),
+            clipboard: ClipboardManager,
         }
     }
 
@@ -48,6 +51,7 @@ impl EditorState {
             selection: None,
             block_selection_mode: false,
             bookmarks: BookmarkManager::new(),
+            clipboard: ClipboardManager,
         })
     }
 
@@ -116,6 +120,12 @@ impl EditorState {
             Command::NextBookmark => self.next_bookmark(),
             Command::PreviousBookmark => self.previous_bookmark(),
             Command::ClearAllBookmarks => self.clear_all_bookmarks(),
+
+            Command::SelectionStart => self.selection_start(),
+            Command::SelectionEnd => self.selection_end(),
+            Command::Copy => self.copy(),
+            Command::Cut => self.cut(),
+            Command::Paste => self.paste(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),

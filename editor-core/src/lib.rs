@@ -1,5 +1,6 @@
 pub mod bookmark;
 pub mod buffer;
+pub mod clipboard;
 pub mod command;
 pub mod cursor;
 pub mod editor;
@@ -10,6 +11,7 @@ pub mod view;
 
 pub use bookmark::{Bookmark, BookmarkManager, FileBookmarks};
 pub use buffer::{Buffer, Encoding, LineEnding};
+pub use clipboard::ClipboardManager;
 pub use command::{CaseMode, Command};
 pub use cursor::{CursorPosition, MultiCursor};
 pub use editor::EditorState;

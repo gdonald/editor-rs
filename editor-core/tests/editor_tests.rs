@@ -502,13 +502,6 @@ fn test_editor_close_command() {
 }
 
 #[test]
-fn test_editor_unimplemented_command() {
-    let mut editor = EditorState::new();
-    let result = editor.execute_command(Command::Copy);
-    assert!(result.is_err());
-}
-
-#[test]
 fn test_editor_default() {
     let editor = EditorState::default();
     assert_eq!(editor.cursor(), &CursorPosition::zero());
