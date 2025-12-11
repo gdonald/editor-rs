@@ -197,10 +197,10 @@
 - [x] Write tests for code intelligence
 
 ### 4.6 Editor Modes
-- [ ] Implement read-only mode
-- [ ] Implement vim keybinding mode (optional)
-- [ ] Implement emacs keybinding mode (optional)
-- [ ] Write tests for editor modes
+- [x] Implement read-only mode support
+- [x] Design plugin/mode infrastructure (for Vim/Emacs modes)
+- [ ] (Optional) Implement basic Vim mode switching
+- [x] Write tests for editor modes
 
 ## Phase 5: Search and Replace
 

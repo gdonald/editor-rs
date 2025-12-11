@@ -82,6 +82,8 @@ pub enum Command {
     FoldCode,
     UnfoldCode,
 
+    ToggleReadOnly,
+
     ToggleBookmark,
     AddNamedBookmark(String),
     RemoveBookmark(usize),
@@ -118,6 +120,10 @@ impl Command {
                 | Command::SetSoftWrap(_)
                 | Command::TrimTrailingWhitespace
                 | Command::Paste
+                | Command::Cut
+                | Command::Replace { .. }
+                | Command::Undo
+                | Command::Redo
                 | Command::ToggleLineComment
                 | Command::ToggleBlockComment
         )

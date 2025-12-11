@@ -78,15 +78,15 @@ fn test_command_replace() {
         find: "old".to_string(),
         replace: "new".to_string(),
     };
-    assert!(!cmd.is_editing_command());
+    assert!(cmd.is_editing_command());
     assert!(!cmd.is_navigation_command());
     assert!(!cmd.is_file_command());
 }
 
 #[test]
 fn test_command_undo_redo() {
-    assert!(!Command::Undo.is_editing_command());
-    assert!(!Command::Redo.is_editing_command());
+    assert!(Command::Undo.is_editing_command());
+    assert!(Command::Redo.is_editing_command());
     assert!(!Command::Undo.is_navigation_command());
     assert!(!Command::Redo.is_navigation_command());
     assert!(!Command::Undo.is_file_command());
@@ -96,6 +96,6 @@ fn test_command_undo_redo() {
 #[test]
 fn test_command_clipboard() {
     assert!(!Command::Copy.is_editing_command());
-    assert!(!Command::Cut.is_editing_command());
+    assert!(Command::Cut.is_editing_command());
     assert!(Command::Paste.is_editing_command());
 }

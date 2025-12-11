@@ -7,6 +7,8 @@ use crate::error::Result;
 use crate::selection::Selection;
 use std::path::{Path, PathBuf};
 
+use super::mode::EditorMode;
+
 pub struct EditorState {
     pub(super) buffer: Buffer,
     pub(super) cursors: MultiCursor,
@@ -19,6 +21,7 @@ pub struct EditorState {
     pub(super) block_selection_mode: bool,
     pub(super) bookmarks: BookmarkManager,
     pub(super) clipboard: ClipboardManager,
+    pub(super) mode: EditorMode,
 }
 
 impl EditorState {
@@ -35,6 +38,7 @@ impl EditorState {
             block_selection_mode: false,
             bookmarks: BookmarkManager::new(),
             clipboard: ClipboardManager,
+            mode: EditorMode::default(),
         }
     }
 
@@ -52,11 +56,20 @@ impl EditorState {
             block_selection_mode: false,
             bookmarks: BookmarkManager::new(),
             clipboard: ClipboardManager,
+            mode: EditorMode::default(),
         })
     }
 
     pub fn execute_command(&mut self, command: Command) -> Result<()> {
         use crate::error::EditorError;
+        if self.buffer.is_read_only() && command.is_editing_command() {
+            return Err(EditorError::ReadOnlyFile(
+                self.buffer
+                    .file_path()
+                    .map(|p| p.to_string_lossy().to_string())
+                    .unwrap_or_else(|| "buffer".to_string()),
+            ));
+        }
 
         match command {
             Command::InsertChar(ch) => self.insert_char(ch),
@@ -132,10 +145,18 @@ impl EditorState {
             Command::FoldCode => self.fold_code(),
             Command::UnfoldCode => self.unfold_code(),
 
+            Command::ToggleReadOnly => self.toggle_read_only(),
+
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
             )),
         }
+    }
+
+    pub fn toggle_read_only(&mut self) -> Result<()> {
+        let current = self.buffer.is_read_only();
+        self.buffer.set_read_only(!current);
+        Ok(())
     }
 
     pub(super) fn map_cursors<F>(&mut self, mut f: F) -> Result<()>
@@ -230,6 +251,14 @@ impl EditorState {
 
     pub fn bookmarks_mut(&mut self) -> &mut BookmarkManager {
         &mut self.bookmarks
+    }
+
+    pub fn mode(&self) -> EditorMode {
+        self.mode
+    }
+
+    pub fn set_mode(&mut self, mode: EditorMode) {
+        self.mode = mode;
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {
