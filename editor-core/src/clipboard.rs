@@ -18,13 +18,13 @@ static GLOBAL_CLIPBOARD: once_cell::sync::Lazy<Arc<Mutex<Option<Clipboard>>>> =
     });
 
 #[cfg(test)]
-use std::cell::RefCell;
+use parking_lot::Mutex;
+#[cfg(test)]
+use std::sync::Arc;
 
 #[cfg(test)]
-thread_local! {
-    #[allow(clippy::missing_const_for_thread_local)]
-    static TEST_CLIPBOARD: RefCell<Option<String>> = RefCell::new(None);
-}
+static TEST_CLIPBOARD: once_cell::sync::Lazy<Arc<Mutex<Option<String>>>> =
+    once_cell::sync::Lazy::new(|| Arc::new(Mutex::new(None)));
 
 #[derive(Clone)]
 pub struct ClipboardManager;
@@ -38,9 +38,7 @@ impl ClipboardManager {
     pub fn clear_test_clipboard() {
         #[cfg(test)]
         {
-            TEST_CLIPBOARD.with(|clipboard| {
-                *clipboard.borrow_mut() = None;
-            });
+            *TEST_CLIPBOARD.lock() = None;
         }
     }
 
@@ -57,9 +55,7 @@ impl ClipboardManager {
 
     #[cfg(test)]
     pub fn set_text(&self, text: &str) -> Result<()> {
-        TEST_CLIPBOARD.with(|clipboard| {
-            *clipboard.borrow_mut() = Some(text.to_string());
-        });
+        *TEST_CLIPBOARD.lock() = Some(text.to_string());
         Ok(())
     }
 
@@ -77,7 +73,7 @@ impl ClipboardManager {
 
     #[cfg(test)]
     pub fn get_text(&self) -> Result<String> {
-        TEST_CLIPBOARD.with(|clipboard| Ok(clipboard.borrow().clone().unwrap_or_default()))
+        Ok(TEST_CLIPBOARD.lock().clone().unwrap_or_default())
     }
 }
 

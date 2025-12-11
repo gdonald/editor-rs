@@ -189,12 +189,12 @@
 - [x] Write tests for selection and clipboard
 
 ### 4.5 Code Intelligence Commands
-- [ ] Implement bracket/paren matching
-- [ ] Implement auto-closing brackets/quotes
+- [x] Implement bracket/paren matching
+- [x] Implement auto-closing brackets/quotes
 - [ ] Implement comment toggling (line comments)
 - [ ] Implement comment toggling (block comments)
 - [ ] Implement code folding (collapse/expand)
-- [ ] Write tests for code intelligence
+- [x] Write tests for code intelligence
 
 ### 4.6 Editor Modes
 - [ ] Implement read-only mode

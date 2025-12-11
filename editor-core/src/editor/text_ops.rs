@@ -22,6 +22,49 @@ impl EditorState {
         })
     }
 
+    pub(super) fn insert_char_with_auto_close(&mut self, ch: char) -> Result<()> {
+        if ch == '\n' {
+            return self.new_line();
+        }
+
+        let closing_char = match ch {
+            '(' => Some(')'),
+            '[' => Some(']'),
+            '{' => Some('}'),
+            '"' => Some('"'),
+            '\'' => Some('\''),
+            _ => None,
+        };
+
+        if let Some(close) = closing_char {
+            self.map_cursors_descending(|state, mut pos| {
+                let line_len = state.buffer.line_len(pos.line)?;
+                let should_auto_close = if pos.column < line_len {
+                    let char_idx = state.buffer.char_index(pos.line, pos.column)?;
+                    match state.buffer.char_at(char_idx) {
+                        Some(c) => c.is_whitespace() || c == ')' || c == ']' || c == '}',
+                        None => true,
+                    }
+                } else {
+                    true
+                };
+
+                if should_auto_close {
+                    state.buffer.insert_char(pos.line, pos.column, ch)?;
+                    state.buffer.insert_char(pos.line, pos.column + 1, close)?;
+                    pos.column += 1;
+                } else {
+                    state.buffer.insert_char(pos.line, pos.column, ch)?;
+                    pos.column += 1;
+                }
+
+                Ok(pos)
+            })
+        } else {
+            self.insert_char(ch)
+        }
+    }
+
     pub(super) fn delete_char(&mut self) -> Result<()> {
         self.map_cursors_descending(|state, pos| {
             state.buffer.delete_char(pos.line, pos.column)?;

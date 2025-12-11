@@ -100,6 +100,7 @@ impl EditorState {
 
             Command::GotoLine(line) => self.goto_line(line),
             Command::JumpToMatchingBracket => self.jump_to_matching_bracket(),
+            Command::InsertCharWithAutoClose(ch) => self.insert_char_with_auto_close(ch),
             Command::AddCursor(position) => self.add_cursor(position),
             Command::RemoveCursor(index) => self.remove_cursor(index),
             Command::ClearSecondaryCursors => self.clear_secondary_cursors(),

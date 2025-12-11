@@ -1,4 +1,7 @@
 use editor_core::{Command, CursorPosition, EditorState};
+use std::sync::Mutex;
+
+static TEST_LOCK: Mutex<()> = Mutex::new(());
 
 #[test]
 fn test_selection_start_creates_selection() {
@@ -41,6 +44,8 @@ fn test_selection_end_extends_selection() {
 
 #[test]
 fn test_copy_empty_selection() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('H')).unwrap();
     editor.execute_command(Command::InsertChar('e')).unwrap();
@@ -54,6 +59,8 @@ fn test_copy_empty_selection() {
 
 #[test]
 fn test_copy_selected_text() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('H')).unwrap();
     editor.execute_command(Command::InsertChar('e')).unwrap();
@@ -73,6 +80,8 @@ fn test_copy_selected_text() {
 
 #[test]
 fn test_cut_removes_selected_text() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('H')).unwrap();
     editor.execute_command(Command::InsertChar('e')).unwrap();
@@ -94,6 +103,8 @@ fn test_cut_removes_selected_text() {
 
 #[test]
 fn test_cut_empty_selection() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('H')).unwrap();
     editor.execute_command(Command::InsertChar('e')).unwrap();
@@ -108,6 +119,7 @@ fn test_cut_empty_selection() {
 
 #[test]
 fn test_paste_inserts_text() {
+    let _lock = TEST_LOCK.lock().unwrap();
     editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor1 = EditorState::new();
     editor1.execute_command(Command::InsertChar('H')).unwrap();
@@ -139,6 +151,7 @@ fn test_paste_inserts_text() {
 
 #[test]
 fn test_paste_replaces_selection() {
+    let _lock = TEST_LOCK.lock().unwrap();
     editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor1 = EditorState::new();
     editor1.execute_command(Command::InsertChar('H')).unwrap();
@@ -171,6 +184,8 @@ fn test_paste_replaces_selection() {
 
 #[test]
 fn test_selection_multiline() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('H')).unwrap();
     editor.execute_command(Command::InsertChar('e')).unwrap();
@@ -190,6 +205,8 @@ fn test_selection_multiline() {
 
 #[test]
 fn test_block_selection_copy() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('A')).unwrap();
     editor.execute_command(Command::InsertChar('B')).unwrap();
@@ -215,6 +232,8 @@ fn test_block_selection_copy() {
 
 #[test]
 fn test_block_selection_cut() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('A')).unwrap();
     editor.execute_command(Command::InsertChar('B')).unwrap();
@@ -241,6 +260,8 @@ fn test_block_selection_cut() {
 
 #[test]
 fn test_selection_with_mouse() {
+    let _lock = TEST_LOCK.lock().unwrap();
+    editor_core::ClipboardManager::clear_test_clipboard();
     let mut editor = EditorState::new();
     editor.execute_command(Command::InsertChar('H')).unwrap();
     editor.execute_command(Command::InsertChar('e')).unwrap();

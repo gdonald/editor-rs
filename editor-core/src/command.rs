@@ -75,6 +75,7 @@ pub enum Command {
 
     GotoLine(usize),
     JumpToMatchingBracket,
+    InsertCharWithAutoClose(char),
 
     ToggleBookmark,
     AddNamedBookmark(String),
@@ -93,6 +94,7 @@ impl Command {
         matches!(
             self,
             Command::InsertChar(_)
+                | Command::InsertCharWithAutoClose(_)
                 | Command::DeleteChar
                 | Command::Backspace
                 | Command::NewLine
