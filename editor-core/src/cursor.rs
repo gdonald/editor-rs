@@ -1,6 +1,7 @@
 use crate::error::{EditorError, Result};
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CursorPosition {
     pub line: usize,
     pub column: usize,

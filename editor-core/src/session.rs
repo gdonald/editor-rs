@@ -1,3 +1,4 @@
+use crate::bookmark::FileBookmarks;
 use crate::cursor::CursorPosition;
 use crate::error::{EditorError, Result};
 use serde::{Deserialize, Serialize};
@@ -26,6 +27,7 @@ pub struct Session {
     pub recent_files_limit: usize,
     pub created_at: SystemTime,
     pub last_accessed: SystemTime,
+    pub bookmarks: Vec<FileBookmarks>,
 }
 
 impl Session {
@@ -37,6 +39,7 @@ impl Session {
             recent_files_limit: DEFAULT_RECENT_FILES_LIMIT,
             created_at: now,
             last_accessed: now,
+            bookmarks: Vec::new(),
         }
     }
 
@@ -105,6 +108,23 @@ impl Session {
 
     pub fn get_active_file(&self) -> Option<&OpenFileState> {
         self.open_files.iter().find(|f| f.active)
+    }
+
+    pub fn save_bookmarks(&mut self, file_path: PathBuf, bookmarks: FileBookmarks) {
+        self.bookmarks.retain(|fb| fb.file_path != file_path);
+        if !bookmarks.bookmarks.is_empty() {
+            self.bookmarks.push(bookmarks);
+        }
+        self.last_accessed = SystemTime::now();
+    }
+
+    pub fn load_bookmarks(&self, file_path: &Path) -> Option<&FileBookmarks> {
+        self.bookmarks.iter().find(|fb| fb.file_path == file_path)
+    }
+
+    pub fn remove_bookmarks(&mut self, file_path: &Path) {
+        self.bookmarks.retain(|fb| fb.file_path != file_path);
+        self.last_accessed = SystemTime::now();
     }
 
     pub fn save_to_file(&self, path: &Path) -> Result<()> {

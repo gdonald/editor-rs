@@ -76,6 +76,15 @@ pub enum Command {
     GotoLine(usize),
     JumpToMatchingBracket,
 
+    ToggleBookmark,
+    AddNamedBookmark(String),
+    RemoveBookmark(usize),
+    JumpToBookmark(usize),
+    JumpToNamedBookmark(String),
+    NextBookmark,
+    PreviousBookmark,
+    ClearAllBookmarks,
+
     Quit,
 }
 
@@ -132,6 +141,14 @@ impl Command {
                 | Command::MouseTripleClick(_)
                 | Command::ToggleBlockSelection
                 | Command::JumpToMatchingBracket
+                | Command::ToggleBookmark
+                | Command::AddNamedBookmark(_)
+                | Command::RemoveBookmark(_)
+                | Command::JumpToBookmark(_)
+                | Command::JumpToNamedBookmark(_)
+                | Command::NextBookmark
+                | Command::PreviousBookmark
+                | Command::ClearAllBookmarks
         )
     }
 

@@ -1,3 +1,4 @@
+pub mod bookmark;
 pub mod buffer;
 pub mod command;
 pub mod cursor;
@@ -7,6 +8,7 @@ pub mod selection;
 pub mod session;
 pub mod view;
 
+pub use bookmark::{Bookmark, BookmarkManager, FileBookmarks};
 pub use buffer::{Buffer, Encoding, LineEnding};
 pub use command::{CaseMode, Command};
 pub use cursor::{CursorPosition, MultiCursor};

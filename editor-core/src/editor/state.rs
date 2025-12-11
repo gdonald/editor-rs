@@ -1,3 +1,4 @@
+use crate::bookmark::BookmarkManager;
 use crate::buffer::Buffer;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
@@ -15,6 +16,7 @@ pub struct EditorState {
     pub(super) soft_wrap_width: Option<usize>,
     pub(super) selection: Option<Selection>,
     pub(super) block_selection_mode: bool,
+    pub(super) bookmarks: BookmarkManager,
 }
 
 impl EditorState {
@@ -29,6 +31,7 @@ impl EditorState {
             soft_wrap_width: None,
             selection: None,
             block_selection_mode: false,
+            bookmarks: BookmarkManager::new(),
         }
     }
 
@@ -44,6 +47,7 @@ impl EditorState {
             soft_wrap_width: None,
             selection: None,
             block_selection_mode: false,
+            bookmarks: BookmarkManager::new(),
         })
     }
 
@@ -103,6 +107,15 @@ impl EditorState {
             Command::MouseDoubleClick(position) => self.mouse_double_click(position),
             Command::MouseTripleClick(position) => self.mouse_triple_click(position),
             Command::ToggleBlockSelection => self.toggle_block_selection(),
+
+            Command::ToggleBookmark => self.toggle_bookmark(),
+            Command::AddNamedBookmark(name) => self.add_named_bookmark(name),
+            Command::RemoveBookmark(index) => self.remove_bookmark(index),
+            Command::JumpToBookmark(index) => self.jump_to_bookmark(index),
+            Command::JumpToNamedBookmark(name) => self.jump_to_named_bookmark(name),
+            Command::NextBookmark => self.next_bookmark(),
+            Command::PreviousBookmark => self.previous_bookmark(),
+            Command::ClearAllBookmarks => self.clear_all_bookmarks(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -194,6 +207,14 @@ impl EditorState {
 
     pub fn has_selection(&self) -> bool {
         self.selection.is_some()
+    }
+
+    pub fn bookmarks(&self) -> &BookmarkManager {
+        &self.bookmarks
+    }
+
+    pub fn bookmarks_mut(&mut self) -> &mut BookmarkManager {
+        &mut self.bookmarks
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {

@@ -165,10 +165,10 @@
 - [x] Write tests for navigation commands
 
 ### 4.2b Bookmarks and Markers
-- [ ] Implement bookmark creation/deletion
-- [ ] Implement jump to bookmark
-- [ ] Implement bookmark persistence
-- [ ] Write tests for bookmarks
+- [x] Implement bookmark creation/deletion
+- [x] Implement jump to bookmark
+- [x] Implement bookmark persistence
+- [x] Write tests for bookmarks
 
 ### 4.3 File Commands
 - [ ] Implement `Open` command

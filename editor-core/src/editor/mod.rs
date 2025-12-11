@@ -1,3 +1,4 @@
+mod bookmark_ops;
 mod cursor_ops;
 mod file_ops;
 mod mouse_ops;
