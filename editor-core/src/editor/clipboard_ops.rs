@@ -135,8 +135,36 @@ impl EditorState {
     pub(super) fn paste(&mut self) -> Result<()> {
         let text = self.clipboard.get_text()?;
         if !text.is_empty() {
-            if self.selection.is_some() {
-                self.cut()?;
+            if let Some(selection) = &self.selection {
+                if !selection.is_empty() {
+                    match selection.mode {
+                        SelectionMode::Normal => {
+                            let start = selection.start();
+                            let end = selection.end();
+                            self.delete_range(start, end)?;
+                        }
+                        SelectionMode::Block => {
+                            let start = selection.start();
+                            let end = selection.end();
+                            let min_col = selection.anchor.column.min(selection.cursor.column);
+                            let max_col = selection.anchor.column.max(selection.cursor.column);
+
+                            for line in (start.line..=end.line).rev() {
+                                let line_len = self.buffer.line_len(line)?;
+                                let start_col = min_col.min(line_len);
+                                let end_col = max_col.min(line_len);
+
+                                if start_col < end_col {
+                                    let start_pos = CursorPosition::new(line, start_col);
+                                    let end_pos = CursorPosition::new(line, end_col);
+                                    self.delete_range(start_pos, end_pos)?;
+                                }
+                            }
+                        }
+                    }
+
+                    self.selection = None;
+                }
             }
             let cursor_pos = *self.cursors.primary();
             self.insert_text_at(cursor_pos, &text)?;
