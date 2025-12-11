@@ -88,9 +88,7 @@ impl EditorState {
 
     pub(super) fn copy(&mut self) -> Result<()> {
         let text = self.get_selected_text()?;
-        if !text.is_empty() {
-            self.clipboard.set_text(&text)?;
-        }
+        self.clipboard.set_text(&text)?;
         Ok(())
     }
 
