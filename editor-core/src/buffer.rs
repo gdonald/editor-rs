@@ -42,6 +42,8 @@ pub struct Buffer {
     is_binary: bool,
     last_saved: Option<SystemTime>,
     auto_save_enabled: bool,
+    file_size: Option<u64>,
+    memory_limit: Option<u64>,
 }
 
 impl Buffer {
@@ -56,6 +58,8 @@ impl Buffer {
             is_binary: false,
             last_saved: None,
             auto_save_enabled: false,
+            file_size: None,
+            memory_limit: Some(500_000_000),
         }
     }
 
@@ -72,6 +76,8 @@ impl Buffer {
             is_binary: false,
             last_saved: None,
             auto_save_enabled: false,
+            file_size: Some(content.len() as u64),
+            memory_limit: Some(500_000_000),
         }
     }
 
@@ -80,6 +86,15 @@ impl Buffer {
         let file_size = metadata.len();
 
         let read_only = metadata.permissions().readonly();
+
+        let memory_limit = 500_000_000;
+        if file_size > memory_limit {
+            return Err(EditorError::FileTooLarge {
+                path: path.to_string_lossy().to_string(),
+                size: file_size,
+                limit: memory_limit,
+            });
+        }
 
         let (content, line_ending) = if file_size > 10_000_000 {
             let mut file = std::fs::File::open(&path).map_err(|e| {
@@ -124,6 +139,8 @@ impl Buffer {
             is_binary,
             last_saved: Some(SystemTime::now()),
             auto_save_enabled: false,
+            file_size: Some(file_size),
+            memory_limit: Some(memory_limit),
         })
     }
 
@@ -880,6 +897,35 @@ impl Buffer {
         } else {
             Ok(pattern.len())
         }
+    }
+
+    pub fn file_size(&self) -> Option<u64> {
+        self.file_size
+    }
+
+    pub fn memory_limit(&self) -> Option<u64> {
+        self.memory_limit
+    }
+
+    pub fn set_memory_limit(&mut self, limit: Option<u64>) {
+        self.memory_limit = limit;
+    }
+
+    pub fn estimated_memory_usage(&self) -> usize {
+        self.rope.len_bytes()
+    }
+
+    pub fn check_memory_usage(&self) -> Result<()> {
+        if let Some(limit) = self.memory_limit {
+            let usage = self.estimated_memory_usage() as u64;
+            if usage > limit {
+                return Err(EditorError::OutOfMemory(format!(
+                    "Buffer memory usage ({} bytes) exceeds limit ({} bytes)",
+                    usage, limit
+                )));
+            }
+        }
+        Ok(())
     }
 }
 

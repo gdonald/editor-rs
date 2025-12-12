@@ -15,3 +15,4 @@ mod view_ops;
 pub use mode::EditorMode;
 pub use state::EditorState;
 pub use state::SearchOptions;
+pub use view_ops::VirtualViewport;

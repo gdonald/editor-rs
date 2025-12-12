@@ -14,7 +14,7 @@ pub use buffer::{Buffer, Encoding, LineEnding};
 pub use clipboard::ClipboardManager;
 pub use command::{CaseMode, Command};
 pub use cursor::{CursorPosition, MultiCursor};
-pub use editor::EditorState;
+pub use editor::{EditorState, VirtualViewport};
 pub use error::{EditorError, Result};
 pub use selection::{Selection, SelectionMode};
 pub use session::{OpenFileState, Session, SessionManager};

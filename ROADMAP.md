@@ -230,11 +230,11 @@
 - [x] Write tests for replace functionality
 
 ### 5.4 Performance and Memory
-- [ ] Implement lazy loading for very large files
-- [ ] Implement virtual scrolling (render only visible lines)
-- [ ] Implement memory limits and warnings
-- [ ] Handle out of memory scenarios gracefully
-- [ ] Write performance tests for large files
+- [x] Implement lazy loading for very large files
+- [x] Implement virtual scrolling (render only visible lines)
+- [x] Implement memory limits and warnings
+- [x] Handle out of memory scenarios gracefully
+- [x] Write performance tests for large files
 
 ## Phase 6: Undo/Redo System
 

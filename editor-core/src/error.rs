@@ -12,6 +12,8 @@ pub enum EditorError {
     BinaryFile(String),
     DiskFull(String),
     CorruptedFile(String),
+    FileTooLarge { path: String, size: u64, limit: u64 },
+    OutOfMemory(String),
 }
 
 impl fmt::Display for EditorError {
@@ -28,6 +30,14 @@ impl fmt::Display for EditorError {
             EditorError::BinaryFile(path) => write!(f, "Cannot edit binary file: {}", path),
             EditorError::DiskFull(msg) => write!(f, "Disk full: {}", msg),
             EditorError::CorruptedFile(path) => write!(f, "Corrupted file: {}", path),
+            EditorError::FileTooLarge { path, size, limit } => {
+                write!(
+                    f,
+                    "File too large: {} ({} bytes exceeds limit of {} bytes)",
+                    path, size, limit
+                )
+            }
+            EditorError::OutOfMemory(msg) => write!(f, "Out of memory: {}", msg),
         }
     }
 }

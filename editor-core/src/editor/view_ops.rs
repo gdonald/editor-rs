@@ -1,7 +1,45 @@
 use super::state::EditorState;
 use crate::error::{EditorError, Result};
 
+pub struct VirtualViewport {
+    pub start_line: usize,
+    pub end_line: usize,
+    pub visible_lines: Vec<String>,
+}
+
 impl EditorState {
+    pub fn get_virtual_viewport(&self, viewport_height: usize) -> VirtualViewport {
+        let total_lines = self.buffer.line_count();
+        let start_line = self.viewport_top;
+        let end_line = (start_line + viewport_height).min(total_lines);
+
+        let mut visible_lines = Vec::with_capacity(viewport_height);
+        for line_idx in start_line..end_line {
+            if let Ok(line) = self.buffer.line(line_idx) {
+                visible_lines.push(line);
+            }
+        }
+
+        VirtualViewport {
+            start_line,
+            end_line,
+            visible_lines,
+        }
+    }
+
+    pub fn adjust_viewport_to_cursor(&mut self, viewport_height: usize) {
+        let cursor_line = self.cursor().line;
+        let offset = self.scroll_offset;
+
+        if cursor_line < self.viewport_top + offset {
+            self.viewport_top = cursor_line.saturating_sub(offset);
+        } else if cursor_line >= self.viewport_top + viewport_height.saturating_sub(offset) {
+            self.viewport_top = cursor_line
+                .saturating_sub(viewport_height.saturating_sub(offset))
+                .saturating_add(1);
+        }
+    }
+
     pub(super) fn toggle_overwrite_mode(&mut self) -> Result<()> {
         self.overwrite_mode = !self.overwrite_mode;
         Ok(())
