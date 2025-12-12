@@ -28,9 +28,16 @@ impl EditorState {
 
         // Simple heuristic: Search from current position. If found at current position, maybe that's fine.
 
-        let case_sensitive = self.search_options.case_sensitive;
-        if let Some(idx) = self.buffer.find_next(&query, start_idx, case_sensitive) {
-            self.move_to_match(idx, query.len())?;
+        let opts = self.search_options;
+        if let Some(idx) = self.buffer.find_next_advanced(
+            &query,
+            start_idx,
+            opts.case_sensitive,
+            opts.use_regex,
+            opts.whole_word,
+        ) {
+            let match_len = self.get_match_length(&query, idx)?;
+            self.move_to_match(idx, match_len)?;
         }
 
         Ok(())
@@ -40,7 +47,7 @@ impl EditorState {
         if let Some(query) = self.last_search_query.clone() {
             let start_pos = self.cursors.primary();
             let mut start_idx = self.buffer.char_index(start_pos.line, start_pos.column)?;
-            let case_sensitive = self.search_options.case_sensitive;
+            let opts = self.search_options;
 
             // If we are currently sitting on a match, we don't want to find the same match again.
             // We should advance by 1 char? Or length of match?
@@ -49,14 +56,28 @@ impl EditorState {
             // Let's advance by 1 char to ensure we find "next" one.
             start_idx += 1;
 
-            if let Some(idx) = self.buffer.find_next(&query, start_idx, case_sensitive) {
-                self.move_to_match(idx, query.len())?;
+            if let Some(idx) = self.buffer.find_next_advanced(
+                &query,
+                start_idx,
+                opts.case_sensitive,
+                opts.use_regex,
+                opts.whole_word,
+            ) {
+                let match_len = self.get_match_length(&query, idx)?;
+                self.move_to_match(idx, match_len)?;
             } else {
                 // Wrap around?
                 // Roadmap doesn't explicitly splitting 'wrap' but "BASIC search" implies basic navigation.
                 // Let's implement wrap.
-                if let Some(idx) = self.buffer.find_next(&query, 0, case_sensitive) {
-                    self.move_to_match(idx, query.len())?;
+                if let Some(idx) = self.buffer.find_next_advanced(
+                    &query,
+                    0,
+                    opts.case_sensitive,
+                    opts.use_regex,
+                    opts.whole_word,
+                ) {
+                    let match_len = self.get_match_length(&query, idx)?;
+                    self.move_to_match(idx, match_len)?;
                 }
             }
         }
@@ -68,7 +89,7 @@ impl EditorState {
             let start_pos = self.cursors.primary();
             let original_idx = self.buffer.char_index(start_pos.line, start_pos.column)?;
             let mut search_idx = original_idx;
-            let case_sensitive = self.search_options.case_sensitive;
+            let opts = self.search_options;
 
             // Search backwards
             // If we find a match that ENDS at original_idx, we should verify it's the one we want to skip?
@@ -79,18 +100,22 @@ impl EditorState {
                     break;
                 }
 
-                if let Some(idx) = self
-                    .buffer
-                    .find_previous(&query, search_idx - 1, case_sensitive)
-                {
-                    if idx + query.len() == original_idx {
+                if let Some(idx) = self.buffer.find_previous_advanced(
+                    &query,
+                    search_idx - 1,
+                    opts.case_sensitive,
+                    opts.use_regex,
+                    opts.whole_word,
+                ) {
+                    let match_len = self.get_match_length(&query, idx)?;
+                    if idx + match_len == original_idx {
                         // This is the match we are currently at.
                         // Skip it and search before it.
                         search_idx = idx;
                         continue;
                     }
 
-                    self.move_to_match(idx, query.len())?;
+                    self.move_to_match(idx, match_len)?;
                     return Ok(());
                 } else {
                     break;
@@ -100,15 +125,22 @@ impl EditorState {
             // Wrap around (search from end)
             let len = self.buffer.len_chars();
 
-            if let Some(idx) = self.buffer.find_previous(&query, len, case_sensitive) {
+            if let Some(idx) = self.buffer.find_previous_advanced(
+                &query,
+                len,
+                opts.case_sensitive,
+                opts.use_regex,
+                opts.whole_word,
+            ) {
+                let match_len = self.get_match_length(&query, idx)?;
                 // Check if it is same as original (single match case)
-                if idx + query.len() == original_idx {
+                if idx + match_len == original_idx {
                     // Only one match in file.
                     // Do nothing? Or re-select it?
                     // Let's re-select it to be consistent.
-                    self.move_to_match(idx, query.len())?;
+                    self.move_to_match(idx, match_len)?;
                 } else {
-                    self.move_to_match(idx, query.len())?;
+                    self.move_to_match(idx, match_len)?;
                 }
             }
         }
@@ -141,5 +173,16 @@ impl EditorState {
         self.selection = Some(Selection::new(start, end));
 
         Ok(())
+    }
+
+    fn get_match_length(&self, query: &str, match_idx: usize) -> Result<usize> {
+        let opts = self.search_options;
+
+        if opts.use_regex {
+            self.buffer
+                .get_regex_match_length(query, match_idx, opts.case_sensitive)
+        } else {
+            Ok(query.chars().count())
+        }
     }
 }

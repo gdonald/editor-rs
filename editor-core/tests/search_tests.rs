@@ -133,6 +133,8 @@ fn test_search_case_insensitive() {
     use editor_core::editor::SearchOptions;
     let options = SearchOptions {
         case_sensitive: false,
+        use_regex: false,
+        whole_word: false,
     };
     editor.set_search_options(options);
 
@@ -180,4 +182,263 @@ fn test_search_history() {
     assert_eq!(history.len(), 2);
     assert_eq!(history[0], "foo");
     assert_eq!(history[1], "bar");
+}
+
+#[test]
+fn test_regex_search_basic() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("foo123 bar456 baz789".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.use_regex = true;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search(r"\d+".to_string()))
+        .unwrap();
+
+    let cursor = editor.cursor();
+    assert_eq!(cursor.column, 6);
+
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().column, 3);
+    assert_eq!(sel.end().column, 6);
+}
+
+#[test]
+fn test_regex_search_next() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("foo123 bar456 baz789".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.use_regex = true;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search(r"\d+".to_string()))
+        .unwrap();
+    assert_eq!(editor.cursor().column, 6);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    assert_eq!(editor.cursor().column, 13);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    assert_eq!(editor.cursor().column, 20);
+}
+
+#[test]
+fn test_regex_search_word_boundary() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("word words wordy".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.use_regex = true;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search(r"\bword\b".to_string()))
+        .unwrap();
+
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().column, 0);
+    assert_eq!(sel.end().column, 4);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().column, 0);
+    assert_eq!(sel.end().column, 4);
+}
+
+#[test]
+fn test_whole_word_search() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("word words wordy sword".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.whole_word = true;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search("word".to_string()))
+        .unwrap();
+
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().column, 0);
+    assert_eq!(sel.end().column, 4);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().column, 0);
+    assert_eq!(sel.end().column, 4);
+}
+
+#[test]
+fn test_whole_word_no_match() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("words wordy sword".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.whole_word = true;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search("word".to_string()))
+        .unwrap();
+
+    assert_eq!(editor.cursor().line, 0);
+    assert_eq!(editor.cursor().column, 0);
+    assert!(editor.selection().is_none());
+}
+
+#[test]
+fn test_whole_word_multiline() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("foo bar\nbar baz\nfoobar".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.whole_word = true;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search("bar".to_string()))
+        .unwrap();
+
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().line, 0);
+    assert_eq!(sel.start().column, 4);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().line, 1);
+    assert_eq!(sel.start().column, 0);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    let sel = editor.selection().unwrap();
+    assert_eq!(sel.start().line, 0);
+    assert_eq!(sel.start().column, 4);
+}
+
+#[test]
+fn test_search_in_range() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("foo bar foo baz foo".to_string())
+        .unwrap();
+
+    let start_idx = 4;
+    let end_idx = 15;
+
+    let matches = editor
+        .buffer()
+        .find_in_range("foo", start_idx, end_idx, true, false, false);
+
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0], 8);
+}
+
+#[test]
+fn test_search_in_range_regex() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("foo123 bar456 baz789".to_string())
+        .unwrap();
+
+    let start_idx = 7;
+    let end_idx = 20;
+
+    let matches = editor
+        .buffer()
+        .find_in_range(r"\d+", start_idx, end_idx, true, true, false);
+
+    assert_eq!(matches.len(), 2);
+    assert_eq!(matches[0], 10);
+    assert_eq!(matches[1], 17);
+}
+
+#[test]
+fn test_search_in_range_whole_word() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("word words wordy sword word".to_string())
+        .unwrap();
+
+    let start_idx = 5;
+    let end_idx = 27;
+
+    let matches = editor
+        .buffer()
+        .find_in_range("word", start_idx, end_idx, true, false, true);
+
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0], 23);
+}
+
+#[test]
+fn test_regex_case_insensitive() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("Hello WORLD hello".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.use_regex = true;
+    options.case_sensitive = false;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search(r"hello".to_string()))
+        .unwrap();
+
+    assert_eq!(editor.cursor().column, 5);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    assert_eq!(editor.cursor().column, 17);
+}
+
+#[test]
+fn test_whole_word_case_insensitive() {
+    let mut editor = EditorState::new();
+    editor
+        .buffer_mut()
+        .set_content("Word WORD words".to_string())
+        .unwrap();
+
+    let mut options = editor.search_options();
+    options.whole_word = true;
+    options.case_sensitive = false;
+    editor.set_search_options(options);
+
+    editor
+        .execute_command(Command::Search("word".to_string()))
+        .unwrap();
+
+    assert_eq!(editor.cursor().column, 4);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    assert_eq!(editor.cursor().column, 9);
+
+    editor.execute_command(Command::NextMatch).unwrap();
+    assert_eq!(editor.cursor().column, 4);
 }

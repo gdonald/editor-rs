@@ -216,10 +216,10 @@
 - [x] Write tests for search functionality
 
 ### 5.2 Advanced Search
-- [ ] Implement regex search
-- [ ] Implement whole word search
-- [ ] Implement search in selection
-- [ ] Write tests for advanced search
+- [x] Implement regex search
+- [x] Implement whole word search
+- [x] Implement search in selection
+- [x] Write tests for advanced search
 
 ### 5.3 Replace
 - [ ] Implement single replace

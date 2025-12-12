@@ -653,6 +653,234 @@ impl Buffer {
 
         matches
     }
+
+    pub fn find_next_advanced(
+        &self,
+        query: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+        use_regex: bool,
+        whole_word: bool,
+    ) -> Option<usize> {
+        if query.is_empty() {
+            return None;
+        }
+
+        let len = self.rope.len_chars();
+        if start_char_idx >= len {
+            return None;
+        }
+
+        if use_regex {
+            self.find_next_regex(query, start_char_idx, case_sensitive)
+        } else if whole_word {
+            self.find_next_whole_word(query, start_char_idx, case_sensitive)
+        } else {
+            self.find_next(query, start_char_idx, case_sensitive)
+        }
+    }
+
+    pub fn find_previous_advanced(
+        &self,
+        query: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+        use_regex: bool,
+        whole_word: bool,
+    ) -> Option<usize> {
+        if query.is_empty() {
+            return None;
+        }
+
+        if use_regex {
+            self.find_previous_regex(query, start_char_idx, case_sensitive)
+        } else if whole_word {
+            self.find_previous_whole_word(query, start_char_idx, case_sensitive)
+        } else {
+            self.find_previous(query, start_char_idx, case_sensitive)
+        }
+    }
+
+    pub fn find_all_advanced(
+        &self,
+        query: &str,
+        case_sensitive: bool,
+        use_regex: bool,
+        whole_word: bool,
+    ) -> Vec<usize> {
+        if query.is_empty() {
+            return Vec::new();
+        }
+
+        if use_regex {
+            self.find_all_regex(query, case_sensitive)
+        } else if whole_word {
+            self.find_all_whole_word(query, case_sensitive)
+        } else {
+            self.find_all(query, case_sensitive)
+        }
+    }
+
+    fn find_next_regex(
+        &self,
+        pattern: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+    ) -> Option<usize> {
+        use regex::RegexBuilder;
+
+        let regex = RegexBuilder::new(pattern)
+            .case_insensitive(!case_sensitive)
+            .build()
+            .ok()?;
+
+        let text: String = self.rope.chars().skip(start_char_idx).collect();
+        regex.find(&text).map(|mat| start_char_idx + mat.start())
+    }
+
+    fn find_previous_regex(
+        &self,
+        pattern: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+    ) -> Option<usize> {
+        use regex::RegexBuilder;
+
+        let regex = RegexBuilder::new(pattern)
+            .case_insensitive(!case_sensitive)
+            .build()
+            .ok()?;
+
+        let end_idx = start_char_idx.min(self.rope.len_chars());
+        let text: String = self.rope.chars().take(end_idx).collect();
+
+        regex.find_iter(&text).last().map(|mat| mat.start())
+    }
+
+    fn find_all_regex(&self, pattern: &str, case_sensitive: bool) -> Vec<usize> {
+        use regex::RegexBuilder;
+
+        let regex = match RegexBuilder::new(pattern)
+            .case_insensitive(!case_sensitive)
+            .build()
+        {
+            Ok(r) => r,
+            Err(_) => return Vec::new(),
+        };
+
+        let text: String = self.rope.chars().collect();
+        regex.find_iter(&text).map(|mat| mat.start()).collect()
+    }
+
+    fn is_word_boundary(&self, char_idx: usize) -> bool {
+        if char_idx == 0 || char_idx >= self.rope.len_chars() {
+            return true;
+        }
+
+        let prev_char = self.rope.get_char(char_idx.saturating_sub(1));
+        let next_char = self.rope.get_char(char_idx);
+
+        let prev_is_word = prev_char.is_some_and(|c| c.is_alphanumeric() || c == '_');
+        let next_is_word = next_char.is_some_and(|c| c.is_alphanumeric() || c == '_');
+
+        prev_is_word != next_is_word
+    }
+
+    fn find_next_whole_word(
+        &self,
+        query: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+    ) -> Option<usize> {
+        let query_len = query.chars().count();
+        let mut search_idx = start_char_idx;
+
+        while let Some(idx) = self.find_next(query, search_idx, case_sensitive) {
+            if self.is_word_boundary(idx) && self.is_word_boundary(idx + query_len) {
+                return Some(idx);
+            }
+            search_idx = idx + 1;
+        }
+
+        None
+    }
+
+    fn find_previous_whole_word(
+        &self,
+        query: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+    ) -> Option<usize> {
+        let query_len = query.chars().count();
+        let mut search_idx = start_char_idx;
+
+        loop {
+            if search_idx == 0 {
+                return None;
+            }
+
+            if let Some(idx) = self.find_previous(query, search_idx, case_sensitive) {
+                if self.is_word_boundary(idx) && self.is_word_boundary(idx + query_len) {
+                    return Some(idx);
+                }
+                search_idx = idx;
+            } else {
+                return None;
+            }
+        }
+    }
+
+    fn find_all_whole_word(&self, query: &str, case_sensitive: bool) -> Vec<usize> {
+        let query_len = query.chars().count();
+        let all_matches = self.find_all(query, case_sensitive);
+
+        all_matches
+            .into_iter()
+            .filter(|&idx| self.is_word_boundary(idx) && self.is_word_boundary(idx + query_len))
+            .collect()
+    }
+
+    pub fn find_in_range(
+        &self,
+        query: &str,
+        start_char_idx: usize,
+        end_char_idx: usize,
+        case_sensitive: bool,
+        use_regex: bool,
+        whole_word: bool,
+    ) -> Vec<usize> {
+        if query.is_empty() || start_char_idx >= end_char_idx {
+            return Vec::new();
+        }
+
+        let all_matches = self.find_all_advanced(query, case_sensitive, use_regex, whole_word);
+
+        all_matches
+            .into_iter()
+            .filter(|&idx| idx >= start_char_idx && idx < end_char_idx)
+            .collect()
+    }
+
+    pub fn get_regex_match_length(
+        &self,
+        pattern: &str,
+        match_idx: usize,
+        case_sensitive: bool,
+    ) -> Result<usize> {
+        use regex::RegexBuilder;
+
+        let regex = RegexBuilder::new(pattern)
+            .case_insensitive(!case_sensitive)
+            .build()
+            .map_err(|e| EditorError::InvalidOperation(format!("Invalid regex: {}", e)))?;
+
+        let text: String = self.rope.chars().skip(match_idx).collect();
+        if let Some(mat) = regex.find(&text) {
+            Ok(mat.end() - mat.start())
+        } else {
+            Ok(pattern.len())
+        }
+    }
 }
 
 impl Default for Buffer {
