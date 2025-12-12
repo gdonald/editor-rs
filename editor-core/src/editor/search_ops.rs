@@ -147,7 +147,7 @@ impl EditorState {
         Ok(())
     }
 
-    fn move_to_match(&mut self, char_idx: usize, len: usize) -> Result<()> {
+    pub(super) fn move_to_match(&mut self, char_idx: usize, len: usize) -> Result<()> {
         let (line, col) = self.buffer.char_to_line_col(char_idx)?;
         // We might want to select the match?
         // Roadmap says "Implement search result highlighting" later.
@@ -175,7 +175,7 @@ impl EditorState {
         Ok(())
     }
 
-    fn get_match_length(&self, query: &str, match_idx: usize) -> Result<usize> {
+    pub(super) fn get_match_length(&self, query: &str, match_idx: usize) -> Result<usize> {
         let opts = self.search_options;
 
         if opts.use_regex {

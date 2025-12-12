@@ -74,7 +74,23 @@ fn test_command_search() {
 
 #[test]
 fn test_command_replace() {
-    let cmd = Command::Replace {
+    let cmd = Command::ReplaceNext {
+        find: "old".to_string(),
+        replace: "new".to_string(),
+    };
+    assert!(cmd.is_editing_command());
+    assert!(!cmd.is_navigation_command());
+    assert!(!cmd.is_file_command());
+
+    let cmd = Command::ReplaceAll {
+        find: "old".to_string(),
+        replace: "new".to_string(),
+    };
+    assert!(cmd.is_editing_command());
+    assert!(!cmd.is_navigation_command());
+    assert!(!cmd.is_file_command());
+
+    let cmd = Command::ReplaceInSelection {
         find: "old".to_string(),
         replace: "new".to_string(),
     };

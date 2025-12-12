@@ -71,7 +71,9 @@ pub enum Command {
     SelectionEnd,
 
     Search(String),
-    Replace { find: String, replace: String },
+    ReplaceNext { find: String, replace: String },
+    ReplaceAll { find: String, replace: String },
+    ReplaceInSelection { find: String, replace: String },
 
     GotoLine(usize),
     JumpToMatchingBracket,
@@ -124,7 +126,9 @@ impl Command {
                 | Command::TrimTrailingWhitespace
                 | Command::Paste
                 | Command::Cut
-                | Command::Replace { .. }
+                | Command::ReplaceNext { .. }
+                | Command::ReplaceAll { .. }
+                | Command::ReplaceInSelection { .. }
                 | Command::Undo
                 | Command::Redo
                 | Command::ToggleLineComment

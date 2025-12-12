@@ -222,12 +222,12 @@
 - [x] Write tests for advanced search
 
 ### 5.3 Replace
-- [ ] Implement single replace
-- [ ] Implement replace all
-- [ ] Implement replace in selection
+- [x] Implement single replace
+- [x] Implement replace all
+- [x] Implement replace in selection
 - [ ] Add confirmation for replace operations
-- [ ] Implement replace history
-- [ ] Write tests for replace functionality
+- [x] Implement replace history
+- [x] Write tests for replace functionality
 
 ### 5.4 Performance and Memory
 - [ ] Implement lazy loading for very large files

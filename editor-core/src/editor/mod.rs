@@ -5,6 +5,7 @@ mod cursor_ops;
 mod file_ops;
 mod mode;
 mod mouse_ops;
+mod replace_ops;
 mod search_ops;
 mod session_ops;
 mod state;

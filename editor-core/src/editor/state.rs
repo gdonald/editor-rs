@@ -25,6 +25,7 @@ pub struct EditorState {
     pub(super) last_search_query: Option<String>,
     pub(super) search_options: SearchOptions,
     pub(super) search_history: Vec<String>,
+    pub(super) replace_history: Vec<(String, String)>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -62,6 +63,7 @@ impl EditorState {
             last_search_query: None,
             search_options: SearchOptions::default(),
             search_history: Vec::new(),
+            replace_history: Vec::new(),
         }
     }
 
@@ -83,6 +85,7 @@ impl EditorState {
             last_search_query: None,
             search_options: SearchOptions::default(),
             search_history: Vec::new(),
+            replace_history: Vec::new(),
         })
     }
 
@@ -176,6 +179,12 @@ impl EditorState {
             Command::Search(query) => self.search(query),
             Command::NextMatch => self.next_match(),
             Command::PreviousMatch => self.previous_match(),
+
+            Command::ReplaceNext { find, replace } => self.replace_next(find, replace),
+            Command::ReplaceAll { find, replace } => self.replace_all(find, replace),
+            Command::ReplaceInSelection { find, replace } => {
+                self.replace_in_selection(find, replace)
+            }
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -305,6 +314,10 @@ impl EditorState {
 
     pub fn search_history(&self) -> &[String] {
         &self.search_history
+    }
+
+    pub fn replace_history(&self) -> &[(String, String)] {
+        &self.replace_history
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {
