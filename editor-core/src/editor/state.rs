@@ -22,6 +22,22 @@ pub struct EditorState {
     pub(super) bookmarks: BookmarkManager,
     pub(super) clipboard: ClipboardManager,
     pub(super) mode: EditorMode,
+    pub(super) last_search_query: Option<String>,
+    pub(super) search_options: SearchOptions,
+    pub(super) search_history: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SearchOptions {
+    pub case_sensitive: bool,
+}
+
+impl Default for SearchOptions {
+    fn default() -> Self {
+        Self {
+            case_sensitive: true, // Default to true as per roadmap? "Case-sensitive (default usually)"
+        }
+    }
 }
 
 impl EditorState {
@@ -39,6 +55,9 @@ impl EditorState {
             bookmarks: BookmarkManager::new(),
             clipboard: ClipboardManager,
             mode: EditorMode::default(),
+            last_search_query: None,
+            search_options: SearchOptions::default(),
+            search_history: Vec::new(),
         }
     }
 
@@ -57,6 +76,9 @@ impl EditorState {
             bookmarks: BookmarkManager::new(),
             clipboard: ClipboardManager,
             mode: EditorMode::default(),
+            last_search_query: None,
+            search_options: SearchOptions::default(),
+            search_history: Vec::new(),
         })
     }
 
@@ -147,6 +169,10 @@ impl EditorState {
 
             Command::ToggleReadOnly => self.toggle_read_only(),
 
+            Command::Search(query) => self.search(query),
+            Command::NextMatch => self.next_match(),
+            Command::PreviousMatch => self.previous_match(),
+
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
             )),
@@ -191,6 +217,10 @@ impl EditorState {
 
     pub fn buffer(&self) -> &Buffer {
         &self.buffer
+    }
+
+    pub fn buffer_mut(&mut self) -> &mut Buffer {
+        &mut self.buffer
     }
 
     pub fn cursor(&self) -> &CursorPosition {
@@ -259,6 +289,18 @@ impl EditorState {
 
     pub fn set_mode(&mut self, mode: EditorMode) {
         self.mode = mode;
+    }
+
+    pub fn search_options(&self) -> SearchOptions {
+        self.search_options
+    }
+
+    pub fn set_search_options(&mut self, options: SearchOptions) {
+        self.search_options = options;
+    }
+
+    pub fn search_history(&self) -> &[String] {
+        &self.search_history
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {

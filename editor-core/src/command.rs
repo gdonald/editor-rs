@@ -93,6 +93,9 @@ pub enum Command {
     PreviousBookmark,
     ClearAllBookmarks,
 
+    NextMatch,
+    PreviousMatch,
+
     Quit,
 }
 
@@ -164,6 +167,8 @@ impl Command {
                 | Command::NextBookmark
                 | Command::PreviousBookmark
                 | Command::ClearAllBookmarks
+                | Command::NextMatch
+                | Command::PreviousMatch
         )
     }
 

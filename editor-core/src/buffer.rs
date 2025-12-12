@@ -500,6 +500,159 @@ impl Buffer {
     pub fn has_unsaved_changes(&self) -> bool {
         self.modified
     }
+
+    pub fn find_next(
+        &self,
+        query: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+    ) -> Option<usize> {
+        if query.is_empty() {
+            return None;
+        }
+
+        let len = self.rope.len_chars();
+        if start_char_idx >= len {
+            return None;
+        }
+
+        let query_chars: Vec<char> = if case_sensitive {
+            query.chars().collect()
+        } else {
+            query.to_lowercase().chars().collect()
+        };
+        let query_len = query_chars.len();
+
+        for i in start_char_idx..=(len.saturating_sub(query_len)) {
+            let mut matches = true;
+            for (j, &q_char) in query_chars.iter().enumerate() {
+                let char_at = self.rope.get_char(i + j);
+                let char_to_check = if case_sensitive {
+                    char_at
+                } else {
+                    char_at.map(|c| c.to_lowercase().next().unwrap())
+                };
+
+                if char_to_check != Some(q_char) {
+                    matches = false;
+                    break;
+                }
+            }
+            if matches {
+                return Some(i);
+            }
+        }
+
+        None
+    }
+
+    pub fn find_previous(
+        &self,
+        query: &str,
+        start_char_idx: usize,
+        case_sensitive: bool,
+    ) -> Option<usize> {
+        if query.is_empty() {
+            return None;
+        }
+
+        let len = self.rope.len_chars();
+
+        // Ensure start_char_idx is within bounds?
+        // start_char_idx can be len (e.g. cursor at EOF).
+
+        let query_chars: Vec<char> = if case_sensitive {
+            query.chars().collect()
+        } else {
+            query.to_lowercase().chars().collect()
+        };
+        let query_len = query_chars.len();
+
+        if start_char_idx == 0 {
+            return None;
+        }
+
+        let mut i = start_char_idx.min(len.saturating_sub(query_len));
+        if i > start_char_idx {
+            i = start_char_idx;
+        }
+
+        loop {
+            let mut matches = true;
+            for (j, &q_char) in query_chars.iter().enumerate() {
+                let char_at = self.rope.get_char(i + j);
+                let char_to_check = if case_sensitive {
+                    char_at
+                } else {
+                    char_at.map(|c| c.to_lowercase().next().unwrap())
+                };
+
+                if char_to_check != Some(q_char) {
+                    matches = false;
+                    break;
+                }
+            }
+            if matches {
+                return Some(i);
+            }
+
+            if i == 0 {
+                break;
+            }
+            i -= 1;
+        }
+
+        None
+    }
+
+    pub fn find_all(&self, query: &str, case_sensitive: bool) -> Vec<usize> {
+        if query.is_empty() {
+            return Vec::new();
+        }
+
+        let mut matches = Vec::new();
+        let len = self.rope.len_chars();
+        let query_chars: Vec<char> = if case_sensitive {
+            query.chars().collect()
+        } else {
+            query.to_lowercase().chars().collect()
+        };
+        let query_len = query_chars.len();
+
+        // Naive find all
+        // Should we allow overlapping? Usually find all means non-overlapping.
+        // E.g. "ana" in "banana".
+        // b-ana-na.
+        // If overlapping: "ana", "ana" (at 1 and 3).
+        // Let's do non-overlapping for now as typical for search highlight.
+
+        let mut i = 0;
+        while i <= len.saturating_sub(query_len) {
+            let mut is_match = true;
+            for (j, &q_char) in query_chars.iter().enumerate() {
+                let char_at = self.rope.get_char(i + j);
+                let char_to_check = if case_sensitive {
+                    char_at
+                } else {
+                    char_at.map(|c| c.to_lowercase().next().unwrap())
+                };
+
+                if char_to_check != Some(q_char) {
+                    is_match = false;
+                    break;
+                }
+            }
+
+            if is_match {
+                matches.push(i);
+                i += query_len; // Skip past this match
+            } else {
+                i += 1;
+            }
+        }
+
+        matches
+    }
 }
 
 impl Default for Buffer {

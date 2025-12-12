@@ -205,15 +205,15 @@
 ## Phase 5: Search and Replace
 
 ### 5.1 Basic Search
-- [ ] Implement forward search
-- [ ] Implement backward search
-- [ ] Implement case-sensitive search
-- [ ] Implement case-insensitive search
-- [ ] Implement search result highlighting
-- [ ] Implement jump to next/previous match
-- [ ] Implement incremental search (search as you type)
-- [ ] Implement search history
-- [ ] Write tests for search functionality
+- [x] Implement forward search
+- [x] Implement backward search
+- [x] Implement case-sensitive search
+- [x] Implement case-insensitive search
+- [x] Implement search result highlighting
+- [x] Implement jump to next/previous match
+- [x] Implement incremental search (search as you type)
+- [x] Implement search history
+- [x] Write tests for search functionality
 
 ### 5.2 Advanced Search
 - [ ] Implement regex search
