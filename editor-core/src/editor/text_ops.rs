@@ -2,6 +2,7 @@ use super::state::EditorState;
 use crate::command::CaseMode;
 use crate::cursor::CursorPosition;
 use crate::error::Result;
+use crate::history::{Edit, HistoryEntry};
 use std::collections::HashMap;
 
 impl EditorState {
@@ -9,6 +10,10 @@ impl EditorState {
         if ch == '\n' {
             return self.new_line();
         }
+
+        let content_before = self.buffer.content();
+        let cursor_before = self.cursors.positions().to_vec();
+        let selection_before = self.selection;
 
         self.map_cursors_descending(|state, mut pos| {
             let line_len = state.buffer.line_len(pos.line)?;
@@ -19,7 +24,32 @@ impl EditorState {
             state.buffer.insert_char(pos.line, pos.column, ch)?;
             pos.column += 1;
             Ok(pos)
-        })
+        })?;
+
+        let content_after = self.buffer.content();
+        let cursor_after = self.cursors.positions().to_vec();
+        let selection_after = self.selection;
+
+        if content_before != content_after {
+            let edit = Edit::Replace {
+                position: CursorPosition::new(0, 0),
+                old_text: content_before,
+                new_text: content_after,
+            };
+
+            let entry = HistoryEntry::new(
+                vec![edit],
+                cursor_before,
+                cursor_after,
+                selection_before,
+                selection_after,
+            )
+            .with_grouped(true);
+
+            self.history.push(entry);
+        }
+
+        Ok(())
     }
 
     pub(super) fn insert_char_with_auto_close(&mut self, ch: char) -> Result<()> {

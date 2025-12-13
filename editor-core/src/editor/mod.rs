@@ -10,6 +10,7 @@ mod search_ops;
 mod session_ops;
 mod state;
 mod text_ops;
+mod undo_ops;
 mod view_ops;
 
 pub use mode::EditorMode;

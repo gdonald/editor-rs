@@ -4,6 +4,7 @@ use crate::clipboard::ClipboardManager;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
+use crate::history::History;
 use crate::selection::Selection;
 use std::path::{Path, PathBuf};
 
@@ -26,6 +27,7 @@ pub struct EditorState {
     pub(super) search_options: SearchOptions,
     pub(super) search_history: Vec<String>,
     pub(super) replace_history: Vec<(String, String)>,
+    pub(super) history: History,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -64,6 +66,7 @@ impl EditorState {
             search_options: SearchOptions::default(),
             search_history: Vec::new(),
             replace_history: Vec::new(),
+            history: History::new(),
         }
     }
 
@@ -86,6 +89,7 @@ impl EditorState {
             search_options: SearchOptions::default(),
             search_history: Vec::new(),
             replace_history: Vec::new(),
+            history: History::new(),
         })
     }
 
@@ -185,6 +189,9 @@ impl EditorState {
             Command::ReplaceInSelection { find, replace } => {
                 self.replace_in_selection(find, replace)
             }
+
+            Command::Undo => self.undo(),
+            Command::Redo => self.redo(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),

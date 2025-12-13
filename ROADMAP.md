@@ -239,13 +239,13 @@
 ## Phase 6: Undo/Redo System
 
 ### 6.1 History Management
-- [ ] Design undo/redo stack structure
-- [ ] Implement command wrapping for undo
-- [ ] Implement undo operation
-- [ ] Implement redo operation
-- [ ] Implement history limits (memory management)
-- [ ] Group related commands for single undo
-- [ ] Write tests for undo/redo
+- [x] Design undo/redo stack structure
+- [x] Implement command wrapping for undo
+- [x] Implement undo operation
+- [x] Implement redo operation
+- [x] Implement history limits (memory management)
+- [x] Group related commands for single undo
+- [x] Write tests for undo/redo
 
 ## Phase 6.5: Git-Based Time Machine (KILLER FEATURE)
 
