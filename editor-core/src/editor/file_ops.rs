@@ -14,12 +14,30 @@ impl EditorState {
 
     pub(super) fn save(&mut self) -> Result<()> {
         self.buffer.save()?;
+
+        if let Some(file_path) = self.buffer.file_path() {
+            if let Some(project_path) = file_path.parent() {
+                let _ = self
+                    .git_history
+                    .auto_commit_on_save(project_path, file_path);
+            }
+        }
+
         self.status_message = "File saved".to_string();
         Ok(())
     }
 
     pub(super) fn save_as(&mut self, path: PathBuf) -> Result<()> {
         self.buffer.save_as(path)?;
+
+        if let Some(file_path) = self.buffer.file_path() {
+            if let Some(project_path) = file_path.parent() {
+                let _ = self
+                    .git_history
+                    .auto_commit_on_save(project_path, file_path);
+            }
+        }
+
         self.status_message = "File saved".to_string();
         Ok(())
     }

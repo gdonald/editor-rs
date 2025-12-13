@@ -101,6 +101,63 @@ impl GitHistoryManager {
     pub fn storage_root(&self) -> &Path {
         &self.storage_root
     }
+
+    pub fn auto_commit_on_save(&self, project_path: &Path, file_path: &Path) -> Result<()> {
+        let repo = self.open_repository(project_path)?;
+
+        let canonical_file = file_path.canonicalize().map_err(EditorError::Io)?;
+        let canonical_project = project_path.canonicalize().map_err(EditorError::Io)?;
+
+        let relative_path = canonical_file
+            .strip_prefix(&canonical_project)
+            .map_err(|_| {
+                EditorError::InvalidOperation("File is not within project directory".to_string())
+            })?;
+
+        let repo_file_path = repo
+            .workdir()
+            .ok_or_else(|| EditorError::Git("Repository has no working directory".to_string()))?
+            .join(relative_path);
+
+        if let Some(parent) = repo_file_path.parent() {
+            fs::create_dir_all(parent).map_err(EditorError::Io)?;
+        }
+
+        fs::copy(&canonical_file, &repo_file_path).map_err(EditorError::Io)?;
+
+        let mut index = repo.index().map_err(|e| EditorError::Git(e.to_string()))?;
+        index
+            .add_path(relative_path)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+        index.write().map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let signature = create_signature()?;
+        let tree_id = index
+            .write_tree()
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+        let tree = repo
+            .find_tree(tree_id)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+        let message = format!("Auto-save: {} at {}", relative_path.display(), timestamp);
+
+        let parent_commit = repo.head().ok().and_then(|head| head.peel_to_commit().ok());
+
+        let parents: Vec<_> = parent_commit.iter().collect();
+
+        repo.commit(
+            Some("HEAD"),
+            &signature,
+            &signature,
+            &message,
+            &tree,
+            &parents,
+        )
+        .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        Ok(())
+    }
 }
 
 impl Default for GitHistoryManager {

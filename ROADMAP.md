@@ -258,12 +258,27 @@
 - [x] Write tests for git repository management
 
 ### 6.5.2 Auto-Commit on Save
-- [ ] Implement "save all unsaved files" functionality
-- [ ] Implement git add for all changed files on save
-- [ ] Implement git commit with timestamp metadata on save
-- [ ] Handle git commit failures gracefully
-- [ ] Ensure commits don't interfere with user's actual git repos
-- [ ] Write tests for auto-commit on save
+
+#### 6.5.2.1 Single File Auto-Commit (Minimal)
+- [x] Add `auto_commit_on_save()` method to GitHistoryManager
+- [x] Implement git add for single file in hidden repo
+- [x] Implement git commit with timestamp in commit message
+- [x] Hook auto-commit into EditorState::save() after successful buffer save
+- [x] Write tests for single file auto-commit
+- [x] Test that auto-commit doesn't affect user's actual git repos
+
+#### 6.5.2.2 Multi-File Auto-Commit Support
+- [ ] Implement "save all unsaved files" functionality in EditorState
+- [ ] Modify auto-commit to handle multiple files in single commit
+- [ ] Update commit message to list all files changed
+- [ ] Write tests for multi-file auto-commit
+
+#### 6.5.2.3 Error Handling and Robustness
+- [ ] Handle git commit failures gracefully (log but don't block save)
+- [ ] Handle case where file is outside project directory
+- [ ] Handle case where hidden repo is corrupted
+- [ ] Add configuration option to enable/disable auto-commit (default: enabled)
+- [ ] Write tests for error scenarios
 
 ### 6.5.3 Auto-Commit Interval (Optional)
 - [ ] Implement configurable auto-commit interval

@@ -4,6 +4,7 @@ use crate::clipboard::ClipboardManager;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
+use crate::git_history::GitHistoryManager;
 use crate::history::History;
 use crate::selection::Selection;
 use std::path::{Path, PathBuf};
@@ -28,6 +29,7 @@ pub struct EditorState {
     pub(super) search_history: Vec<String>,
     pub(super) replace_history: Vec<(String, String)>,
     pub(super) history: History,
+    pub(super) git_history: GitHistoryManager,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,6 +69,7 @@ impl EditorState {
             search_history: Vec::new(),
             replace_history: Vec::new(),
             history: History::new(),
+            git_history: GitHistoryManager::default(),
         }
     }
 
@@ -90,6 +93,7 @@ impl EditorState {
             search_history: Vec::new(),
             replace_history: Vec::new(),
             history: History::new(),
+            git_history: GitHistoryManager::default(),
         })
     }
 
