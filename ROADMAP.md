@@ -250,12 +250,12 @@
 ## Phase 6.5: Git-Based Time Machine (KILLER FEATURE)
 
 ### 6.5.1 Core Git History Infrastructure
-- [ ] Design hidden git repository structure (`~/.editor-rs/history/{project-hash}/`)
-- [ ] Implement project identification (directory-based or single file)
-- [ ] Implement git repository initialization for new projects/files
-- [ ] Implement git repository opening for existing projects/files
-- [ ] Generate unique project hashes for storage paths
-- [ ] Write tests for git repository management
+- [x] Design hidden git repository structure (`~/.editor-rs/history/{project-hash}/`)
+- [x] Implement project identification (directory-based or single file)
+- [x] Implement git repository initialization for new projects/files
+- [x] Implement git repository opening for existing projects/files
+- [x] Generate unique project hashes for storage paths
+- [x] Write tests for git repository management
 
 ### 6.5.2 Auto-Commit on Save
 - [ ] Implement "save all unsaved files" functionality

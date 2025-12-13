@@ -14,6 +14,8 @@ pub enum EditorError {
     CorruptedFile(String),
     FileTooLarge { path: String, size: u64, limit: u64 },
     OutOfMemory(String),
+    Git(String),
+    Parse(String),
 }
 
 impl fmt::Display for EditorError {
@@ -38,6 +40,8 @@ impl fmt::Display for EditorError {
                 )
             }
             EditorError::OutOfMemory(msg) => write!(f, "Out of memory: {}", msg),
+            EditorError::Git(msg) => write!(f, "Git error: {}", msg),
+            EditorError::Parse(msg) => write!(f, "Parse error: {}", msg),
         }
     }
 }
