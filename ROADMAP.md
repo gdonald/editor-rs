@@ -366,12 +366,12 @@
 - [x] Write basic rendering test
 
 ### 8.2 TUI Input Handling
-- [ ] Capture keyboard input
-- [ ] Map keys to editor commands
-- [ ] Handle special keys (arrows, function keys)
-- [ ] Implement key bindings configuration
-- [ ] Handle mouse input (optional)
-- [ ] Write tests for input handling
+- [x] Capture keyboard input
+- [x] Map keys to editor commands
+- [x] Handle special keys (arrows, function keys)
+- [x] Implement key bindings configuration
+- [x] Handle mouse input (optional)
+- [x] Write tests for input handling
 
 ### 8.3 TUI Rendering
 - [ ] Render text buffer to terminal
