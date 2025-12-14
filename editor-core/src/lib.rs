@@ -18,7 +18,7 @@ pub use command::{CaseMode, Command};
 pub use cursor::{CursorPosition, MultiCursor};
 pub use editor::{EditorState, VirtualViewport};
 pub use error::{EditorError, Result};
-pub use git_history::{create_signature, GitHistoryManager};
+pub use git_history::{create_signature, ChangeStatus, CommitInfo, FileChange, GitHistoryManager};
 pub use history::{Edit, History, HistoryEntry};
 pub use selection::{Selection, SelectionMode};
 pub use session::{OpenFileState, Session, SessionManager};

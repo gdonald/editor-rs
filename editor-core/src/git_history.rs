@@ -1,8 +1,30 @@
 use crate::{EditorError, Result};
-use git2::{Repository, Signature, Time};
+use git2::{Diff, DiffOptions, Oid, Repository, Signature, Time};
 use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CommitInfo {
+    pub id: String,
+    pub author_name: String,
+    pub author_email: String,
+    pub timestamp: i64,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct FileChange {
+    pub path: String,
+    pub status: ChangeStatus,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum ChangeStatus {
+    Added,
+    Deleted,
+    Modified,
+}
 
 pub struct GitHistoryManager {
     storage_root: PathBuf,
@@ -231,6 +253,217 @@ impl GitHistoryManager {
         .map_err(|e| EditorError::Git(e.to_string()))?;
 
         Ok(())
+    }
+
+    pub fn list_commits(&self, project_path: &Path) -> Result<Vec<CommitInfo>> {
+        let repo = self.open_repository(project_path)?;
+
+        let mut revwalk = repo
+            .revwalk()
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        if revwalk.push_head().is_err() {
+            return Ok(Vec::new());
+        }
+
+        let mut commits = Vec::new();
+
+        for oid_result in revwalk {
+            let oid = oid_result.map_err(|e| EditorError::Git(e.to_string()))?;
+            let commit = repo
+                .find_commit(oid)
+                .map_err(|e| EditorError::Git(e.to_string()))?;
+
+            commits.push(CommitInfo {
+                id: oid.to_string(),
+                author_name: commit.author().name().unwrap_or("Unknown").to_string(),
+                author_email: commit
+                    .author()
+                    .email()
+                    .unwrap_or("unknown@localhost")
+                    .to_string(),
+                timestamp: commit.time().seconds(),
+                message: commit.message().unwrap_or("").to_string(),
+            });
+        }
+
+        Ok(commits)
+    }
+
+    pub fn get_commit_details(&self, project_path: &Path, commit_id: &str) -> Result<CommitInfo> {
+        let repo = self.open_repository(project_path)?;
+        let oid = Oid::from_str(commit_id).map_err(|e| EditorError::Git(e.to_string()))?;
+        let commit = repo
+            .find_commit(oid)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let author = commit.author();
+        let author_name = author.name().unwrap_or("Unknown").to_string();
+        let author_email = author.email().unwrap_or("unknown@localhost").to_string();
+        let timestamp = commit.time().seconds();
+        let message = commit.message().unwrap_or("").to_string();
+
+        Ok(CommitInfo {
+            id: oid.to_string(),
+            author_name,
+            author_email,
+            timestamp,
+            message,
+        })
+    }
+
+    pub fn get_files_changed(
+        &self,
+        project_path: &Path,
+        commit_id: &str,
+    ) -> Result<Vec<FileChange>> {
+        let repo = self.open_repository(project_path)?;
+        let oid = Oid::from_str(commit_id).map_err(|e| EditorError::Git(e.to_string()))?;
+        let commit = repo
+            .find_commit(oid)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let tree = commit.tree().map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let parent_tree = if commit.parent_count() > 0 {
+            Some(
+                commit
+                    .parent(0)
+                    .map_err(|e| EditorError::Git(e.to_string()))?
+                    .tree()
+                    .map_err(|e| EditorError::Git(e.to_string()))?,
+            )
+        } else {
+            None
+        };
+
+        let diff = repo
+            .diff_tree_to_tree(parent_tree.as_ref(), Some(&tree), None)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let mut files = Vec::new();
+
+        diff.foreach(
+            &mut |delta, _| {
+                let status = match delta.status() {
+                    git2::Delta::Added => ChangeStatus::Added,
+                    git2::Delta::Deleted => ChangeStatus::Deleted,
+                    git2::Delta::Modified => ChangeStatus::Modified,
+                    _ => return true,
+                };
+
+                let path = delta
+                    .new_file()
+                    .path()
+                    .or_else(|| delta.old_file().path())
+                    .and_then(|p| p.to_str())
+                    .unwrap_or("")
+                    .to_string();
+
+                files.push(FileChange { path, status });
+                true
+            },
+            None,
+            None,
+            None,
+        )
+        .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        Ok(files)
+    }
+
+    pub fn get_diff_between_commits(
+        &self,
+        project_path: &Path,
+        from_commit_id: &str,
+        to_commit_id: &str,
+    ) -> Result<String> {
+        let repo = self.open_repository(project_path)?;
+
+        let from_oid =
+            Oid::from_str(from_commit_id).map_err(|e| EditorError::Git(e.to_string()))?;
+        let to_oid = Oid::from_str(to_commit_id).map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let from_commit = repo
+            .find_commit(from_oid)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+        let to_commit = repo
+            .find_commit(to_oid)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let from_tree = from_commit
+            .tree()
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+        let to_tree = to_commit
+            .tree()
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let diff = repo
+            .diff_tree_to_tree(Some(&from_tree), Some(&to_tree), None)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        self.format_diff(&diff)
+    }
+
+    pub fn get_file_diff_between_commits(
+        &self,
+        project_path: &Path,
+        file_path: &str,
+        from_commit_id: &str,
+        to_commit_id: &str,
+    ) -> Result<String> {
+        let repo = self.open_repository(project_path)?;
+
+        let from_oid =
+            Oid::from_str(from_commit_id).map_err(|e| EditorError::Git(e.to_string()))?;
+        let to_oid = Oid::from_str(to_commit_id).map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let from_commit = repo
+            .find_commit(from_oid)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+        let to_commit = repo
+            .find_commit(to_oid)
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let from_tree = from_commit
+            .tree()
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+        let to_tree = to_commit
+            .tree()
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        let mut opts = DiffOptions::new();
+        opts.pathspec(file_path);
+
+        let diff = repo
+            .diff_tree_to_tree(Some(&from_tree), Some(&to_tree), Some(&mut opts))
+            .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        self.format_diff(&diff)
+    }
+
+    fn format_diff(&self, diff: &Diff) -> Result<String> {
+        let mut diff_text = String::new();
+
+        diff.print(git2::DiffFormat::Patch, |_delta, _hunk, line| {
+            let origin = line.origin();
+            let content = std::str::from_utf8(line.content()).unwrap_or("");
+
+            match origin {
+                '+' | '-' | ' ' => {
+                    diff_text.push(origin);
+                    diff_text.push_str(content);
+                }
+                _ => {
+                    diff_text.push_str(content);
+                }
+            }
+
+            true
+        })
+        .map_err(|e| EditorError::Git(e.to_string()))?;
+
+        Ok(diff_text)
     }
 }
 

@@ -290,12 +290,12 @@
 ### 6.5.4 History Browsing UI
 
 #### 6.5.4.1 Core History Data API
-- [ ] Add method to GitHistoryManager to list all commits
-- [ ] Add method to get commit details (author, timestamp, message)
-- [ ] Add method to get list of files changed in a commit
-- [ ] Add method to get diff between two commits
-- [ ] Add method to get diff for a specific file between commits
-- [ ] Write tests for history data API
+- [x] Add method to GitHistoryManager to list all commits
+- [x] Add method to get commit details (author, timestamp, message)
+- [x] Add method to get list of files changed in a commit
+- [x] Add method to get diff between two commits
+- [x] Add method to get diff for a specific file between commits
+- [x] Write tests for history data API
 
 #### 6.5.4.2 History Browser State
 - [ ] Design HistoryBrowser struct to hold browsing state
