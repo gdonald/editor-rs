@@ -288,15 +288,114 @@
 - [ ] Write tests for interval-based auto-commit
 
 ### 6.5.4 History Browsing UI
-- [ ] Design history browser UI/UX
-- [ ] Implement history timeline view (TUI)
-- [ ] Implement history timeline view (GUI)
-- [ ] Display commit list with timestamps
-- [ ] Implement navigation through commit history
-- [ ] Implement diff viewing between commits
-- [ ] Implement diff viewing for specific files
-- [ ] Show which files changed in each commit
-- [ ] Write tests for history browsing
+
+#### 6.5.4.1 Core History Data API
+- [ ] Add method to GitHistoryManager to list all commits
+- [ ] Add method to get commit details (author, timestamp, message)
+- [ ] Add method to get list of files changed in a commit
+- [ ] Add method to get diff between two commits
+- [ ] Add method to get diff for a specific file between commits
+- [ ] Write tests for history data API
+
+#### 6.5.4.2 History Browser State
+- [ ] Design HistoryBrowser struct to hold browsing state
+- [ ] Implement commit list storage and pagination
+- [ ] Implement selected commit tracking
+- [ ] Implement selected file tracking (for file-level diffs)
+- [ ] Implement diff view state (current vs selected commit)
+- [ ] Write tests for history browser state
+
+#### 6.5.4.3 History Browser Commands
+- [ ] Add OpenHistoryBrowser command to Command enum
+- [ ] Add CloseHistoryBrowser command
+- [ ] Add HistoryNavigateNext command (next commit in list)
+- [ ] Add HistoryNavigatePrevious command (previous commit)
+- [ ] Add HistorySelectCommit command
+- [ ] Add HistoryToggleFileList command
+- [ ] Add HistoryViewDiff command
+- [ ] Write tests for history browser commands
+
+#### 6.5.4.4 EditorState History Integration
+- [ ] Add history_browser field to EditorState
+- [ ] Implement open_history_browser() method
+- [ ] Implement close_history_browser() method
+- [ ] Implement is_history_browser_open() method
+- [ ] Hook up history browser commands to EditorState
+- [ ] Write tests for EditorState history integration
+
+#### 6.5.4.5 TUI History Rendering - Basic Layout
+- [ ] Design TUI layout for history browser (split view)
+- [ ] Implement commit list panel rendering
+- [ ] Implement commit details panel rendering
+- [ ] Implement file list panel rendering
+- [ ] Add scrolling support for commit list
+- [ ] Write tests for TUI history layout
+
+#### 6.5.4.6 TUI History Rendering - Commit Display
+- [ ] Format commit timestamps in human-readable form
+- [ ] Render commit hash (short form)
+- [ ] Render commit message (truncated if needed)
+- [ ] Highlight selected commit
+- [ ] Add visual indicators for current position
+- [ ] Write tests for commit display formatting
+
+#### 6.5.4.7 TUI History Rendering - Diff View
+- [ ] Implement diff panel rendering
+- [ ] Render line-by-line diff with +/- indicators
+- [ ] Add syntax highlighting to diff view
+- [ ] Implement scrolling in diff view
+- [ ] Add line numbers to diff view
+- [ ] Write tests for diff view rendering
+
+#### 6.5.4.8 TUI History Input Handling
+- [ ] Map up/down arrows to navigate commit list
+- [ ] Map Enter to view commit details/diff
+- [ ] Map Tab to switch between panels
+- [ ] Map Esc to close history browser
+- [ ] Map 'q' to close history browser
+- [ ] Map 'f' to toggle file list view
+- [ ] Write tests for history input handling
+
+#### 6.5.4.9 GUI History Rendering - Basic Layout
+- [ ] Design GUI layout for history browser (split view with egui)
+- [ ] Implement commit list panel (scrollable list)
+- [ ] Implement commit details panel
+- [ ] Implement file list panel
+- [ ] Add resizable splitters between panels
+- [ ] Write tests for GUI history layout
+
+#### 6.5.4.10 GUI History Rendering - Commit Display
+- [ ] Format commit timestamps for GUI display
+- [ ] Render commit list with proper fonts and colors
+- [ ] Implement commit selection highlighting
+- [ ] Add hover effects for commits
+- [ ] Implement double-click to view diff
+- [ ] Write tests for GUI commit display
+
+#### 6.5.4.11 GUI History Rendering - Diff View
+- [ ] Implement diff view widget in egui
+- [ ] Render diff with proper formatting and colors
+- [ ] Add line numbers to diff view
+- [ ] Implement scrolling in diff view
+- [ ] Add syntax highlighting to diff
+- [ ] Write tests for GUI diff view
+
+#### 6.5.4.12 GUI History Input Handling
+- [ ] Handle mouse clicks to select commits
+- [ ] Handle keyboard navigation (up/down arrows)
+- [ ] Handle Enter key to view diff
+- [ ] Handle Esc key to close history browser
+- [ ] Handle mouse scroll in commit list
+- [ ] Write tests for GUI history input
+
+#### 6.5.4.13 History Browser Polish and Edge Cases
+- [ ] Handle empty history (no commits yet)
+- [ ] Handle single commit edge case
+- [ ] Add loading indicators for slow operations
+- [ ] Optimize performance for large commit histories
+- [ ] Add error handling for git operations
+- [ ] Add keyboard shortcuts help overlay
+- [ ] Write tests for edge cases
 
 ### 6.5.5 Time Travel Operations
 - [ ] Implement restore from historical commit
