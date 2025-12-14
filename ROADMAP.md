@@ -359,11 +359,11 @@
 ## Phase 8: TUI Frontend Implementation
 
 ### 8.1 TUI Setup
-- [ ] Set up `ratatui` and `crossterm`
-- [ ] Initialize terminal
-- [ ] Implement main event loop
-- [ ] Handle terminal cleanup on exit
-- [ ] Write basic rendering test
+- [x] Set up `ratatui` and `crossterm`
+- [x] Initialize terminal
+- [x] Implement main event loop
+- [x] Handle terminal cleanup on exit
+- [x] Write basic rendering test
 
 ### 8.2 TUI Input Handling
 - [ ] Capture keyboard input

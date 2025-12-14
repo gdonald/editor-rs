@@ -8,3 +8,5 @@ repository.workspace = true
 
 [dependencies]
 editor-core = { path = "../editor-core" }
+ratatui = "0.26"
+crossterm = "0.27"
