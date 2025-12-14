@@ -5,20 +5,22 @@ use crossterm::{
 };
 use editor_core::EditorState;
 use editor_tui::input::InputHandler;
-use ratatui::{
-    backend::CrosstermBackend,
-    layout::{Constraint, Direction, Layout},
-    widgets::{Block, Borders, Paragraph},
-    Terminal,
-};
+use editor_tui::renderer::Renderer;
+use ratatui::{backend::CrosstermBackend, Terminal};
 use std::io;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = setup_terminal()?;
     let mut editor_state = EditorState::new();
     let mut input_handler = InputHandler::new();
+    let renderer = Renderer::new();
 
-    let result = run_event_loop(&mut terminal, &mut editor_state, &mut input_handler);
+    let result = run_event_loop(
+        &mut terminal,
+        &mut editor_state,
+        &mut input_handler,
+        &renderer,
+    );
 
     cleanup_terminal(terminal)?;
 
@@ -47,25 +49,11 @@ fn run_event_loop(
     terminal: &mut Terminal<CrosstermBackend<io::Stdout>>,
     editor_state: &mut EditorState,
     input_handler: &mut InputHandler,
+    renderer: &Renderer,
 ) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         terminal.draw(|frame| {
-            let area = frame.size();
-            let chunks = Layout::default()
-                .direction(Direction::Vertical)
-                .constraints([Constraint::Percentage(100)])
-                .split(area);
-
-            let status = editor_state.status_message();
-            let display_text = format!(
-                "Welcome to editor-rs TUI!\n\nPress Ctrl+Q to quit.\n\nStatus: {}",
-                if status.is_empty() { "Ready" } else { status }
-            );
-
-            let welcome_text = Paragraph::new(display_text)
-                .block(Block::default().borders(Borders::ALL).title("Editor"));
-
-            frame.render_widget(welcome_text, chunks[0]);
+            renderer.render(frame, editor_state);
         })?;
 
         if event::poll(std::time::Duration::from_millis(100))? {

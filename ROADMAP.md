@@ -374,20 +374,20 @@
 - [x] Write tests for input handling
 
 ### 8.3 TUI Rendering
-- [ ] Render text buffer to terminal
-- [ ] Implement cursor rendering
+- [x] Render text buffer to terminal
+- [x] Implement cursor rendering
 - [ ] Implement cursor style (block, line, underline)
-- [ ] Implement scrolling (viewport management)
-- [ ] Render line numbers
-- [ ] Render status bar (file name, line/col, mode)
+- [x] Implement scrolling (viewport management)
+- [x] Render line numbers
+- [x] Render status bar (file name, line/col, mode)
 - [ ] Render command/message bar
 - [ ] Apply syntax highlighting colors
-- [ ] Handle terminal resize
+- [x] Handle terminal resize
 - [ ] Implement column guide/ruler display
 - [ ] Implement whitespace visualization
-- [ ] Implement current line highlighting
+- [x] Implement current line highlighting
 - [ ] Implement word count/character count display
-- [ ] Write tests for rendering logic
+- [x] Write tests for rendering logic
 
 ### 8.4 TUI Features
 - [ ] Implement command palette/prompt
