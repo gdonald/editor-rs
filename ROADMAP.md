@@ -402,11 +402,11 @@
 ## Phase 9: GUI Frontend Implementation
 
 ### 9.1 GUI Setup
-- [ ] Choose GUI library (egui/iced/other)
-- [ ] Set up GUI framework
-- [ ] Create main window
-- [ ] Implement event loop
-- [ ] Write basic GUI test
+- [x] Choose GUI library (egui/iced/other)
+- [x] Set up GUI framework
+- [x] Create main window
+- [x] Implement event loop
+- [x] Write basic GUI test
 
 ### 9.2 GUI Input Handling
 - [ ] Capture keyboard input

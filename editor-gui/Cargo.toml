@@ -8,3 +8,5 @@ repository.workspace = true
 
 [dependencies]
 editor-core = { path = "../editor-core" }
+eframe = "0.29"
+egui = "0.29"
