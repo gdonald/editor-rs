@@ -409,12 +409,12 @@
 - [x] Write basic GUI test
 
 ### 9.2 GUI Input Handling
-- [ ] Capture keyboard input
-- [ ] Map keys to editor commands
-- [ ] Handle text input events
-- [ ] Handle mouse clicks
-- [ ] Handle scroll events
-- [ ] Write tests for input handling
+- [x] Capture keyboard input
+- [x] Map keys to editor commands
+- [x] Handle text input events
+- [x] Handle mouse clicks
+- [x] Handle scroll events
+- [x] Write tests for input handling
 
 ### 9.3 GUI Rendering
 - [ ] Render text buffer to window
