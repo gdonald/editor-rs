@@ -184,7 +184,7 @@ fn test_auto_commit_nested_file() {
 }
 
 #[test]
-fn test_auto_commit_file_outside_project_fails() {
+fn test_auto_commit_file_outside_project_skipped() {
     let temp_dir = TempDir::new().unwrap();
     let storage_root = temp_dir.path().join("storage");
     let project_dir = TempDir::new().unwrap();
@@ -196,7 +196,7 @@ fn test_auto_commit_file_outside_project_fails() {
     let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
     let result = manager.auto_commit_on_save(project_dir.path(), &file_path);
 
-    assert!(result.is_err());
+    assert!(result.is_ok());
 }
 
 #[test]
@@ -323,4 +323,71 @@ fn test_auto_commit_single_file_via_multiple() {
     let message = commit.message().unwrap();
     assert!(message.contains("Auto-save: single.txt"));
     assert!(!message.contains("files"));
+}
+
+#[test]
+fn test_corrupted_repo_recovery() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root.clone()).unwrap();
+
+    let repo_path = manager.repo_path(project_dir.path()).unwrap();
+    fs::create_dir_all(&repo_path).unwrap();
+    fs::write(repo_path.join("corrupt_file"), "not a git repo").unwrap();
+
+    let result = manager.open_repository(project_dir.path());
+    assert!(result.is_ok());
+
+    let repo = result.unwrap();
+    assert!(repo.path().exists());
+}
+
+#[test]
+fn test_auto_commit_with_mixed_valid_invalid_files() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+    let other_dir = TempDir::new().unwrap();
+
+    let valid_file = project_dir.path().join("valid.txt");
+    let invalid_file = other_dir.path().join("invalid.txt");
+
+    fs::write(&valid_file, "Valid content").unwrap();
+    fs::write(&invalid_file, "Invalid content").unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+    let file_paths = vec![&valid_file, &invalid_file];
+
+    let result = manager.auto_commit_on_save_multiple(project_dir.path(), &file_paths);
+    assert!(result.is_ok());
+
+    let repo = manager.open_repository(project_dir.path()).unwrap();
+    let head = repo.head().unwrap();
+    let commit = head.peel_to_commit().unwrap();
+
+    let message = commit.message().unwrap();
+    assert!(message.contains("valid.txt"));
+    assert!(!message.contains("invalid.txt"));
+}
+
+#[test]
+fn test_auto_commit_all_files_outside_project() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+    let other_dir = TempDir::new().unwrap();
+
+    let file1 = other_dir.path().join("file1.txt");
+    let file2 = other_dir.path().join("file2.txt");
+
+    fs::write(&file1, "Content 1").unwrap();
+    fs::write(&file2, "Content 2").unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+    let file_paths = vec![&file1, &file2];
+
+    let result = manager.auto_commit_on_save_multiple(project_dir.path(), &file_paths);
+    assert!(result.is_ok());
 }

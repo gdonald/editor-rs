@@ -695,3 +695,21 @@ fn test_editor_trim_trailing_whitespace() {
     assert_eq!(editor.cursor().line, 2);
     assert_eq!(editor.cursor().column, 0);
 }
+
+#[test]
+fn test_auto_commit_enabled_by_default() {
+    let editor = EditorState::new();
+    assert!(editor.auto_commit_enabled());
+}
+
+#[test]
+fn test_set_auto_commit_enabled() {
+    let mut editor = EditorState::new();
+    assert!(editor.auto_commit_enabled());
+
+    editor.set_auto_commit_enabled(false);
+    assert!(!editor.auto_commit_enabled());
+
+    editor.set_auto_commit_enabled(true);
+    assert!(editor.auto_commit_enabled());
+}

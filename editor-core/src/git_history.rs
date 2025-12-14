@@ -62,7 +62,23 @@ impl GitHistoryManager {
             return self.init_repository(project_path);
         }
 
-        Repository::open(&repo_path).map_err(|e| EditorError::Git(e.to_string()))
+        match Repository::open(&repo_path) {
+            Ok(repo) => Ok(repo),
+            Err(e) => {
+                eprintln!(
+                    "Warning: Git repository at {} appears corrupted ({}), reinitializing...",
+                    repo_path.display(),
+                    e
+                );
+                if let Err(remove_err) = fs::remove_dir_all(&repo_path) {
+                    eprintln!(
+                        "Warning: Failed to remove corrupted repository: {}",
+                        remove_err
+                    );
+                }
+                self.init_repository(project_path)
+            }
+        }
     }
 
     fn write_project_metadata(&self, repo: &Repository, project_path: &Path) -> Result<()> {
@@ -123,15 +139,29 @@ impl GitHistoryManager {
         let mut relative_paths = Vec::new();
 
         for file_path in file_paths {
-            let canonical_file = file_path.canonicalize().map_err(EditorError::Io)?;
+            let canonical_file = match file_path.canonicalize() {
+                Ok(path) => path,
+                Err(e) => {
+                    eprintln!(
+                        "Warning: Could not canonicalize file path {}: {}",
+                        file_path.display(),
+                        e
+                    );
+                    continue;
+                }
+            };
 
-            let relative_path = canonical_file
-                .strip_prefix(&canonical_project)
-                .map_err(|_| {
-                    EditorError::InvalidOperation(
-                        "File is not within project directory".to_string(),
-                    )
-                })?;
+            let relative_path = match canonical_file.strip_prefix(&canonical_project) {
+                Ok(path) => path,
+                Err(_) => {
+                    eprintln!(
+                        "Warning: File {} is outside project directory {}, skipping auto-commit",
+                        canonical_file.display(),
+                        canonical_project.display()
+                    );
+                    continue;
+                }
+            };
 
             let repo_file_path = repo
                 .workdir()
@@ -149,6 +179,10 @@ impl GitHistoryManager {
                 .map_err(|e| EditorError::Git(e.to_string()))?;
 
             relative_paths.push(relative_path.to_path_buf());
+        }
+
+        if relative_paths.is_empty() {
+            return Ok(());
         }
 
         index.write().map_err(|e| EditorError::Git(e.to_string()))?;

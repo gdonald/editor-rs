@@ -274,11 +274,11 @@
 - [x] Write tests for multi-file auto-commit
 
 #### 6.5.2.3 Error Handling and Robustness
-- [ ] Handle git commit failures gracefully (log but don't block save)
-- [ ] Handle case where file is outside project directory
-- [ ] Handle case where hidden repo is corrupted
-- [ ] Add configuration option to enable/disable auto-commit (default: enabled)
-- [ ] Write tests for error scenarios
+- [x] Handle git commit failures gracefully (log but don't block save)
+- [x] Handle case where file is outside project directory
+- [x] Handle case where hidden repo is corrupted
+- [x] Add configuration option to enable/disable auto-commit (default: enabled)
+- [x] Write tests for error scenarios
 
 ### 6.5.3 Auto-Commit Interval (Optional)
 - [ ] Implement configurable auto-commit interval

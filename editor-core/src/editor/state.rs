@@ -31,6 +31,7 @@ pub struct EditorState {
     pub(super) replace_history: Vec<(String, String)>,
     pub(super) history: History,
     pub(super) git_history: GitHistoryManager,
+    pub(super) auto_commit_enabled: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -72,6 +73,7 @@ impl EditorState {
             replace_history: Vec::new(),
             history: History::new(),
             git_history: GitHistoryManager::default(),
+            auto_commit_enabled: true,
         }
     }
 
@@ -97,6 +99,7 @@ impl EditorState {
             replace_history: Vec::new(),
             history: History::new(),
             git_history: GitHistoryManager::default(),
+            auto_commit_enabled: true,
         })
     }
 
@@ -300,6 +303,14 @@ impl EditorState {
 
     pub fn file_path(&self) -> Option<&Path> {
         self.buffer().file_path().map(|p| p.as_path())
+    }
+
+    pub fn auto_commit_enabled(&self) -> bool {
+        self.auto_commit_enabled
+    }
+
+    pub fn set_auto_commit_enabled(&mut self, enabled: bool) {
+        self.auto_commit_enabled = enabled;
     }
 
     pub fn selection(&self) -> Option<&Selection> {

@@ -21,8 +21,12 @@ impl EditorState {
     pub(super) fn save_as(&mut self, path: PathBuf) -> Result<()> {
         self.buffer_mut().save_as(path.clone())?;
 
-        if let Some(project_path) = path.parent() {
-            let _ = self.git_history.auto_commit_on_save(project_path, &path);
+        if self.auto_commit_enabled {
+            if let Some(project_path) = path.parent() {
+                if let Err(e) = self.git_history.auto_commit_on_save(project_path, &path) {
+                    eprintln!("Warning: Git auto-commit failed: {}", e);
+                }
+            }
         }
 
         self.status_message = "File saved".to_string();
@@ -50,12 +54,17 @@ impl EditorState {
         }
 
         if !saved_files.is_empty() {
-            if let Some(first_file) = saved_files.first() {
-                if let Some(project_path) = first_file.parent() {
-                    let file_refs: Vec<&PathBuf> = saved_files.iter().collect();
-                    let _ = self
-                        .git_history
-                        .auto_commit_on_save_multiple(project_path, &file_refs);
+            if self.auto_commit_enabled {
+                if let Some(first_file) = saved_files.first() {
+                    if let Some(project_path) = first_file.parent() {
+                        let file_refs: Vec<&PathBuf> = saved_files.iter().collect();
+                        if let Err(e) = self
+                            .git_history
+                            .auto_commit_on_save_multiple(project_path, &file_refs)
+                        {
+                            eprintln!("Warning: Git auto-commit failed: {}", e);
+                        }
+                    }
                 }
             }
 
