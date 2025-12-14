@@ -1,8 +1,10 @@
 mod input;
+mod renderer;
 
 use editor_core::editor::EditorState;
 use eframe::egui;
 use input::{InputAction, InputHandler};
+use renderer::Renderer;
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -22,6 +24,7 @@ fn main() -> eframe::Result {
 struct EditorApp {
     editor_state: EditorState,
     input_handler: InputHandler,
+    renderer: Renderer,
     should_quit: bool,
 }
 
@@ -30,6 +33,7 @@ impl Default for EditorApp {
         Self {
             editor_state: EditorState::new(),
             input_handler: InputHandler::new(),
+            renderer: Renderer::new(),
             should_quit: false,
         }
     }
@@ -65,23 +69,28 @@ impl eframe::App for EditorApp {
             }
         });
 
+        egui::TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
+            self.renderer.render_status_bar(ui, &self.editor_state);
+        });
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Editor-rs GUI");
+            ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_rgb(30, 30, 30);
+            ui.style_mut().visuals.override_text_color = Some(egui::Color32::WHITE);
 
-            ui.separator();
-
-            let buffer = self.editor_state.current_buffer();
-            ui.label(format!("Current buffer: {} lines", buffer.line_count()));
-            let cursor = self.editor_state.cursor();
-            ui.label(format!(
-                "Line: {}, Col: {}",
-                cursor.line + 1,
-                cursor.column + 1
-            ));
-            ui.separator();
-
-            let buffer_content = self.editor_state.current_buffer().content();
-            ui.label(&buffer_content);
+            if let Some(scroll_delta) = self.renderer.render(ui, &self.editor_state, ctx) {
+                let lines_to_scroll = scroll_delta.abs();
+                for _ in 0..lines_to_scroll {
+                    if scroll_delta > 0 {
+                        let _ = self
+                            .editor_state
+                            .execute_command(editor_core::Command::MoveCursorUp);
+                    } else {
+                        let _ = self
+                            .editor_state
+                            .execute_command(editor_core::Command::MoveCursorDown);
+                    }
+                }
+            }
         });
     }
 }
@@ -93,6 +102,7 @@ impl EditorApp {
                 self.should_quit = true;
             }
             InputAction::Command(cmd) => {
+                self.renderer.reset_cursor_blink();
                 if let Err(e) = self.editor_state.execute_command(cmd) {
                     self.editor_state
                         .set_status_message(format!("Error: {}", e));

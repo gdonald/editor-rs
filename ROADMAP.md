@@ -417,22 +417,22 @@
 - [x] Write tests for input handling
 
 ### 9.3 GUI Rendering
-- [ ] Render text buffer to window
-- [ ] Implement cursor rendering with blinking
+- [x] Render text buffer to window
+- [x] Implement cursor rendering with blinking
 - [ ] Implement cursor style configuration (block, line, underline)
 - [ ] Implement cursor blink rate configuration
-- [ ] Implement text selection rendering
-- [ ] Implement scrolling (viewport + scrollbars)
-- [ ] Render line numbers gutter
+- [x] Implement text selection rendering
+- [x] Implement scrolling (viewport + scrollbars)
+- [x] Render line numbers gutter
 - [ ] Apply syntax highlighting
-- [ ] Handle window resize
+- [x] Handle window resize
 - [ ] Implement column guide/ruler display
 - [ ] Implement whitespace visualization
-- [ ] Implement current line highlighting
+- [x] Implement current line highlighting
 - [ ] Implement minimap (code overview)
 - [ ] Implement breadcrumbs (current function/scope)
 - [ ] Implement word count/character count display
-- [ ] Write tests for rendering logic
+- [x] Write tests for rendering logic
 
 ### 9.4 GUI Menus and Dialogs
 - [ ] Implement menu bar (File, Edit, View, Help)

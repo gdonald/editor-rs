@@ -1,5 +1,6 @@
 use editor_core::command::Command;
 use editor_core::editor::EditorState;
+use editor_gui::renderer::Renderer;
 
 #[test]
 fn test_editor_state_initialization() {
@@ -30,4 +31,20 @@ fn test_editor_state_insert_char() {
     let buffer = editor_state.current_buffer();
     let content = buffer.content();
     assert!(content.starts_with('a'));
+}
+
+#[test]
+fn test_renderer_initialization() {
+    let _renderer = Renderer::new();
+}
+
+#[test]
+fn test_renderer_with_line_numbers() {
+    let _renderer = Renderer::new().with_line_numbers(false);
+}
+
+#[test]
+fn test_renderer_cursor_blink_reset() {
+    let mut renderer = Renderer::new();
+    renderer.reset_cursor_blink();
 }
