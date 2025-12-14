@@ -29,7 +29,7 @@ impl EditorState {
         self.add_to_replace_history(&find, &replace);
 
         let opts = self.search_options;
-        let matches = self.buffer.find_all_advanced(
+        let matches = self.buffer().find_all_advanced(
             &find,
             opts.case_sensitive,
             opts.use_regex,
@@ -42,12 +42,13 @@ impl EditorState {
 
         for &match_idx in matches.iter().rev() {
             let match_len = self.get_match_length(&find, match_idx)?;
-            let (start_line, start_col) = self.buffer.char_to_line_col(match_idx)?;
-            let (end_line, end_col) = self.buffer.char_to_line_col(match_idx + match_len)?;
+            let (start_line, start_col) = self.buffer().char_to_line_col(match_idx)?;
+            let (end_line, end_col) = self.buffer().char_to_line_col(match_idx + match_len)?;
 
-            self.buffer
+            self.buffer_mut()
                 .delete_range(start_line, start_col, end_line, end_col)?;
-            self.buffer.insert_str(start_line, start_col, &replace)?;
+            self.buffer_mut()
+                .insert_str(start_line, start_col, &replace)?;
         }
 
         self.selection = None;
@@ -70,11 +71,11 @@ impl EditorState {
         let start = selection.start();
         let end = selection.end();
 
-        let start_idx = self.buffer.char_index(start.line, start.column)?;
-        let end_idx = self.buffer.char_index(end.line, end.column)?;
+        let start_idx = self.buffer().char_index(start.line, start.column)?;
+        let end_idx = self.buffer().char_index(end.line, end.column)?;
 
         let opts = self.search_options;
-        let matches = self.buffer.find_in_range(
+        let matches = self.buffer().find_in_range(
             &find,
             start_idx,
             end_idx,
@@ -89,12 +90,13 @@ impl EditorState {
 
         for &match_idx in matches.iter().rev() {
             let match_len = self.get_match_length(&find, match_idx)?;
-            let (start_line, start_col) = self.buffer.char_to_line_col(match_idx)?;
-            let (end_line, end_col) = self.buffer.char_to_line_col(match_idx + match_len)?;
+            let (start_line, start_col) = self.buffer().char_to_line_col(match_idx)?;
+            let (end_line, end_col) = self.buffer().char_to_line_col(match_idx + match_len)?;
 
-            self.buffer
+            self.buffer_mut()
                 .delete_range(start_line, start_col, end_line, end_col)?;
-            self.buffer.insert_str(start_line, start_col, &replace)?;
+            self.buffer_mut()
+                .insert_str(start_line, start_col, &replace)?;
         }
 
         self.selection = None;
@@ -113,8 +115,8 @@ impl EditorState {
         if let Some(sel) = &self.selection {
             let start = sel.start();
             let end = sel.end();
-            let start_idx = self.buffer.char_index(start.line, start.column)?;
-            let end_idx = self.buffer.char_index(end.line, end.column)?;
+            let start_idx = self.buffer().char_index(start.line, start.column)?;
+            let end_idx = self.buffer().char_index(end.line, end.column)?;
 
             let selected_len = end_idx - start_idx;
             let expected_len = self.get_match_length(query, start_idx)?;
@@ -124,7 +126,7 @@ impl EditorState {
             }
 
             let opts = self.search_options;
-            if let Some(match_idx) = self.buffer.find_next_advanced(
+            if let Some(match_idx) = self.buffer().find_next_advanced(
                 query,
                 start_idx,
                 opts.case_sensitive,
@@ -142,16 +144,17 @@ impl EditorState {
         if let Some(sel) = &self.selection {
             let start = sel.start();
             let end = sel.end();
-            let start_idx = self.buffer.char_index(start.line, start.column)?;
+            let start_idx = self.buffer().char_index(start.line, start.column)?;
 
-            self.buffer
+            self.buffer_mut()
                 .delete_range(start.line, start.column, end.line, end.column)?;
-            self.buffer
+            self.buffer_mut()
                 .insert_str(start.line, start.column, replacement)?;
 
             let replacement_len = replacement.chars().count();
-            let (new_end_line, new_end_col) =
-                self.buffer.char_to_line_col(start_idx + replacement_len)?;
+            let (new_end_line, new_end_col) = self
+                .buffer()
+                .char_to_line_col(start_idx + replacement_len)?;
 
             self.cursors
                 .reset_to(CursorPosition::new(new_end_line, new_end_col));
@@ -163,10 +166,10 @@ impl EditorState {
 
     fn find_next_after_replace(&mut self, query: &str) -> Result<()> {
         let start_pos = self.cursors.primary();
-        let start_idx = self.buffer.char_index(start_pos.line, start_pos.column)?;
+        let start_idx = self.buffer().char_index(start_pos.line, start_pos.column)?;
 
         let opts = self.search_options;
-        if let Some(idx) = self.buffer.find_next_advanced(
+        if let Some(idx) = self.buffer().find_next_advanced(
             query,
             start_idx,
             opts.case_sensitive,
@@ -175,7 +178,7 @@ impl EditorState {
         ) {
             let match_len = self.get_match_length(query, idx)?;
             self.move_to_match(idx, match_len)?;
-        } else if let Some(idx) = self.buffer.find_next_advanced(
+        } else if let Some(idx) = self.buffer().find_next_advanced(
             query,
             0,
             opts.case_sensitive,
@@ -191,10 +194,10 @@ impl EditorState {
 
     fn find_next_occurrence(&mut self, query: &str) -> Result<bool> {
         let start_pos = self.cursors.primary();
-        let start_idx = self.buffer.char_index(start_pos.line, start_pos.column)?;
+        let start_idx = self.buffer().char_index(start_pos.line, start_pos.column)?;
 
         let opts = self.search_options;
-        if let Some(idx) = self.buffer.find_next_advanced(
+        if let Some(idx) = self.buffer().find_next_advanced(
             query,
             start_idx,
             opts.case_sensitive,
@@ -206,7 +209,7 @@ impl EditorState {
             return Ok(true);
         }
 
-        if let Some(idx) = self.buffer.find_next_advanced(
+        if let Some(idx) = self.buffer().find_next_advanced(
             query,
             0,
             opts.case_sensitive,

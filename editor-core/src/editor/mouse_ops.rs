@@ -52,21 +52,21 @@ impl EditorState {
     pub(super) fn mouse_double_click(&mut self, position: CursorPosition) -> Result<()> {
         self.validate_position(position)?;
 
-        let char_idx = self.buffer.char_index(position.line, position.column)?;
-        let total_chars = self.buffer.len_chars();
+        let char_idx = self.buffer().char_index(position.line, position.column)?;
+        let total_chars = self.buffer().len_chars();
 
         if total_chars == 0 {
             return Ok(());
         }
 
-        let current_char = self.buffer.char_at(char_idx);
+        let current_char = self.buffer().char_at(char_idx);
         if current_char.is_none() || !is_word_char(current_char.unwrap()) {
             return Ok(());
         }
 
         let mut start_idx = char_idx;
         while start_idx > 0 {
-            if let Some(ch) = self.buffer.char_at(start_idx - 1) {
+            if let Some(ch) = self.buffer().char_at(start_idx - 1) {
                 if !is_word_char(ch) {
                     break;
                 }
@@ -78,7 +78,7 @@ impl EditorState {
 
         let mut end_idx = char_idx;
         while end_idx < total_chars {
-            if let Some(ch) = self.buffer.char_at(end_idx) {
+            if let Some(ch) = self.buffer().char_at(end_idx) {
                 if !is_word_char(ch) {
                     break;
                 }
@@ -88,8 +88,8 @@ impl EditorState {
             }
         }
 
-        let (start_line, start_col) = self.buffer.char_to_line_col(start_idx)?;
-        let (end_line, end_col) = self.buffer.char_to_line_col(end_idx)?;
+        let (start_line, start_col) = self.buffer().char_to_line_col(start_idx)?;
+        let (end_line, end_col) = self.buffer().char_to_line_col(end_idx)?;
 
         let start_pos = CursorPosition::new(start_line, start_col);
         let end_pos = CursorPosition::new(end_line, end_col);
@@ -103,7 +103,7 @@ impl EditorState {
     pub(super) fn mouse_triple_click(&mut self, position: CursorPosition) -> Result<()> {
         self.validate_position(position)?;
 
-        let line_len = self.buffer.line_len(position.line)?;
+        let line_len = self.buffer().line_len(position.line)?;
         let start_pos = CursorPosition::new(position.line, 0);
         let end_pos = CursorPosition::new(position.line, line_len);
 

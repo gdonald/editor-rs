@@ -35,14 +35,18 @@ impl EditorState {
     fn apply_edit(&mut self, edit: &Edit) -> Result<()> {
         match edit {
             Edit::Insert { position, text } => {
-                self.buffer
+                self.buffer_mut()
                     .insert_str(position.line, position.column, text)?;
             }
             Edit::Delete { position, text } => {
                 let end_line = position.line;
                 let end_column = position.column + text.chars().count();
-                self.buffer
-                    .delete_range(position.line, position.column, end_line, end_column)?;
+                self.buffer_mut().delete_range(
+                    position.line,
+                    position.column,
+                    end_line,
+                    end_column,
+                )?;
             }
             Edit::Replace {
                 position,
@@ -51,9 +55,13 @@ impl EditorState {
             } => {
                 let end_line = position.line;
                 let end_column = position.column + old_text.chars().count();
-                self.buffer
-                    .delete_range(position.line, position.column, end_line, end_column)?;
-                self.buffer
+                self.buffer_mut().delete_range(
+                    position.line,
+                    position.column,
+                    end_line,
+                    end_column,
+                )?;
+                self.buffer_mut()
                     .insert_str(position.line, position.column, new_text)?;
             }
         }

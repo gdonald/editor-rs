@@ -11,22 +11,22 @@ impl EditorState {
             return self.new_line();
         }
 
-        let content_before = self.buffer.content();
+        let content_before = self.buffer().content();
         let cursor_before = self.cursors.positions().to_vec();
         let selection_before = self.selection;
 
         self.map_cursors_descending(|state, mut pos| {
-            let line_len = state.buffer.line_len(pos.line)?;
+            let line_len = state.buffer_mut().line_len(pos.line)?;
             if state.overwrite_mode && pos.column < line_len {
-                state.buffer.delete_char(pos.line, pos.column)?;
+                state.buffer_mut().delete_char(pos.line, pos.column)?;
             }
 
-            state.buffer.insert_char(pos.line, pos.column, ch)?;
+            state.buffer_mut().insert_char(pos.line, pos.column, ch)?;
             pos.column += 1;
             Ok(pos)
         })?;
 
-        let content_after = self.buffer.content();
+        let content_after = self.buffer().content();
         let cursor_after = self.cursors.positions().to_vec();
         let selection_after = self.selection;
 
@@ -68,10 +68,10 @@ impl EditorState {
 
         if let Some(close) = closing_char {
             self.map_cursors_descending(|state, mut pos| {
-                let line_len = state.buffer.line_len(pos.line)?;
+                let line_len = state.buffer_mut().line_len(pos.line)?;
                 let should_auto_close = if pos.column < line_len {
-                    let char_idx = state.buffer.char_index(pos.line, pos.column)?;
-                    match state.buffer.char_at(char_idx) {
+                    let char_idx = state.buffer_mut().char_index(pos.line, pos.column)?;
+                    match state.buffer_mut().char_at(char_idx) {
                         Some(c) => c.is_whitespace() || c == ')' || c == ']' || c == '}',
                         None => true,
                     }
@@ -80,11 +80,13 @@ impl EditorState {
                 };
 
                 if should_auto_close {
-                    state.buffer.insert_char(pos.line, pos.column, ch)?;
-                    state.buffer.insert_char(pos.line, pos.column + 1, close)?;
+                    state.buffer_mut().insert_char(pos.line, pos.column, ch)?;
+                    state
+                        .buffer_mut()
+                        .insert_char(pos.line, pos.column + 1, close)?;
                     pos.column += 1;
                 } else {
-                    state.buffer.insert_char(pos.line, pos.column, ch)?;
+                    state.buffer_mut().insert_char(pos.line, pos.column, ch)?;
                     pos.column += 1;
                 }
 
@@ -97,7 +99,7 @@ impl EditorState {
 
     pub(super) fn delete_char(&mut self) -> Result<()> {
         self.map_cursors_descending(|state, pos| {
-            state.buffer.delete_char(pos.line, pos.column)?;
+            state.buffer_mut().delete_char(pos.line, pos.column)?;
             Ok(pos)
         })
     }
@@ -106,13 +108,15 @@ impl EditorState {
         self.map_cursors_descending(|state, mut pos| {
             if pos.column > 0 {
                 pos.column -= 1;
-                state.buffer.delete_char(pos.line, pos.column)?;
+                state.buffer_mut().delete_char(pos.line, pos.column)?;
                 return Ok(pos);
             }
 
             if pos.line > 0 {
-                let prev_line_len = state.buffer.line_len(pos.line - 1)?;
-                state.buffer.delete_char(pos.line - 1, prev_line_len)?;
+                let prev_line_len = state.buffer_mut().line_len(pos.line - 1)?;
+                state
+                    .buffer_mut()
+                    .delete_char(pos.line - 1, prev_line_len)?;
                 pos.line -= 1;
                 pos.column = prev_line_len;
             }
@@ -125,12 +129,14 @@ impl EditorState {
         self.map_cursors_descending(|state, mut pos| {
             let indent = state.indentation_for_line(pos.line)?;
 
-            state.buffer.insert_char(pos.line, pos.column, '\n')?;
+            state.buffer_mut().insert_char(pos.line, pos.column, '\n')?;
             pos.line += 1;
             pos.column = 0;
 
             if !indent.is_empty() {
-                state.buffer.insert_str(pos.line, pos.column, &indent)?;
+                state
+                    .buffer_mut()
+                    .insert_str(pos.line, pos.column, &indent)?;
                 pos.column = indent.chars().count();
             }
 
@@ -139,7 +145,7 @@ impl EditorState {
     }
 
     pub(super) fn delete_line(&mut self) -> Result<()> {
-        if self.buffer.line_count() == 0 {
+        if self.buffer().line_count() == 0 {
             return Ok(());
         }
 
@@ -149,19 +155,19 @@ impl EditorState {
         lines.reverse();
 
         for line in lines {
-            let is_last_line = line == self.buffer.line_count().saturating_sub(1);
+            let is_last_line = line == self.buffer().line_count().saturating_sub(1);
 
             if is_last_line {
-                let line_len = self.buffer.line_len(line)?;
-                self.buffer.delete_range(line, 0, line, line_len)?;
+                let line_len = self.buffer().line_len(line)?;
+                self.buffer_mut().delete_range(line, 0, line, line_len)?;
             } else {
-                self.buffer.delete_range(line, 0, line + 1, 0)?;
+                self.buffer_mut().delete_range(line, 0, line + 1, 0)?;
             }
         }
 
         let mut positions = Vec::with_capacity(self.cursors.positions().len());
         for pos in self.cursors.positions() {
-            let line = pos.line.min(self.buffer.line_count().saturating_sub(1));
+            let line = pos.line.min(self.buffer().line_count().saturating_sub(1));
             positions.push(CursorPosition::new(line, 0));
         }
 
@@ -177,12 +183,12 @@ impl EditorState {
         lines.dedup();
 
         for line in lines {
-            self.buffer.insert_str(line, 0, indent)?;
+            self.buffer_mut().insert_str(line, 0, indent)?;
         }
 
         self.map_cursors(|state, mut pos| {
             pos.column += indent.len();
-            let line_len = state.buffer.line_len(pos.line)?;
+            let line_len = state.buffer_mut().line_len(pos.line)?;
             if pos.column > line_len {
                 pos.column = line_len;
             }
@@ -198,7 +204,7 @@ impl EditorState {
         let mut removed_by_line = HashMap::new();
 
         for line_idx in &lines {
-            let line = self.buffer.line(*line_idx)?;
+            let line = self.buffer().line(*line_idx)?;
             let trimmed = line.trim_end_matches('\n');
             let mut remove_count = 0;
 
@@ -214,14 +220,14 @@ impl EditorState {
             }
 
             if remove_count > 0 {
-                self.buffer
+                self.buffer_mut()
                     .delete_range(*line_idx, 0, *line_idx, remove_count)?;
                 removed_by_line.insert(*line_idx, remove_count);
             }
         }
 
         self.map_cursors(|state, mut pos| {
-            let line_len = state.buffer.line_len(pos.line)?;
+            let line_len = state.buffer_mut().line_len(pos.line)?;
 
             if let Some(amount) = removed_by_line.get(&pos.line) {
                 if pos.column < *amount {
@@ -246,15 +252,17 @@ impl EditorState {
         lines.reverse();
 
         for line in lines {
-            let line_content = self.buffer.line(line)?.trim_end_matches('\n').to_string();
+            let line_content = self.buffer().line(line)?.trim_end_matches('\n').to_string();
             let insert_line = line + 1;
-            if insert_line >= self.buffer.line_count() {
-                self.buffer
-                    .insert_char(line, self.buffer.line_len(line)?, '\n')?;
-                self.buffer.insert_str(insert_line, 0, &line_content)?;
+            if insert_line >= self.buffer().line_count() {
+                let line_len = self.buffer().line_len(line)?;
+                self.buffer_mut().insert_char(line, line_len, '\n')?;
+                self.buffer_mut()
+                    .insert_str(insert_line, 0, &line_content)?;
             } else {
-                self.buffer.insert_str(insert_line, 0, &line_content)?;
-                self.buffer
+                self.buffer_mut()
+                    .insert_str(insert_line, 0, &line_content)?;
+                self.buffer_mut()
                     .insert_char(insert_line, line_content.chars().count(), '\n')?;
             }
         }
@@ -277,10 +285,10 @@ impl EditorState {
             return Ok(());
         }
 
-        let total_lines = self.buffer.line_count();
+        let total_lines = self.buffer().line_count();
         let mut all_lines: Vec<String> = Vec::new();
         for i in 0..total_lines {
-            let line = self.buffer.line(i)?;
+            let line = self.buffer().line(i)?;
             all_lines.push(line.trim_end_matches('\n').to_string());
         }
 
@@ -291,7 +299,7 @@ impl EditorState {
         }
 
         let new_content = all_lines.join("\n");
-        self.buffer.set_content(new_content)?;
+        self.buffer_mut().set_content(new_content)?;
 
         let mut positions = Vec::with_capacity(self.cursors.positions().len());
         for pos in self.cursors.positions() {
@@ -312,7 +320,7 @@ impl EditorState {
         lines.dedup();
         lines.reverse();
 
-        let total_lines = self.buffer.line_count();
+        let total_lines = self.buffer().line_count();
         let last_line = total_lines.saturating_sub(1);
         if lines.is_empty() || lines[0] == last_line {
             return Ok(());
@@ -320,7 +328,7 @@ impl EditorState {
 
         let mut all_lines: Vec<String> = Vec::new();
         for i in 0..total_lines {
-            let line = self.buffer.line(i)?;
+            let line = self.buffer().line(i)?;
             all_lines.push(line.trim_end_matches('\n').to_string());
         }
 
@@ -331,7 +339,7 @@ impl EditorState {
         }
 
         let new_content = all_lines.join("\n");
-        self.buffer.set_content(new_content)?;
+        self.buffer_mut().set_content(new_content)?;
 
         let mut positions = Vec::with_capacity(self.cursors.positions().len());
         for pos in self.cursors.positions() {
@@ -350,13 +358,17 @@ impl EditorState {
         lines.reverse();
 
         for line in lines.iter() {
-            if *line >= self.buffer.line_count().saturating_sub(1) {
+            if *line >= self.buffer().line_count().saturating_sub(1) {
                 continue;
             }
 
-            let current_line = self.buffer.line(*line)?.trim_end_matches('\n').to_string();
+            let current_line = self
+                .buffer()
+                .line(*line)?
+                .trim_end_matches('\n')
+                .to_string();
             let next_line = self
-                .buffer
+                .buffer()
                 .line(line + 1)?
                 .trim_end_matches('\n')
                 .to_string();
@@ -368,13 +380,14 @@ impl EditorState {
                 format!("{} {}", current_line, trimmed_next)
             };
 
-            let current_len = self.buffer.line_len(*line)?;
-            let next_len = self.buffer.line_len(line + 1)?;
+            let current_len = self.buffer().line_len(*line)?;
+            let next_len = self.buffer().line_len(line + 1)?;
 
-            self.buffer.delete_range(*line, 0, *line, current_len)?;
-            self.buffer.delete_char(*line, 0)?;
-            self.buffer.delete_range(*line, 0, *line, next_len)?;
-            self.buffer.insert_str(*line, 0, &joined)?;
+            self.buffer_mut()
+                .delete_range(*line, 0, *line, current_len)?;
+            self.buffer_mut().delete_char(*line, 0)?;
+            self.buffer_mut().delete_range(*line, 0, *line, next_len)?;
+            self.buffer_mut().insert_str(*line, 0, &joined)?;
         }
 
         Ok(())
@@ -394,7 +407,7 @@ impl EditorState {
 
         let mut line_contents: Vec<String> = Vec::new();
         for line_idx in start_line..=end_line {
-            let line = self.buffer.line(line_idx)?;
+            let line = self.buffer().line(line_idx)?;
             line_contents.push(line.trim_end_matches('\n').to_string());
         }
 
@@ -416,9 +429,11 @@ impl EditorState {
         }
 
         for (i, line_idx) in (start_line..=end_line).enumerate() {
-            let line_len = self.buffer.line_len(line_idx)?;
-            self.buffer.delete_range(line_idx, 0, line_idx, line_len)?;
-            self.buffer.insert_str(line_idx, 0, &line_contents[i])?;
+            let line_len = self.buffer().line_len(line_idx)?;
+            self.buffer_mut()
+                .delete_range(line_idx, 0, line_idx, line_len)?;
+            self.buffer_mut()
+                .insert_str(line_idx, 0, &line_contents[i])?;
         }
 
         Ok(())
@@ -427,7 +442,7 @@ impl EditorState {
     pub(super) fn change_case(&mut self, mode: CaseMode) -> Result<()> {
         self.map_cursors(|state, pos| {
             let line_content = state
-                .buffer
+                .buffer()
                 .line(pos.line)?
                 .trim_end_matches('\n')
                 .to_string();
@@ -452,9 +467,11 @@ impl EditorState {
                 }
             };
 
-            let line_len = state.buffer.line_len(pos.line)?;
-            state.buffer.delete_range(pos.line, 0, pos.line, line_len)?;
-            state.buffer.insert_str(pos.line, 0, &transformed)?;
+            let line_len = state.buffer_mut().line_len(pos.line)?;
+            state
+                .buffer_mut()
+                .delete_range(pos.line, 0, pos.line, line_len)?;
+            state.buffer_mut().insert_str(pos.line, 0, &transformed)?;
 
             Ok(pos)
         })
@@ -463,7 +480,7 @@ impl EditorState {
     pub(super) fn transpose_characters(&mut self) -> Result<()> {
         self.map_cursors(|state, mut pos| {
             let line_content = state
-                .buffer
+                .buffer()
                 .line(pos.line)?
                 .trim_end_matches('\n')
                 .to_string();
@@ -487,16 +504,18 @@ impl EditorState {
             }
 
             let new_line: String = chars.into_iter().collect();
-            let old_len = state.buffer.line_len(pos.line)?;
-            state.buffer.delete_range(pos.line, 0, pos.line, old_len)?;
-            state.buffer.insert_str(pos.line, 0, &new_line)?;
+            let old_len = state.buffer_mut().line_len(pos.line)?;
+            state
+                .buffer_mut()
+                .delete_range(pos.line, 0, pos.line, old_len)?;
+            state.buffer_mut().insert_str(pos.line, 0, &new_line)?;
 
             Ok(pos)
         })
     }
 
     pub(super) fn trim_trailing_whitespace(&mut self) -> Result<()> {
-        let content = self.buffer.content();
+        let content = self.buffer().content();
         let ends_with_newline = content.ends_with('\n');
 
         let lines: Vec<String> = content
@@ -509,7 +528,7 @@ impl EditorState {
             new_content.push('\n');
         }
 
-        self.buffer.set_content(new_content)?;
+        self.buffer_mut().set_content(new_content)?;
         self.clamp_cursors_after_edit()?;
         Ok(())
     }

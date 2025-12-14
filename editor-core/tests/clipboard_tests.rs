@@ -101,7 +101,7 @@ fn test_cut_removes_selected_text() {
     editor.execute_command(Command::Cut).unwrap();
 
     assert!(!editor.has_selection());
-    assert_eq!(editor.buffer().content(), "llo");
+    assert_eq!(editor.current_buffer().content(), "llo");
 }
 
 #[test]
@@ -118,7 +118,7 @@ fn test_cut_empty_selection() {
 
     let result = editor.execute_command(Command::Cut);
     assert!(result.is_ok());
-    assert_eq!(editor.buffer().content(), "Hello");
+    assert_eq!(editor.current_buffer().content(), "Hello");
 }
 
 #[test]
@@ -151,7 +151,7 @@ fn test_paste_inserts_text() {
     editor2.execute_command(Command::MoveToStartOfLine).unwrap();
     editor2.execute_command(Command::Paste).unwrap();
 
-    assert_eq!(editor2.buffer().content(), "HeWorld");
+    assert_eq!(editor2.current_buffer().content(), "HeWorld");
 }
 
 #[test]
@@ -185,7 +185,7 @@ fn test_paste_replaces_selection() {
 
     editor2.execute_command(Command::Paste).unwrap();
 
-    assert_eq!(editor2.buffer().content(), "Herld");
+    assert_eq!(editor2.current_buffer().content(), "Herld");
 }
 
 #[test]
@@ -207,7 +207,7 @@ fn test_selection_multiline() {
 
     editor.execute_command(Command::Cut).unwrap();
 
-    assert_eq!(editor.buffer().content(), "");
+    assert_eq!(editor.current_buffer().content(), "");
 }
 
 #[test]
@@ -264,7 +264,7 @@ fn test_block_selection_cut() {
 
     editor.execute_command(Command::Cut).unwrap();
 
-    assert_eq!(editor.buffer().content(), "C\nF");
+    assert_eq!(editor.current_buffer().content(), "C\nF");
 }
 
 #[test]
@@ -291,5 +291,5 @@ fn test_selection_with_mouse() {
 
     editor.execute_command(Command::Cut).unwrap();
 
-    assert_eq!(editor.buffer().content(), "lo");
+    assert_eq!(editor.current_buffer().content(), "lo");
 }

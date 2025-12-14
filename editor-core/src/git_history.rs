@@ -103,32 +103,54 @@ impl GitHistoryManager {
     }
 
     pub fn auto_commit_on_save(&self, project_path: &Path, file_path: &Path) -> Result<()> {
-        let repo = self.open_repository(project_path)?;
+        let path_buf = file_path.to_path_buf();
+        self.auto_commit_on_save_multiple(project_path, &[&path_buf])
+    }
 
-        let canonical_file = file_path.canonicalize().map_err(EditorError::Io)?;
-        let canonical_project = project_path.canonicalize().map_err(EditorError::Io)?;
-
-        let relative_path = canonical_file
-            .strip_prefix(&canonical_project)
-            .map_err(|_| {
-                EditorError::InvalidOperation("File is not within project directory".to_string())
-            })?;
-
-        let repo_file_path = repo
-            .workdir()
-            .ok_or_else(|| EditorError::Git("Repository has no working directory".to_string()))?
-            .join(relative_path);
-
-        if let Some(parent) = repo_file_path.parent() {
-            fs::create_dir_all(parent).map_err(EditorError::Io)?;
+    pub fn auto_commit_on_save_multiple(
+        &self,
+        project_path: &Path,
+        file_paths: &[&PathBuf],
+    ) -> Result<()> {
+        if file_paths.is_empty() {
+            return Ok(());
         }
 
-        fs::copy(&canonical_file, &repo_file_path).map_err(EditorError::Io)?;
+        let repo = self.open_repository(project_path)?;
+        let canonical_project = project_path.canonicalize().map_err(EditorError::Io)?;
 
         let mut index = repo.index().map_err(|e| EditorError::Git(e.to_string()))?;
-        index
-            .add_path(relative_path)
-            .map_err(|e| EditorError::Git(e.to_string()))?;
+        let mut relative_paths = Vec::new();
+
+        for file_path in file_paths {
+            let canonical_file = file_path.canonicalize().map_err(EditorError::Io)?;
+
+            let relative_path = canonical_file
+                .strip_prefix(&canonical_project)
+                .map_err(|_| {
+                    EditorError::InvalidOperation(
+                        "File is not within project directory".to_string(),
+                    )
+                })?;
+
+            let repo_file_path = repo
+                .workdir()
+                .ok_or_else(|| EditorError::Git("Repository has no working directory".to_string()))?
+                .join(relative_path);
+
+            if let Some(parent) = repo_file_path.parent() {
+                fs::create_dir_all(parent).map_err(EditorError::Io)?;
+            }
+
+            fs::copy(&canonical_file, &repo_file_path).map_err(EditorError::Io)?;
+
+            index
+                .add_path(relative_path)
+                .map_err(|e| EditorError::Git(e.to_string()))?;
+
+            relative_paths.push(relative_path.to_path_buf());
+        }
+
         index.write().map_err(|e| EditorError::Git(e.to_string()))?;
 
         let signature = create_signature()?;
@@ -140,7 +162,25 @@ impl GitHistoryManager {
             .map_err(|e| EditorError::Git(e.to_string()))?;
 
         let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-        let message = format!("Auto-save: {} at {}", relative_path.display(), timestamp);
+        let message = if relative_paths.len() == 1 {
+            format!(
+                "Auto-save: {} at {}",
+                relative_paths[0].display(),
+                timestamp
+            )
+        } else {
+            let files_list = relative_paths
+                .iter()
+                .map(|p| format!("  - {}", p.display()))
+                .collect::<Vec<_>>()
+                .join("\n");
+            format!(
+                "Auto-save: {} files at {}\n\n{}",
+                relative_paths.len(),
+                timestamp,
+                files_list
+            )
+        };
 
         let parent_commit = repo.head().ok().and_then(|head| head.peel_to_commit().ok());
 

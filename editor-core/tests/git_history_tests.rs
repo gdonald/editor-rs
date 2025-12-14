@@ -218,3 +218,109 @@ fn test_auto_commit_doesnt_affect_user_repo() {
     let is_head_unborn = user_repo.head().is_err() || user_repo.is_empty().unwrap();
     assert!(is_head_unborn);
 }
+
+#[test]
+fn test_auto_commit_multiple_files() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let file1_path = project_dir.path().join("file1.txt");
+    let file2_path = project_dir.path().join("file2.txt");
+    let file3_path = project_dir.path().join("file3.txt");
+
+    fs::write(&file1_path, "File 1 content").unwrap();
+    fs::write(&file2_path, "File 2 content").unwrap();
+    fs::write(&file3_path, "File 3 content").unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+    let file_paths = vec![&file1_path, &file2_path, &file3_path];
+
+    manager
+        .auto_commit_on_save_multiple(project_dir.path(), &file_paths)
+        .unwrap();
+
+    let repo = manager.open_repository(project_dir.path()).unwrap();
+    let head = repo.head().unwrap();
+    let commit = head.peel_to_commit().unwrap();
+
+    let message = commit.message().unwrap();
+    assert!(message.contains("3 files"));
+    assert!(message.contains("file1.txt"));
+    assert!(message.contains("file2.txt"));
+    assert!(message.contains("file3.txt"));
+}
+
+#[test]
+fn test_auto_commit_multiple_files_nested() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let src_dir = project_dir.path().join("src");
+    let tests_dir = project_dir.path().join("tests");
+    fs::create_dir_all(&src_dir).unwrap();
+    fs::create_dir_all(&tests_dir).unwrap();
+
+    let file1_path = src_dir.join("main.rs");
+    let file2_path = src_dir.join("lib.rs");
+    let file3_path = tests_dir.join("integration.rs");
+
+    fs::write(&file1_path, "fn main() {}").unwrap();
+    fs::write(&file2_path, "pub fn lib() {}").unwrap();
+    fs::write(&file3_path, "#[test] fn test() {}").unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+    let file_paths = vec![&file1_path, &file2_path, &file3_path];
+
+    manager
+        .auto_commit_on_save_multiple(project_dir.path(), &file_paths)
+        .unwrap();
+
+    let repo = manager.open_repository(project_dir.path()).unwrap();
+    let head = repo.head().unwrap();
+    let commit = head.peel_to_commit().unwrap();
+
+    let message = commit.message().unwrap();
+    assert!(message.contains("3 files"));
+    assert!(message.contains("src") && message.contains("main.rs"));
+    assert!(message.contains("src") && message.contains("lib.rs"));
+    assert!(message.contains("tests") && message.contains("integration.rs"));
+}
+
+#[test]
+fn test_auto_commit_empty_file_list() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+    let file_paths: Vec<&std::path::PathBuf> = vec![];
+
+    let result = manager.auto_commit_on_save_multiple(project_dir.path(), &file_paths);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_auto_commit_single_file_via_multiple() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let file_path = project_dir.path().join("single.txt");
+    fs::write(&file_path, "Single file").unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+
+    manager
+        .auto_commit_on_save_multiple(project_dir.path(), &[&file_path])
+        .unwrap();
+
+    let repo = manager.open_repository(project_dir.path()).unwrap();
+    let head = repo.head().unwrap();
+    let commit = head.peel_to_commit().unwrap();
+
+    let message = commit.message().unwrap();
+    assert!(message.contains("Auto-save: single.txt"));
+    assert!(!message.contains("files"));
+}

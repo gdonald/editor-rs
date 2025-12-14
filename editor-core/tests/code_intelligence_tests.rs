@@ -7,7 +7,7 @@ fn test_auto_close_parentheses() {
         .execute_command(Command::InsertCharWithAutoClose('('))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "()");
+    assert_eq!(editor.current_buffer().content(), "()");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -18,7 +18,7 @@ fn test_auto_close_square_brackets() {
         .execute_command(Command::InsertCharWithAutoClose('['))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "[]");
+    assert_eq!(editor.current_buffer().content(), "[]");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -29,7 +29,7 @@ fn test_auto_close_curly_braces() {
         .execute_command(Command::InsertCharWithAutoClose('{'))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "{}");
+    assert_eq!(editor.current_buffer().content(), "{}");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -40,7 +40,7 @@ fn test_auto_close_double_quotes() {
         .execute_command(Command::InsertCharWithAutoClose('"'))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "\"\"");
+    assert_eq!(editor.current_buffer().content(), "\"\"");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -51,7 +51,7 @@ fn test_auto_close_single_quotes() {
         .execute_command(Command::InsertCharWithAutoClose('\''))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "''");
+    assert_eq!(editor.current_buffer().content(), "''");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -64,7 +64,7 @@ fn test_auto_close_no_close_when_char_after() {
         .execute_command(Command::InsertCharWithAutoClose('('))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "(a");
+    assert_eq!(editor.current_buffer().content(), "(a");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -77,7 +77,7 @@ fn test_auto_close_with_whitespace_after() {
         .execute_command(Command::InsertCharWithAutoClose('('))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "() ");
+    assert_eq!(editor.current_buffer().content(), "() ");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -91,7 +91,7 @@ fn test_auto_close_at_end_of_line() {
         .execute_command(Command::InsertCharWithAutoClose('('))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "foo()");
+    assert_eq!(editor.current_buffer().content(), "foo()");
     assert_eq!(editor.cursor().column, 4);
 }
 
@@ -108,7 +108,7 @@ fn test_auto_close_nested_brackets() {
         .execute_command(Command::InsertCharWithAutoClose('{'))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "([{}])");
+    assert_eq!(editor.current_buffer().content(), "([{}])");
     assert_eq!(editor.cursor().column, 3);
 }
 
@@ -133,7 +133,7 @@ fn test_auto_close_multi_cursor() {
         .execute_command(Command::InsertCharWithAutoClose('('))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "a()\nb()\nc()");
+    assert_eq!(editor.current_buffer().content(), "a()\nb()\nc()");
     let cursors = editor.cursors();
     assert_eq!(cursors.len(), 3);
 }
@@ -145,7 +145,7 @@ fn test_auto_close_non_bracket_char() {
         .execute_command(Command::InsertCharWithAutoClose('x'))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "x");
+    assert_eq!(editor.current_buffer().content(), "x");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -158,7 +158,7 @@ fn test_auto_close_with_closing_bracket_after() {
         .execute_command(Command::InsertCharWithAutoClose('('))
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "())");
+    assert_eq!(editor.current_buffer().content(), "())");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -175,11 +175,11 @@ fn test_toggle_line_comment() {
 
     // Toggle comment on first line
     editor.execute_command(Command::ToggleLineComment).unwrap();
-    assert_eq!(editor.buffer().content(), "// a\nb");
+    assert_eq!(editor.current_buffer().content(), "// a\nb");
 
     // Toggle comment again (uncomment)
     editor.execute_command(Command::ToggleLineComment).unwrap();
-    assert_eq!(editor.buffer().content(), "a\nb");
+    assert_eq!(editor.current_buffer().content(), "a\nb");
 }
 
 #[test]
@@ -195,10 +195,10 @@ fn test_toggle_line_comment_selection() {
     editor.execute_command(Command::SelectionEnd).unwrap();
 
     editor.execute_command(Command::ToggleLineComment).unwrap();
-    assert_eq!(editor.buffer().content(), "// a\n// b");
+    assert_eq!(editor.current_buffer().content(), "// a\n// b");
 
     editor.execute_command(Command::ToggleLineComment).unwrap();
-    assert_eq!(editor.buffer().content(), "a\nb");
+    assert_eq!(editor.current_buffer().content(), "a\nb");
 }
 
 #[test]
@@ -210,10 +210,10 @@ fn test_toggle_line_comment_different_indentation() {
 
     editor.execute_command(Command::MoveToStartOfLine).unwrap();
     editor.execute_command(Command::ToggleLineComment).unwrap();
-    assert_eq!(editor.buffer().content(), "//  a");
+    assert_eq!(editor.current_buffer().content(), "//  a");
 
     editor.execute_command(Command::ToggleLineComment).unwrap();
-    assert_eq!(editor.buffer().content(), " a");
+    assert_eq!(editor.current_buffer().content(), " a");
 }
 
 #[test]
@@ -227,5 +227,5 @@ fn test_toggle_block_comment() {
     editor.execute_command(Command::SelectionEnd).unwrap();
 
     editor.execute_command(Command::ToggleBlockComment).unwrap();
-    assert_eq!(editor.buffer().content(), "/*a*/");
+    assert_eq!(editor.current_buffer().content(), "/*a*/");
 }

@@ -9,13 +9,13 @@ pub struct VirtualViewport {
 
 impl EditorState {
     pub fn get_virtual_viewport(&self, viewport_height: usize) -> VirtualViewport {
-        let total_lines = self.buffer.line_count();
+        let total_lines = self.buffer().line_count();
         let start_line = self.viewport_top;
         let end_line = (start_line + viewport_height).min(total_lines);
 
         let mut visible_lines = Vec::with_capacity(viewport_height);
         for line_idx in start_line..end_line {
-            if let Ok(line) = self.buffer.line(line_idx) {
+            if let Ok(line) = self.buffer().line(line_idx) {
                 visible_lines.push(line);
             }
         }
@@ -52,7 +52,7 @@ impl EditorState {
             ));
         }
 
-        let content = self.buffer.content();
+        let content = self.buffer().content();
         let ends_with_newline = content.ends_with('\n');
         let mut wrapped_lines = Vec::new();
 
@@ -70,7 +70,7 @@ impl EditorState {
             new_content.push('\n');
         }
 
-        self.buffer.set_content(new_content)?;
+        self.buffer_mut().set_content(new_content)?;
         self.clamp_cursors_after_edit()?;
         Ok(())
     }
@@ -85,7 +85,7 @@ impl EditorState {
     }
 
     pub fn soft_wrapped_lines(&self) -> Vec<String> {
-        let content = self.buffer.content();
+        let content = self.buffer().content();
         let width = self.soft_wrap_width;
 
         let mut lines = Vec::new();

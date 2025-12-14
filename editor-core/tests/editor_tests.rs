@@ -5,7 +5,7 @@ use std::path::PathBuf;
 fn test_editor_new() {
     let editor = EditorState::new();
     assert_eq!(editor.cursor(), &CursorPosition::zero());
-    assert_eq!(editor.buffer().line_count(), 1);
+    assert_eq!(editor.current_buffer().line_count(), 1);
     assert_eq!(editor.viewport_top(), 0);
 }
 
@@ -15,7 +15,7 @@ fn test_editor_insert_char() {
     editor.execute_command(Command::InsertChar('H')).unwrap();
     editor.execute_command(Command::InsertChar('i')).unwrap();
 
-    assert_eq!(editor.buffer().content(), "Hi");
+    assert_eq!(editor.current_buffer().content(), "Hi");
     assert_eq!(editor.cursor().column, 2);
 }
 
@@ -27,7 +27,7 @@ fn test_editor_delete_char() {
     editor.execute_command(Command::MoveCursorLeft).unwrap();
     editor.execute_command(Command::DeleteChar).unwrap();
 
-    assert_eq!(editor.buffer().content(), "H");
+    assert_eq!(editor.current_buffer().content(), "H");
 }
 
 #[test]
@@ -37,7 +37,7 @@ fn test_editor_backspace() {
     editor.execute_command(Command::InsertChar('i')).unwrap();
     editor.execute_command(Command::Backspace).unwrap();
 
-    assert_eq!(editor.buffer().content(), "H");
+    assert_eq!(editor.current_buffer().content(), "H");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -46,7 +46,7 @@ fn test_editor_backspace_at_start() {
     let mut editor = EditorState::new();
     editor.execute_command(Command::Backspace).unwrap();
 
-    assert_eq!(editor.buffer().content(), "");
+    assert_eq!(editor.current_buffer().content(), "");
     assert_eq!(editor.cursor(), &CursorPosition::zero());
 }
 
@@ -57,7 +57,7 @@ fn test_editor_new_line() {
     editor.execute_command(Command::NewLine).unwrap();
     editor.execute_command(Command::InsertChar('W')).unwrap();
 
-    assert_eq!(editor.buffer().content(), "H\nW");
+    assert_eq!(editor.current_buffer().content(), "H\nW");
     assert_eq!(editor.cursor().line, 1);
     assert_eq!(editor.cursor().column, 1);
 }
@@ -71,7 +71,7 @@ fn test_editor_backspace_across_lines() {
     editor.execute_command(Command::MoveCursorLeft).unwrap();
     editor.execute_command(Command::Backspace).unwrap();
 
-    assert_eq!(editor.buffer().content(), "HW");
+    assert_eq!(editor.current_buffer().content(), "HW");
     assert_eq!(editor.cursor().line, 0);
 }
 
@@ -86,7 +86,7 @@ fn test_editor_delete_line() {
     editor.execute_command(Command::MoveCursorUp).unwrap();
     editor.execute_command(Command::DeleteLine).unwrap();
 
-    assert_eq!(editor.buffer().content(), "L2");
+    assert_eq!(editor.current_buffer().content(), "L2");
 }
 
 #[test]
@@ -405,7 +405,7 @@ fn test_editor_new_buffer() {
     editor.execute_command(Command::InsertChar('T')).unwrap();
     editor.execute_command(Command::New).unwrap();
 
-    assert_eq!(editor.buffer().content(), "");
+    assert_eq!(editor.current_buffer().content(), "");
     assert_eq!(editor.cursor(), &CursorPosition::zero());
 }
 
@@ -419,7 +419,7 @@ fn test_editor_from_file() {
     fs::write(&path, "Test file content").unwrap();
 
     let editor = EditorState::from_file(path).unwrap();
-    assert_eq!(editor.buffer().content(), "Test file content");
+    assert_eq!(editor.current_buffer().content(), "Test file content");
     assert_eq!(editor.cursor(), &CursorPosition::zero());
 }
 
@@ -445,7 +445,7 @@ fn test_editor_open_file() {
     fs::write(&path, "New file content").unwrap();
 
     editor.execute_command(Command::Open(path)).unwrap();
-    assert_eq!(editor.buffer().content(), "New file content");
+    assert_eq!(editor.current_buffer().content(), "New file content");
     assert_eq!(editor.cursor(), &CursorPosition::zero());
     assert_eq!(editor.viewport_top(), 0);
 }
@@ -505,13 +505,13 @@ fn test_editor_close_command() {
 fn test_editor_default() {
     let editor = EditorState::default();
     assert_eq!(editor.cursor(), &CursorPosition::zero());
-    assert_eq!(editor.buffer().line_count(), 1);
+    assert_eq!(editor.current_buffer().line_count(), 1);
 }
 
 #[test]
 fn test_editor_buffer_accessor() {
     let editor = EditorState::new();
-    let buffer = editor.buffer();
+    let buffer = editor.current_buffer();
     assert_eq!(buffer.line_count(), 1);
 }
 
@@ -531,7 +531,7 @@ fn test_editor_delete_line_last_line() {
     editor.execute_command(Command::InsertChar('2')).unwrap();
 
     editor.execute_command(Command::DeleteLine).unwrap();
-    assert_eq!(editor.buffer().content(), "L1\n");
+    assert_eq!(editor.current_buffer().content(), "L1\n");
     assert_eq!(editor.cursor().column, 0);
 }
 
@@ -573,7 +573,7 @@ fn test_editor_move_to_end_of_file_empty_buffer() {
 fn test_editor_delete_line_empty_buffer() {
     let mut editor = EditorState::new();
     editor.execute_command(Command::DeleteLine).unwrap();
-    assert_eq!(editor.buffer().content(), "");
+    assert_eq!(editor.current_buffer().content(), "");
 }
 
 #[test]
@@ -613,11 +613,11 @@ fn test_editor_indent_and_dedent_line() {
     }
 
     editor.execute_command(Command::Indent).unwrap();
-    assert_eq!(editor.buffer().content(), "    text");
+    assert_eq!(editor.current_buffer().content(), "    text");
     assert_eq!(editor.cursor().column, 8);
 
     editor.execute_command(Command::Dedent).unwrap();
-    assert_eq!(editor.buffer().content(), "text");
+    assert_eq!(editor.current_buffer().content(), "text");
     assert_eq!(editor.cursor().column, 4);
 }
 
@@ -629,7 +629,7 @@ fn test_editor_auto_indent_new_line() {
     }
 
     editor.execute_command(Command::NewLine).unwrap();
-    assert_eq!(editor.buffer().content(), "    line\n    ");
+    assert_eq!(editor.current_buffer().content(), "    line\n    ");
     assert_eq!(editor.cursor().line, 1);
     assert_eq!(editor.cursor().column, 4);
 }
@@ -646,12 +646,12 @@ fn test_editor_overwrite_mode() {
         .execute_command(Command::ToggleOverwriteMode)
         .unwrap();
     editor.execute_command(Command::InsertChar('Y')).unwrap();
-    assert_eq!(editor.buffer().content(), "Yello");
+    assert_eq!(editor.current_buffer().content(), "Yello");
     assert!(editor.overwrite_mode());
 
     editor.execute_command(Command::MoveToEndOfLine).unwrap();
     editor.execute_command(Command::InsertChar('!')).unwrap();
-    assert_eq!(editor.buffer().content(), "Yello!");
+    assert_eq!(editor.current_buffer().content(), "Yello!");
 }
 
 #[test]
@@ -662,7 +662,7 @@ fn test_editor_hard_wrap() {
     }
 
     editor.execute_command(Command::HardWrap(4)).unwrap();
-    assert_eq!(editor.buffer().content(), "abcd\nefgh\nij");
+    assert_eq!(editor.current_buffer().content(), "abcd\nefgh\nij");
 }
 
 #[test]
@@ -678,7 +678,7 @@ fn test_editor_soft_wrap_lines() {
         lines,
         vec!["wra".to_string(), "pte".to_string(), "xt".to_string()]
     );
-    assert_eq!(editor.buffer().content(), "wraptext");
+    assert_eq!(editor.current_buffer().content(), "wraptext");
 }
 
 #[test]
@@ -691,7 +691,7 @@ fn test_editor_trim_trailing_whitespace() {
     editor
         .execute_command(Command::TrimTrailingWhitespace)
         .unwrap();
-    assert_eq!(editor.buffer().content(), "abc\nline\n");
+    assert_eq!(editor.current_buffer().content(), "abc\nline\n");
     assert_eq!(editor.cursor().line, 2);
     assert_eq!(editor.cursor().column, 0);
 }

@@ -3,13 +3,13 @@ use editor_core::{Command, EditorState};
 #[test]
 fn test_toggle_read_only() {
     let mut editor = EditorState::new();
-    assert!(!editor.buffer().is_read_only());
+    assert!(!editor.current_buffer().is_read_only());
 
     editor.execute_command(Command::ToggleReadOnly).unwrap();
-    assert!(editor.buffer().is_read_only());
+    assert!(editor.current_buffer().is_read_only());
 
     editor.execute_command(Command::ToggleReadOnly).unwrap();
-    assert!(!editor.buffer().is_read_only());
+    assert!(!editor.current_buffer().is_read_only());
 }
 
 #[test]

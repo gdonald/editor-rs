@@ -268,10 +268,10 @@
 - [x] Test that auto-commit doesn't affect user's actual git repos
 
 #### 6.5.2.2 Multi-File Auto-Commit Support
-- [ ] Implement "save all unsaved files" functionality in EditorState
-- [ ] Modify auto-commit to handle multiple files in single commit
-- [ ] Update commit message to list all files changed
-- [ ] Write tests for multi-file auto-commit
+- [x] Implement "save all unsaved files" functionality in EditorState
+- [x] Modify auto-commit to handle multiple files in single commit
+- [x] Update commit message to list all files changed
+- [x] Write tests for multi-file auto-commit
 
 #### 6.5.2.3 Error Handling and Robustness
 - [ ] Handle git commit failures gracefully (log but don't block save)

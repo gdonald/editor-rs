@@ -213,13 +213,13 @@ fn test_edit_invert_replace() {
 fn test_editor_state_undo_redo_insert() {
     let mut state = EditorState::new();
     state.execute_command(Command::InsertChar('h')).unwrap();
-    assert!(state.buffer().content().starts_with("h"));
+    assert!(state.current_buffer().content().starts_with("h"));
 
     state.execute_command(Command::Undo).unwrap();
-    assert!(!state.buffer().content().contains('h'));
+    assert!(!state.current_buffer().content().contains('h'));
 
     state.execute_command(Command::Redo).unwrap();
-    assert!(state.buffer().content().starts_with("h"));
+    assert!(state.current_buffer().content().starts_with("h"));
 }
 
 #[test]
@@ -292,14 +292,14 @@ fn test_editor_state_undo_redo_multiple_commands() {
     state.execute_command(Command::InsertChar('l')).unwrap();
     state.execute_command(Command::InsertChar('o')).unwrap();
 
-    assert!(state.buffer().content().starts_with("hello"));
+    assert!(state.current_buffer().content().starts_with("hello"));
 
     state.execute_command(Command::Undo).unwrap();
-    let content_after_one_undo = state.buffer().content();
+    let content_after_one_undo = state.current_buffer().content();
     assert!(content_after_one_undo.len() < "hello\n".len());
 
     state.execute_command(Command::Redo).unwrap();
-    assert!(state.buffer().content().starts_with("hello"));
+    assert!(state.current_buffer().content().starts_with("hello"));
 }
 
 #[test]

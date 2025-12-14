@@ -7,7 +7,7 @@ fn test_duplicate_line_single_line() {
     editor.execute_command(Command::InsertChar('i')).unwrap();
     editor.execute_command(Command::DuplicateLine).unwrap();
 
-    assert_eq!(editor.buffer().content(), "Hi\nHi");
+    assert_eq!(editor.current_buffer().content(), "Hi\nHi");
     assert_eq!(editor.cursor().line, 1);
 }
 
@@ -23,7 +23,7 @@ fn test_duplicate_line_multiple_lines() {
     editor.execute_command(Command::MoveToStartOfFile).unwrap();
     editor.execute_command(Command::DuplicateLine).unwrap();
 
-    assert_eq!(editor.buffer().content(), "A\nA\nB\nC");
+    assert_eq!(editor.current_buffer().content(), "A\nA\nB\nC");
     assert_eq!(editor.cursor().line, 1);
 }
 
@@ -37,7 +37,7 @@ fn test_move_lines_up() {
     editor.execute_command(Command::InsertChar('C')).unwrap();
 
     editor.execute_command(Command::MoveLinesUp).unwrap();
-    assert_eq!(editor.buffer().content(), "A\nC\nB");
+    assert_eq!(editor.current_buffer().content(), "A\nC\nB");
     assert_eq!(editor.cursor().line, 1);
 }
 
@@ -51,7 +51,7 @@ fn test_move_lines_up_at_top() {
     editor.execute_command(Command::MoveToStartOfFile).unwrap();
     editor.execute_command(Command::MoveLinesUp).unwrap();
 
-    assert_eq!(editor.buffer().content(), "A\nB");
+    assert_eq!(editor.current_buffer().content(), "A\nB");
     assert_eq!(editor.cursor().line, 0);
 }
 
@@ -67,7 +67,7 @@ fn test_move_lines_down() {
     editor.execute_command(Command::MoveToStartOfFile).unwrap();
     editor.execute_command(Command::MoveLinesDown).unwrap();
 
-    assert_eq!(editor.buffer().content(), "B\nA\nC");
+    assert_eq!(editor.current_buffer().content(), "B\nA\nC");
     assert_eq!(editor.cursor().line, 1);
 }
 
@@ -80,7 +80,7 @@ fn test_move_lines_down_at_bottom() {
 
     editor.execute_command(Command::MoveLinesDown).unwrap();
 
-    assert_eq!(editor.buffer().content(), "A\nB");
+    assert_eq!(editor.current_buffer().content(), "A\nB");
     assert_eq!(editor.cursor().line, 1);
 }
 
@@ -102,7 +102,7 @@ fn test_join_lines() {
     editor.execute_command(Command::MoveToStartOfFile).unwrap();
     editor.execute_command(Command::JoinLines).unwrap();
 
-    assert_eq!(editor.buffer().content(), "Hello World");
+    assert_eq!(editor.current_buffer().content(), "Hello World");
 }
 
 #[test]
@@ -117,7 +117,7 @@ fn test_join_lines_with_leading_whitespace() {
     editor.execute_command(Command::MoveToStartOfFile).unwrap();
     editor.execute_command(Command::JoinLines).unwrap();
 
-    assert_eq!(editor.buffer().content(), "A B");
+    assert_eq!(editor.current_buffer().content(), "A B");
 }
 
 #[test]
@@ -126,7 +126,7 @@ fn test_join_lines_at_last_line() {
     editor.execute_command(Command::InsertChar('A')).unwrap();
     editor.execute_command(Command::JoinLines).unwrap();
 
-    assert_eq!(editor.buffer().content(), "A");
+    assert_eq!(editor.current_buffer().content(), "A");
 }
 
 #[test]
@@ -149,7 +149,7 @@ fn test_sort_lines_alphabetical() {
         .execute_command(Command::SortLines { numerical: false })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "A\nB\nC");
+    assert_eq!(editor.current_buffer().content(), "A\nB\nC");
 }
 
 #[test]
@@ -173,7 +173,7 @@ fn test_sort_lines_numerical() {
         .execute_command(Command::SortLines { numerical: true })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "2\n5\n10");
+    assert_eq!(editor.current_buffer().content(), "2\n5\n10");
 }
 
 #[test]
@@ -184,7 +184,7 @@ fn test_sort_lines_single_line() {
         .execute_command(Command::SortLines { numerical: false })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "A");
+    assert_eq!(editor.current_buffer().content(), "A");
 }
 
 #[test]
@@ -203,7 +203,7 @@ fn test_change_case_upper() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "HELLO");
+    assert_eq!(editor.current_buffer().content(), "HELLO");
 }
 
 #[test]
@@ -222,7 +222,7 @@ fn test_change_case_lower() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "hello");
+    assert_eq!(editor.current_buffer().content(), "hello");
 }
 
 #[test]
@@ -247,7 +247,7 @@ fn test_change_case_title() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "Hello World");
+    assert_eq!(editor.current_buffer().content(), "Hello World");
 }
 
 #[test]
@@ -265,7 +265,7 @@ fn test_transpose_characters_middle() {
         .execute_command(Command::TransposeCharacters)
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "Hlelo");
+    assert_eq!(editor.current_buffer().content(), "Hlelo");
     assert_eq!(editor.cursor().column, 3);
 }
 
@@ -281,7 +281,7 @@ fn test_transpose_characters_at_start() {
         .execute_command(Command::TransposeCharacters)
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "BAC");
+    assert_eq!(editor.current_buffer().content(), "BAC");
     assert_eq!(editor.cursor().column, 1);
 }
 
@@ -296,7 +296,7 @@ fn test_transpose_characters_at_end() {
         .execute_command(Command::TransposeCharacters)
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "ACB");
+    assert_eq!(editor.current_buffer().content(), "ACB");
 }
 
 #[test]
@@ -308,7 +308,7 @@ fn test_transpose_characters_single_char() {
         .execute_command(Command::TransposeCharacters)
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "A");
+    assert_eq!(editor.current_buffer().content(), "A");
 }
 
 #[test]
@@ -318,7 +318,7 @@ fn test_transpose_characters_empty_line() {
         .execute_command(Command::TransposeCharacters)
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "");
+    assert_eq!(editor.current_buffer().content(), "");
 }
 
 #[test]
@@ -336,7 +336,7 @@ fn test_duplicate_line_with_multicursor() {
         .unwrap();
     editor.execute_command(Command::DuplicateLine).unwrap();
 
-    assert_eq!(editor.buffer().content(), "A\nA\nB\nB\nC");
+    assert_eq!(editor.current_buffer().content(), "A\nA\nB\nB\nC");
 }
 
 #[test]
@@ -356,7 +356,7 @@ fn test_join_lines_with_multicursor() {
         .unwrap();
     editor.execute_command(Command::JoinLines).unwrap();
 
-    assert_eq!(editor.buffer().content(), "A B C\nD");
+    assert_eq!(editor.current_buffer().content(), "A B C\nD");
 }
 
 #[test]
@@ -381,7 +381,7 @@ fn test_change_case_with_multicursor() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "A\nB\nC");
+    assert_eq!(editor.current_buffer().content(), "A\nB\nC");
 }
 
 #[test]
@@ -401,5 +401,5 @@ fn test_transpose_characters_with_multicursor() {
         .execute_command(Command::TransposeCharacters)
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "BA\nDC");
+    assert_eq!(editor.current_buffer().content(), "BA\nDC");
 }

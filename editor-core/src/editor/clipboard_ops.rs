@@ -53,7 +53,7 @@ impl EditorState {
 
                     let mut result = String::new();
                     for line in start.line..=end.line {
-                        let line_len = self.buffer.line_len(line)?;
+                        let line_len = self.buffer().line_len(line)?;
                         let start_col = min_col.min(line_len);
                         let end_col = max_col.min(line_len);
 
@@ -74,12 +74,12 @@ impl EditorState {
     }
 
     fn get_text_range(&self, start: CursorPosition, end: CursorPosition) -> Result<String> {
-        let start_idx = self.buffer.char_index(start.line, start.column)?;
-        let end_idx = self.buffer.char_index(end.line, end.column)?;
+        let start_idx = self.buffer().char_index(start.line, start.column)?;
+        let end_idx = self.buffer().char_index(end.line, end.column)?;
 
         let mut result = String::new();
         for i in start_idx..end_idx {
-            if let Some(ch) = self.buffer.char_at(i) {
+            if let Some(ch) = self.buffer().char_at(i) {
                 result.push(ch);
             }
         }
@@ -111,7 +111,7 @@ impl EditorState {
                         let max_col = selection.anchor.column.max(selection.cursor.column);
 
                         for line in (start.line..=end.line).rev() {
-                            let line_len = self.buffer.line_len(line)?;
+                            let line_len = self.buffer().line_len(line)?;
                             let start_col = min_col.min(line_len);
                             let end_col = max_col.min(line_len);
 
@@ -148,7 +148,7 @@ impl EditorState {
                             let max_col = selection.anchor.column.max(selection.cursor.column);
 
                             for line in (start.line..=end.line).rev() {
-                                let line_len = self.buffer.line_len(line)?;
+                                let line_len = self.buffer().line_len(line)?;
                                 let start_col = min_col.min(line_len);
                                 let end_col = max_col.min(line_len);
 
@@ -171,12 +171,12 @@ impl EditorState {
     }
 
     fn delete_range(&mut self, start: CursorPosition, end: CursorPosition) -> Result<()> {
-        let start_idx = self.buffer.char_index(start.line, start.column)?;
-        let end_idx = self.buffer.char_index(end.line, end.column)?;
+        let start_idx = self.buffer().char_index(start.line, start.column)?;
+        let end_idx = self.buffer().char_index(end.line, end.column)?;
 
         for _ in start_idx..end_idx {
-            let (line, col) = self.buffer.char_to_line_col(start_idx)?;
-            self.buffer.delete_char(line, col)?;
+            let (line, col) = self.buffer().char_to_line_col(start_idx)?;
+            self.buffer_mut().delete_char(line, col)?;
         }
 
         self.cursors.reset_to(start);
@@ -184,12 +184,12 @@ impl EditorState {
     }
 
     fn insert_text_at(&mut self, position: CursorPosition, text: &str) -> Result<()> {
-        self.buffer
+        self.buffer_mut()
             .insert_str(position.line, position.column, text)?;
 
-        let char_idx = self.buffer.char_index(position.line, position.column)?;
+        let char_idx = self.buffer().char_index(position.line, position.column)?;
         let new_char_idx = char_idx + text.chars().count();
-        let (new_line, new_col) = self.buffer.char_to_line_col(new_char_idx)?;
+        let (new_line, new_col) = self.buffer().char_to_line_col(new_char_idx)?;
         self.cursors
             .reset_to(CursorPosition::new(new_line, new_col));
         Ok(())

@@ -5,7 +5,7 @@ fn test_replace_next_single_occurrence() {
     let mut editor = EditorState::new();
     let content = "hello world";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -16,7 +16,7 @@ fn test_replace_next_single_occurrence() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "hello universe");
+    assert_eq!(editor.current_buffer().content(), "hello universe");
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn test_replace_next_with_selection() {
     let mut editor = EditorState::new();
     let content = "foo bar foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -39,7 +39,7 @@ fn test_replace_next_with_selection() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "baz bar foo");
+    assert_eq!(editor.current_buffer().content(), "baz bar foo");
 
     let cursor = editor.cursor();
     assert_eq!(cursor.line, 0);
@@ -51,7 +51,7 @@ fn test_replace_next_moves_to_next_match() {
     let mut editor = EditorState::new();
     let content = "foo bar foo baz foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -66,7 +66,7 @@ fn test_replace_next_moves_to_next_match() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "xxx bar foo baz foo");
+    assert_eq!(editor.current_buffer().content(), "xxx bar foo baz foo");
 
     let sel = editor.selection().unwrap();
     assert_eq!(sel.start().column, 8);
@@ -78,7 +78,7 @@ fn test_replace_all_multiple_occurrences() {
     let mut editor = EditorState::new();
     let content = "foo bar foo baz foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -89,7 +89,7 @@ fn test_replace_all_multiple_occurrences() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "xxx bar xxx baz xxx");
+    assert_eq!(editor.current_buffer().content(), "xxx bar xxx baz xxx");
 }
 
 #[test]
@@ -97,7 +97,7 @@ fn test_replace_all_no_matches() {
     let mut editor = EditorState::new();
     let content = "hello world";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -108,7 +108,7 @@ fn test_replace_all_no_matches() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "hello world");
+    assert_eq!(editor.current_buffer().content(), "hello world");
 }
 
 #[test]
@@ -116,7 +116,7 @@ fn test_replace_all_multiline() {
     let mut editor = EditorState::new();
     let content = "foo\nbar\nfoo\nbaz\nfoo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -127,7 +127,7 @@ fn test_replace_all_multiline() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "xxx\nbar\nxxx\nbaz\nxxx");
+    assert_eq!(editor.current_buffer().content(), "xxx\nbar\nxxx\nbaz\nxxx");
 }
 
 #[test]
@@ -135,7 +135,7 @@ fn test_replace_in_selection() {
     let mut editor = EditorState::new();
     let content = "foo bar foo baz foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -151,7 +151,7 @@ fn test_replace_in_selection() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "foo bar xxx baz foo");
+    assert_eq!(editor.current_buffer().content(), "foo bar xxx baz foo");
 }
 
 #[test]
@@ -159,7 +159,7 @@ fn test_replace_in_selection_no_selection() {
     let mut editor = EditorState::new();
     let content = "foo bar foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -170,7 +170,7 @@ fn test_replace_in_selection_no_selection() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "foo bar foo");
+    assert_eq!(editor.current_buffer().content(), "foo bar foo");
 }
 
 #[test]
@@ -178,7 +178,7 @@ fn test_replace_history() {
     let mut editor = EditorState::new();
     let content = "foo bar";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -207,7 +207,7 @@ fn test_replace_history_no_duplicates() {
     let mut editor = EditorState::new();
     let content = "foo bar foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -234,7 +234,7 @@ fn test_replace_with_empty_string() {
     let mut editor = EditorState::new();
     let content = "foo bar foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -245,7 +245,7 @@ fn test_replace_with_empty_string() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), " bar ");
+    assert_eq!(editor.current_buffer().content(), " bar ");
 }
 
 #[test]
@@ -253,7 +253,7 @@ fn test_replace_empty_find_string() {
     let mut editor = EditorState::new();
     let content = "hello world";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -264,7 +264,7 @@ fn test_replace_empty_find_string() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "hello world");
+    assert_eq!(editor.current_buffer().content(), "hello world");
 }
 
 #[test]
@@ -272,7 +272,7 @@ fn test_replace_case_sensitive() {
     let mut editor = EditorState::new();
     let content = "Foo foo FOO";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -287,7 +287,7 @@ fn test_replace_case_sensitive() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "Foo bar FOO");
+    assert_eq!(editor.current_buffer().content(), "Foo bar FOO");
 }
 
 #[test]
@@ -295,7 +295,7 @@ fn test_replace_case_insensitive() {
     let mut editor = EditorState::new();
     let content = "Foo foo FOO";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -310,7 +310,7 @@ fn test_replace_case_insensitive() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "bar bar bar");
+    assert_eq!(editor.current_buffer().content(), "bar bar bar");
 }
 
 #[test]
@@ -318,7 +318,7 @@ fn test_replace_regex() {
     let mut editor = EditorState::new();
     let content = "test123 test456";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -333,7 +333,7 @@ fn test_replace_regex() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "number number");
+    assert_eq!(editor.current_buffer().content(), "number number");
 }
 
 #[test]
@@ -341,7 +341,7 @@ fn test_replace_whole_word() {
     let mut editor = EditorState::new();
     let content = "foo foobar barfoo foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -356,7 +356,7 @@ fn test_replace_whole_word() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "xxx foobar barfoo xxx");
+    assert_eq!(editor.current_buffer().content(), "xxx foobar barfoo xxx");
 }
 
 #[test]
@@ -364,7 +364,7 @@ fn test_replace_next_wrap_around() {
     let mut editor = EditorState::new();
     let content = "foo bar baz";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -380,7 +380,7 @@ fn test_replace_next_wrap_around() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "xxx bar baz");
+    assert_eq!(editor.current_buffer().content(), "xxx bar baz");
 }
 
 #[test]
@@ -388,7 +388,7 @@ fn test_replace_longer_replacement() {
     let mut editor = EditorState::new();
     let content = "a b a";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -399,7 +399,7 @@ fn test_replace_longer_replacement() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "longer b longer");
+    assert_eq!(editor.current_buffer().content(), "longer b longer");
 }
 
 #[test]
@@ -407,7 +407,7 @@ fn test_replace_shorter_replacement() {
     let mut editor = EditorState::new();
     let content = "longer word longer";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -418,5 +418,5 @@ fn test_replace_shorter_replacement() {
         })
         .unwrap();
 
-    assert_eq!(editor.buffer().content(), "a word a");
+    assert_eq!(editor.current_buffer().content(), "a word a");
 }

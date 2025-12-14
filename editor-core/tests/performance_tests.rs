@@ -109,7 +109,7 @@ fn test_virtual_viewport_basic() {
     let content = (0..100)
         .map(|i| format!("Line {}\n", i))
         .collect::<String>();
-    state.buffer_mut().set_content(content).unwrap();
+    state.current_buffer_mut().set_content(content).unwrap();
 
     let viewport = state.get_virtual_viewport(20);
     assert_eq!(viewport.start_line, 0);
@@ -125,7 +125,7 @@ fn test_virtual_viewport_scrolled() {
     let content = (0..100)
         .map(|i| format!("Line {}\n", i))
         .collect::<String>();
-    state.buffer_mut().set_content(content).unwrap();
+    state.current_buffer_mut().set_content(content).unwrap();
 
     state.adjust_viewport_to_cursor(20);
 
@@ -147,7 +147,7 @@ fn test_virtual_viewport_at_end() {
     let content = (0..100)
         .map(|i| format!("Line {}\n", i))
         .collect::<String>();
-    state.buffer_mut().set_content(content).unwrap();
+    state.current_buffer_mut().set_content(content).unwrap();
 
     for _ in 0..100 {
         state
@@ -157,7 +157,7 @@ fn test_virtual_viewport_at_end() {
     state.adjust_viewport_to_cursor(20);
 
     let viewport = state.get_virtual_viewport(20);
-    let total_lines = state.buffer().line_count();
+    let total_lines = state.current_buffer().line_count();
     assert!(viewport.start_line <= total_lines.saturating_sub(1));
     assert_eq!(viewport.end_line, total_lines);
 }
@@ -166,10 +166,13 @@ fn test_virtual_viewport_at_end() {
 fn test_virtual_viewport_small_file() {
     let mut state = EditorState::new();
     let content = "Line 1\nLine 2\nLine 3\n";
-    state.buffer_mut().set_content(content.to_string()).unwrap();
+    state
+        .current_buffer_mut()
+        .set_content(content.to_string())
+        .unwrap();
 
     let viewport = state.get_virtual_viewport(20);
-    let total_lines = state.buffer().line_count();
+    let total_lines = state.current_buffer().line_count();
     assert_eq!(viewport.start_line, 0);
     assert_eq!(viewport.end_line, total_lines);
     assert_eq!(viewport.visible_lines.len(), total_lines);
@@ -181,7 +184,7 @@ fn test_adjust_viewport_scrolls_down() {
     let content = (0..100)
         .map(|i| format!("Line {}\n", i))
         .collect::<String>();
-    state.buffer_mut().set_content(content).unwrap();
+    state.current_buffer_mut().set_content(content).unwrap();
 
     for _ in 0..30 {
         state
@@ -202,7 +205,7 @@ fn test_adjust_viewport_scrolls_up() {
     let content = (0..100)
         .map(|i| format!("Line {}\n", i))
         .collect::<String>();
-    state.buffer_mut().set_content(content).unwrap();
+    state.current_buffer_mut().set_content(content).unwrap();
 
     for _ in 0..50 {
         state
@@ -230,7 +233,7 @@ fn test_viewport_respects_scroll_offset() {
     let content = (0..100)
         .map(|i| format!("Line {}\n", i))
         .collect::<String>();
-    state.buffer_mut().set_content(content).unwrap();
+    state.current_buffer_mut().set_content(content).unwrap();
 
     state.set_scroll_offset(10);
 
@@ -283,9 +286,9 @@ fn test_large_file_preserves_content() {
 fn test_virtual_viewport_boundary_conditions() {
     let mut state = EditorState::new();
     let content = (0..5).map(|i| format!("Line {}\n", i)).collect::<String>();
-    state.buffer_mut().set_content(content).unwrap();
+    state.current_buffer_mut().set_content(content).unwrap();
 
-    let total_lines = state.buffer().line_count();
+    let total_lines = state.current_buffer().line_count();
     let viewport = state.get_virtual_viewport(100);
     assert_eq!(viewport.start_line, 0);
     assert_eq!(viewport.end_line, total_lines);

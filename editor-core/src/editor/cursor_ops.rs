@@ -7,7 +7,7 @@ impl EditorState {
         self.map_cursors(|state, mut pos| {
             if pos.line > 0 {
                 pos.line -= 1;
-                let line_len = state.buffer.line_len(pos.line)?;
+                let line_len = state.buffer().line_len(pos.line)?;
                 if pos.column > line_len {
                     pos.column = line_len;
                 }
@@ -18,9 +18,9 @@ impl EditorState {
 
     pub(super) fn move_cursor_down(&mut self) -> Result<()> {
         self.map_cursors(|state, mut pos| {
-            if pos.line + 1 < state.buffer.line_count() {
+            if pos.line + 1 < state.buffer().line_count() {
                 pos.line += 1;
-                let line_len = state.buffer.line_len(pos.line)?;
+                let line_len = state.buffer().line_len(pos.line)?;
                 if pos.column > line_len {
                     pos.column = line_len;
                 }
@@ -35,7 +35,7 @@ impl EditorState {
                 pos.column -= 1;
             } else if pos.line > 0 {
                 pos.line -= 1;
-                pos.column = state.buffer.line_len(pos.line)?;
+                pos.column = state.buffer().line_len(pos.line)?;
             }
             Ok(pos)
         })
@@ -43,10 +43,10 @@ impl EditorState {
 
     pub(super) fn move_cursor_right(&mut self) -> Result<()> {
         self.map_cursors(|state, mut pos| {
-            let line_len = state.buffer.line_len(pos.line)?;
+            let line_len = state.buffer().line_len(pos.line)?;
             if pos.column < line_len {
                 pos.column += 1;
-            } else if pos.line + 1 < state.buffer.line_count() {
+            } else if pos.line + 1 < state.buffer().line_count() {
                 pos.line += 1;
                 pos.column = 0;
             }
@@ -56,11 +56,11 @@ impl EditorState {
 
     pub(super) fn move_cursor_word_left(&mut self) -> Result<()> {
         self.map_cursors(|state, mut pos| {
-            if state.buffer.len_chars() == 0 {
+            if state.buffer().len_chars() == 0 {
                 return Ok(pos);
             }
 
-            let mut idx = state.buffer.char_index(pos.line, pos.column)?;
+            let mut idx = state.buffer().char_index(pos.line, pos.column)?;
 
             if idx == 0 {
                 pos.line = 0;
@@ -70,9 +70,9 @@ impl EditorState {
 
             idx -= 1;
 
-            while !is_word_char(state.buffer.char_at(idx).unwrap()) {
+            while !is_word_char(state.buffer().char_at(idx).unwrap()) {
                 if idx == 0 {
-                    let (line, column) = state.buffer.char_to_line_col(0)?;
+                    let (line, column) = state.buffer().char_to_line_col(0)?;
                     pos.line = line;
                     pos.column = column;
                     return Ok(pos);
@@ -80,11 +80,11 @@ impl EditorState {
                 idx -= 1;
             }
 
-            while idx > 0 && is_word_char(state.buffer.char_at(idx - 1).unwrap()) {
+            while idx > 0 && is_word_char(state.buffer().char_at(idx - 1).unwrap()) {
                 idx -= 1;
             }
 
-            let (line, column) = state.buffer.char_to_line_col(idx)?;
+            let (line, column) = state.buffer().char_to_line_col(idx)?;
             pos.line = line;
             pos.column = column;
             Ok(pos)
@@ -93,28 +93,28 @@ impl EditorState {
 
     pub(super) fn move_cursor_word_right(&mut self) -> Result<()> {
         self.map_cursors(|state, mut pos| {
-            if state.buffer.len_chars() == 0 {
+            if state.buffer().len_chars() == 0 {
                 return Ok(pos);
             }
 
-            let mut idx = state.buffer.char_index(pos.line, pos.column)?;
-            let total = state.buffer.len_chars();
+            let mut idx = state.buffer().char_index(pos.line, pos.column)?;
+            let total = state.buffer().len_chars();
 
             if idx >= total {
                 return Ok(pos);
             }
 
-            if is_word_char(state.buffer.char_at(idx).unwrap()) {
-                while idx < total && is_word_char(state.buffer.char_at(idx).unwrap()) {
+            if is_word_char(state.buffer().char_at(idx).unwrap()) {
+                while idx < total && is_word_char(state.buffer().char_at(idx).unwrap()) {
                     idx += 1;
                 }
             }
 
-            while idx < total && !is_word_char(state.buffer.char_at(idx).unwrap()) {
+            while idx < total && !is_word_char(state.buffer().char_at(idx).unwrap()) {
                 idx += 1;
             }
 
-            let (line, column) = state.buffer.char_to_line_col(idx)?;
+            let (line, column) = state.buffer().char_to_line_col(idx)?;
             pos.line = line;
             pos.column = column;
             Ok(pos)
@@ -130,7 +130,7 @@ impl EditorState {
 
     pub(super) fn move_to_end_of_line(&mut self) -> Result<()> {
         self.map_cursors(|state, mut pos| {
-            let line_len = state.buffer.line_len(pos.line)?;
+            let line_len = state.buffer().line_len(pos.line)?;
             pos.column = line_len;
             Ok(pos)
         })
@@ -143,9 +143,9 @@ impl EditorState {
     }
 
     pub(super) fn move_to_end_of_file(&mut self) -> Result<()> {
-        if self.buffer.line_count() > 0 {
-            let last_line = self.buffer.line_count() - 1;
-            let last_len = self.buffer.line_len(last_line)?;
+        if self.buffer().line_count() > 0 {
+            let last_line = self.buffer().line_count() - 1;
+            let last_len = self.buffer().line_len(last_line)?;
             self.cursors
                 .reset_to(CursorPosition::new(last_line, last_len));
         }
@@ -160,7 +160,7 @@ impl EditorState {
                 pos.line = 0;
             }
 
-            let line_len = state.buffer.line_len(pos.line)?;
+            let line_len = state.buffer().line_len(pos.line)?;
             if pos.column > line_len {
                 pos.column = line_len;
             }
@@ -170,8 +170,8 @@ impl EditorState {
     }
 
     pub(super) fn page_down(&mut self, lines: usize) -> Result<()> {
-        let max_line = if self.buffer.line_count() > 0 {
-            self.buffer.line_count() - 1
+        let max_line = if self.buffer().line_count() > 0 {
+            self.buffer().line_count() - 1
         } else {
             0
         };
@@ -183,7 +183,7 @@ impl EditorState {
                 pos.line = max_line;
             }
 
-            let line_len = state.buffer.line_len(pos.line)?;
+            let line_len = state.buffer().line_len(pos.line)?;
             if pos.column > line_len {
                 pos.column = line_len;
             }
@@ -193,7 +193,7 @@ impl EditorState {
     }
 
     pub(super) fn goto_line(&mut self, line: usize) -> Result<()> {
-        if line < self.buffer.line_count() {
+        if line < self.buffer().line_count() {
             self.cursors
                 .set_positions(vec![CursorPosition::new(line, 0)]);
             return Ok(());
@@ -235,13 +235,13 @@ impl EditorState {
 
     pub(super) fn jump_to_matching_bracket(&mut self) -> Result<()> {
         self.map_cursors(|state, pos| {
-            let char_idx = state.buffer.char_index(pos.line, pos.column)?;
+            let char_idx = state.buffer().char_index(pos.line, pos.column)?;
 
-            if char_idx >= state.buffer.len_chars() {
+            if char_idx >= state.buffer().len_chars() {
                 return Ok(pos);
             }
 
-            let current_char = state.buffer.char_at(char_idx);
+            let current_char = state.buffer().char_at(char_idx);
             if current_char.is_none() {
                 return Ok(pos);
             }
@@ -261,7 +261,7 @@ impl EditorState {
 
             let mut depth = 0;
             let mut idx = char_idx as isize;
-            let len = state.buffer.len_chars() as isize;
+            let len = state.buffer().len_chars() as isize;
 
             loop {
                 if direction == 1 {
@@ -272,7 +272,7 @@ impl EditorState {
                     break;
                 }
 
-                if let Some(ch) = state.buffer.char_at(idx as usize) {
+                if let Some(ch) = state.buffer().char_at(idx as usize) {
                     if ch == opening {
                         if direction == 1 {
                             depth += 1;
@@ -288,7 +288,7 @@ impl EditorState {
                     }
 
                     if depth == 0 && idx != char_idx as isize {
-                        let (line, column) = state.buffer.char_to_line_col(idx as usize)?;
+                        let (line, column) = state.buffer().char_to_line_col(idx as usize)?;
                         return Ok(CursorPosition::new(line, column));
                     }
                 }

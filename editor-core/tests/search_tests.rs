@@ -5,7 +5,7 @@ fn test_search_finds_first_match() {
     let mut editor = EditorState::new();
     let content = "hello world\nhello universe\nhello galaxy";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -36,7 +36,7 @@ fn test_search_next_match() {
     let mut editor = EditorState::new();
     let content = "foo bar foo baz foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -64,7 +64,7 @@ fn test_search_previous_match() {
     let mut editor = EditorState::new();
     let content = "foo bar foo baz foo";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -98,7 +98,7 @@ fn test_search_no_match() {
     let mut editor = EditorState::new();
     let content = "hello world";
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content(content.to_string())
         .unwrap();
 
@@ -119,7 +119,7 @@ fn test_search_no_match() {
 fn test_search_case_insensitive() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("Hello World".to_string())
         .unwrap();
 
@@ -149,12 +149,12 @@ fn test_search_case_insensitive() {
 fn test_search_find_all() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("foo bar foo baz".to_string())
         .unwrap();
 
     // Default case sensitive
-    let matches = editor.buffer().find_all("foo", true);
+    let matches = editor.current_buffer().find_all("foo", true);
     assert_eq!(matches.len(), 2);
     assert_eq!(matches[0], 0);
     assert_eq!(matches[1], 8);
@@ -164,7 +164,7 @@ fn test_search_find_all() {
 fn test_search_history() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("foo bar".to_string())
         .unwrap();
 
@@ -188,7 +188,7 @@ fn test_search_history() {
 fn test_regex_search_basic() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("foo123 bar456 baz789".to_string())
         .unwrap();
 
@@ -212,7 +212,7 @@ fn test_regex_search_basic() {
 fn test_regex_search_next() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("foo123 bar456 baz789".to_string())
         .unwrap();
 
@@ -236,7 +236,7 @@ fn test_regex_search_next() {
 fn test_regex_search_word_boundary() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("word words wordy".to_string())
         .unwrap();
 
@@ -262,7 +262,7 @@ fn test_regex_search_word_boundary() {
 fn test_whole_word_search() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("word words wordy sword".to_string())
         .unwrap();
 
@@ -288,7 +288,7 @@ fn test_whole_word_search() {
 fn test_whole_word_no_match() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("words wordy sword".to_string())
         .unwrap();
 
@@ -309,7 +309,7 @@ fn test_whole_word_no_match() {
 fn test_whole_word_multiline() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("foo bar\nbar baz\nfoobar".to_string())
         .unwrap();
 
@@ -340,7 +340,7 @@ fn test_whole_word_multiline() {
 fn test_search_in_range() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("foo bar foo baz foo".to_string())
         .unwrap();
 
@@ -348,7 +348,7 @@ fn test_search_in_range() {
     let end_idx = 15;
 
     let matches = editor
-        .buffer()
+        .current_buffer()
         .find_in_range("foo", start_idx, end_idx, true, false, false);
 
     assert_eq!(matches.len(), 1);
@@ -359,7 +359,7 @@ fn test_search_in_range() {
 fn test_search_in_range_regex() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("foo123 bar456 baz789".to_string())
         .unwrap();
 
@@ -367,7 +367,7 @@ fn test_search_in_range_regex() {
     let end_idx = 20;
 
     let matches = editor
-        .buffer()
+        .current_buffer()
         .find_in_range(r"\d+", start_idx, end_idx, true, true, false);
 
     assert_eq!(matches.len(), 2);
@@ -379,7 +379,7 @@ fn test_search_in_range_regex() {
 fn test_search_in_range_whole_word() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("word words wordy sword word".to_string())
         .unwrap();
 
@@ -387,7 +387,7 @@ fn test_search_in_range_whole_word() {
     let end_idx = 27;
 
     let matches = editor
-        .buffer()
+        .current_buffer()
         .find_in_range("word", start_idx, end_idx, true, false, true);
 
     assert_eq!(matches.len(), 1);
@@ -398,7 +398,7 @@ fn test_search_in_range_whole_word() {
 fn test_regex_case_insensitive() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("Hello WORLD hello".to_string())
         .unwrap();
 
@@ -421,7 +421,7 @@ fn test_regex_case_insensitive() {
 fn test_whole_word_case_insensitive() {
     let mut editor = EditorState::new();
     editor
-        .buffer_mut()
+        .current_buffer_mut()
         .set_content("Word WORD words".to_string())
         .unwrap();
 

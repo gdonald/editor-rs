@@ -31,7 +31,7 @@ fn multi_cursor_insert_inserts_at_all_positions() {
 
     editor.execute_command(Command::InsertChar('X')).unwrap();
 
-    assert_eq!(editor.buffer().content(), "XabXcd");
+    assert_eq!(editor.current_buffer().content(), "XabXcd");
     let positions: Vec<_> = editor.cursors().to_vec();
     assert_eq!(
         positions,
@@ -54,7 +54,7 @@ fn multi_cursor_backspace_updates_each_cursor() {
 
     editor.execute_command(Command::Backspace).unwrap();
 
-    assert_eq!(editor.buffer().content(), "a\nc");
+    assert_eq!(editor.current_buffer().content(), "a\nc");
     let positions: Vec<_> = editor.cursors().to_vec();
     assert_eq!(
         positions,

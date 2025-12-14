@@ -12,7 +12,8 @@ use std::path::{Path, PathBuf};
 use super::mode::EditorMode;
 
 pub struct EditorState {
-    pub(super) buffer: Buffer,
+    pub(super) buffers: Vec<Buffer>,
+    pub(super) current_buffer_index: usize,
     pub(super) cursors: MultiCursor,
     pub(super) viewport_top: usize,
     pub(super) scroll_offset: usize,
@@ -52,7 +53,8 @@ impl Default for SearchOptions {
 impl EditorState {
     pub fn new() -> Self {
         Self {
-            buffer: Buffer::new(),
+            buffers: vec![Buffer::new()],
+            current_buffer_index: 0,
             cursors: MultiCursor::new(),
             viewport_top: 0,
             scroll_offset: 5,
@@ -76,7 +78,8 @@ impl EditorState {
     pub fn from_file(path: PathBuf) -> Result<Self> {
         let buffer = Buffer::from_file(path)?;
         Ok(Self {
-            buffer,
+            buffers: vec![buffer],
+            current_buffer_index: 0,
             cursors: MultiCursor::new(),
             viewport_top: 0,
             scroll_offset: 5,
@@ -97,11 +100,19 @@ impl EditorState {
         })
     }
 
+    pub(super) fn buffer(&self) -> &Buffer {
+        &self.buffers[self.current_buffer_index]
+    }
+
+    pub(super) fn buffer_mut(&mut self) -> &mut Buffer {
+        &mut self.buffers[self.current_buffer_index]
+    }
+
     pub fn execute_command(&mut self, command: Command) -> Result<()> {
         use crate::error::EditorError;
-        if self.buffer.is_read_only() && command.is_editing_command() {
+        if self.buffer().is_read_only() && command.is_editing_command() {
             return Err(EditorError::ReadOnlyFile(
-                self.buffer
+                self.buffer()
                     .file_path()
                     .map(|p| p.to_string_lossy().to_string())
                     .unwrap_or_else(|| "buffer".to_string()),
@@ -204,8 +215,8 @@ impl EditorState {
     }
 
     pub fn toggle_read_only(&mut self) -> Result<()> {
-        let current = self.buffer.is_read_only();
-        self.buffer.set_read_only(!current);
+        let current = self.buffer().is_read_only();
+        self.buffer_mut().set_read_only(!current);
         Ok(())
     }
 
@@ -239,12 +250,12 @@ impl EditorState {
         Ok(())
     }
 
-    pub fn buffer(&self) -> &Buffer {
-        &self.buffer
+    pub fn current_buffer(&self) -> &Buffer {
+        &self.buffers[self.current_buffer_index]
     }
 
-    pub fn buffer_mut(&mut self) -> &mut Buffer {
-        &mut self.buffer
+    pub fn current_buffer_mut(&mut self) -> &mut Buffer {
+        &mut self.buffers[self.current_buffer_index]
     }
 
     pub fn cursor(&self) -> &CursorPosition {
@@ -288,7 +299,7 @@ impl EditorState {
     }
 
     pub fn file_path(&self) -> Option<&Path> {
-        self.buffer.file_path().map(|p| p.as_path())
+        self.buffer().file_path().map(|p| p.as_path())
     }
 
     pub fn selection(&self) -> Option<&Selection> {
@@ -334,14 +345,14 @@ impl EditorState {
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {
         use crate::error::EditorError;
 
-        if position.line >= self.buffer.line_count() {
+        if position.line >= self.buffer().line_count() {
             return Err(EditorError::InvalidPosition {
                 line: position.line,
                 column: position.column,
             });
         }
 
-        let line_len = self.buffer.line_len(position.line)?;
+        let line_len = self.buffer().line_len(position.line)?;
         if position.column > line_len {
             return Err(EditorError::InvalidPosition {
                 line: position.line,
@@ -353,7 +364,7 @@ impl EditorState {
     }
 
     pub(super) fn indentation_for_line(&self, line_idx: usize) -> Result<String> {
-        let line = self.buffer.line(line_idx)?;
+        let line = self.buffer().line(line_idx)?;
         let trimmed = line.trim_end_matches('\n');
         let mut indent = String::new();
 
@@ -398,7 +409,7 @@ impl EditorState {
     pub(super) fn clamp_cursors_after_edit(&mut self) -> Result<()> {
         let mut positions = Vec::with_capacity(self.cursors.positions().len());
         for mut pos in self.cursors.positions().to_vec() {
-            let line_count = self.buffer.line_count();
+            let line_count = self.buffer().line_count();
             if line_count == 0 {
                 pos.line = 0;
                 pos.column = 0;
@@ -411,7 +422,7 @@ impl EditorState {
                 pos.line = last_line;
             }
 
-            let line_len = self.buffer.line_len(pos.line)?;
+            let line_len = self.buffer().line_len(pos.line)?;
             if pos.column > line_len {
                 pos.column = line_len;
             }

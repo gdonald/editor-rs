@@ -6,7 +6,7 @@ use crate::session::{OpenFileState, Session};
 
 impl EditorState {
     pub fn capture_file_state(&self) -> Option<OpenFileState> {
-        self.buffer.file_path().map(|path| OpenFileState {
+        self.buffer().file_path().map(|path| OpenFileState {
             path: path.to_path_buf(),
             cursor_line: self.cursors.primary().line,
             cursor_column: self.cursors.primary().column,
@@ -16,7 +16,9 @@ impl EditorState {
     }
 
     pub fn restore_from_file_state(&mut self, file_state: &OpenFileState) -> Result<()> {
-        self.buffer = Buffer::from_file(file_state.path.clone())?;
+        let buffer = Buffer::from_file(file_state.path.clone())?;
+        self.buffers.push(buffer);
+        self.current_buffer_index = self.buffers.len() - 1;
 
         let cursor = CursorPosition::new(file_state.cursor_line, file_state.cursor_column);
         self.cursors.reset_to(cursor);
@@ -24,7 +26,7 @@ impl EditorState {
 
         self.clamp_cursors_after_edit()?;
 
-        let line_count = self.buffer.line_count();
+        let line_count = self.buffer().line_count();
         if self.viewport_top >= line_count {
             self.viewport_top = line_count.saturating_sub(1);
         }

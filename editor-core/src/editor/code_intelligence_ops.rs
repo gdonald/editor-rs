@@ -28,7 +28,7 @@ impl EditorState {
         let mut has_non_empty_lines = false;
 
         for line_idx in start_line..=end_line {
-            let line = self.buffer.line(line_idx)?;
+            let line = self.buffer().line(line_idx)?;
             let trimmed = line.trim_start();
             if trimmed.is_empty() {
                 continue;
@@ -50,7 +50,7 @@ impl EditorState {
         if lines_to_uncomment {
             // Remove comments
             for line_idx in start_line..=end_line {
-                let line_content = self.buffer.line(line_idx)?;
+                let line_content = self.buffer().line(line_idx)?;
                 if let Some(first_char_idx) = line_content.find("//") {
                     // Check if it's the start (ignoring whitespace)
                     let prefix = &line_content[..first_char_idx];
@@ -60,17 +60,17 @@ impl EditorState {
                         let rest = &line_content[first_char_idx + 2..];
                         let remove_len = if rest.starts_with(' ') { 3 } else { 2 };
 
-                        let (l, c) = self
-                            .buffer
-                            .char_to_line_col(self.buffer.char_index(line_idx, first_char_idx)?)?;
-                        self.buffer.delete_range(l, c, l, c + remove_len)?;
+                        let (l, c) = self.buffer().char_to_line_col(
+                            self.buffer().char_index(line_idx, first_char_idx)?,
+                        )?;
+                        self.buffer_mut().delete_range(l, c, l, c + remove_len)?;
                     }
                 }
             }
         } else {
             // Add comments
             for line_idx in start_line..=end_line {
-                let line_content = self.buffer.line(line_idx)?;
+                let line_content = self.buffer().line(line_idx)?;
                 if line_content.trim().is_empty() && start_line != end_line {
                     continue; // Skip empty lines in block selection
                 }
@@ -80,7 +80,7 @@ impl EditorState {
                 // Usually VSCode inserts at the indentation level of the first line,
                 // or just at 0. Let's insert at 0 for simplicity or existing indentation?
                 // Let's try insertion at 0 for now.
-                self.buffer.insert_str(line_idx, 0, comment_prefix)?;
+                self.buffer_mut().insert_str(line_idx, 0, comment_prefix)?;
             }
         }
 
@@ -117,8 +117,9 @@ impl EditorState {
                 // Insert end first to not mess up start index?
                 // Actually, inserting at start shifts end.
 
-                self.buffer.insert_str(end.line, end.column, end_marker)?;
-                self.buffer
+                self.buffer_mut()
+                    .insert_str(end.line, end.column, end_marker)?;
+                self.buffer_mut()
                     .insert_str(start.line, start.column, start_marker)?;
 
                 // Selection needs update? logic usually keeps markers inside or updates.
@@ -128,8 +129,9 @@ impl EditorState {
                 let start = selection.start();
                 let end = selection.end();
                 // Same as above
-                self.buffer.insert_str(end.line, end.column, end_marker)?;
-                self.buffer
+                self.buffer_mut()
+                    .insert_str(end.line, end.column, end_marker)?;
+                self.buffer_mut()
                     .insert_str(start.line, start.column, start_marker)?;
             }
         } else {
