@@ -6,6 +6,7 @@ use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
 use crate::git_history::GitHistoryManager;
 use crate::history::History;
+use crate::history_browser::HistoryBrowser;
 use crate::selection::Selection;
 use std::path::{Path, PathBuf};
 
@@ -32,6 +33,7 @@ pub struct EditorState {
     pub(super) history: History,
     pub(super) git_history: GitHistoryManager,
     pub(super) auto_commit_enabled: bool,
+    pub(super) history_browser: Option<HistoryBrowser>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -74,6 +76,7 @@ impl EditorState {
             history: History::new(),
             git_history: GitHistoryManager::default(),
             auto_commit_enabled: true,
+            history_browser: None,
         }
     }
 
@@ -100,6 +103,7 @@ impl EditorState {
             history: History::new(),
             git_history: GitHistoryManager::default(),
             auto_commit_enabled: true,
+            history_browser: None,
         })
     }
 
@@ -210,6 +214,14 @@ impl EditorState {
 
             Command::Undo => self.undo(),
             Command::Redo => self.redo(),
+
+            Command::OpenHistoryBrowser => self.open_history_browser(),
+            Command::CloseHistoryBrowser => self.close_history_browser(),
+            Command::HistoryNavigateNext => self.history_navigate_next(),
+            Command::HistoryNavigatePrevious => self.history_navigate_previous(),
+            Command::HistorySelectCommit(index) => self.history_select_commit(index),
+            Command::HistoryToggleFileList => self.history_toggle_file_list(),
+            Command::HistoryViewDiff => self.history_view_diff(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -351,6 +363,108 @@ impl EditorState {
 
     pub fn replace_history(&self) -> &[(String, String)] {
         &self.replace_history
+    }
+
+    pub fn open_history_browser(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        let file_path = self.buffer().file_path().ok_or_else(|| {
+            EditorError::InvalidOperation(
+                "Cannot open history browser for unsaved buffer".to_string(),
+            )
+        })?;
+
+        let commits = self.git_history.list_commits(file_path)?;
+
+        if commits.is_empty() {
+            return Err(EditorError::InvalidOperation(
+                "No history available for this file".to_string(),
+            ));
+        }
+
+        self.history_browser = Some(HistoryBrowser::with_commits(commits));
+        Ok(())
+    }
+
+    pub fn close_history_browser(&mut self) -> Result<()> {
+        self.history_browser = None;
+        Ok(())
+    }
+
+    pub fn is_history_browser_open(&self) -> bool {
+        self.history_browser.is_some()
+    }
+
+    pub fn history_browser(&self) -> Option<&HistoryBrowser> {
+        self.history_browser.as_ref()
+    }
+
+    pub fn history_browser_mut(&mut self) -> Option<&mut HistoryBrowser> {
+        self.history_browser.as_mut()
+    }
+
+    fn history_navigate_next(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.select_next();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_navigate_previous(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.select_previous();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_select_commit(&mut self, index: usize) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            if browser.select_commit(index) {
+                Ok(())
+            } else {
+                Err(EditorError::InvalidOperation(format!(
+                    "Invalid commit index: {}",
+                    index
+                )))
+            }
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_toggle_file_list(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            if browser.selected_file().is_some() {
+                browser.clear_selected_file();
+            }
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_view_diff(&mut self) -> Result<()> {
+        Ok(())
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {

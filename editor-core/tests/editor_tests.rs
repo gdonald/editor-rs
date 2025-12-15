@@ -713,3 +713,81 @@ fn test_set_auto_commit_enabled() {
     editor.set_auto_commit_enabled(true);
     assert!(editor.auto_commit_enabled());
 }
+
+#[test]
+fn test_history_browser_not_open_by_default() {
+    let editor = EditorState::new();
+    assert!(!editor.is_history_browser_open());
+    assert!(editor.history_browser().is_none());
+}
+
+#[test]
+fn test_open_history_browser_unsaved_buffer() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::OpenHistoryBrowser);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_open_history_browser_no_history() {
+    use std::fs;
+    use tempfile::NamedTempFile;
+
+    let temp_file = NamedTempFile::new().unwrap();
+    let path = temp_file.path().to_path_buf();
+    fs::write(&path, "test content").unwrap();
+
+    let mut editor = EditorState::from_file(path).unwrap();
+    let result = editor.execute_command(Command::OpenHistoryBrowser);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_close_history_browser() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::CloseHistoryBrowser);
+    assert!(result.is_ok());
+    assert!(!editor.is_history_browser_open());
+}
+
+#[test]
+fn test_history_browser_accessors() {
+    let mut editor = EditorState::new();
+    assert!(editor.history_browser().is_none());
+    assert!(editor.history_browser_mut().is_none());
+}
+
+#[test]
+fn test_history_navigate_next_without_browser() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::HistoryNavigateNext);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_history_navigate_previous_without_browser() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::HistoryNavigatePrevious);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_history_select_commit_without_browser() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::HistorySelectCommit(0));
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_history_toggle_file_list_without_browser() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::HistoryToggleFileList);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_history_view_diff_without_browser() {
+    let mut editor = EditorState::new();
+    let result = editor.execute_command(Command::HistoryViewDiff);
+    assert!(result.is_ok());
+}

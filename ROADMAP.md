@@ -316,12 +316,12 @@
 - [x] Write tests for history browser commands
 
 #### 6.5.4.4 EditorState History Integration
-- [ ] Add history_browser field to EditorState
-- [ ] Implement open_history_browser() method
-- [ ] Implement close_history_browser() method
-- [ ] Implement is_history_browser_open() method
-- [ ] Hook up history browser commands to EditorState
-- [ ] Write tests for EditorState history integration
+- [x] Add history_browser field to EditorState
+- [x] Implement open_history_browser() method
+- [x] Implement close_history_browser() method
+- [x] Implement is_history_browser_open() method
+- [x] Hook up history browser commands to EditorState
+- [x] Write tests for EditorState history integration
 
 #### 6.5.4.5 TUI History Rendering - Basic Layout
 - [ ] Design TUI layout for history browser (split view)
