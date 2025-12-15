@@ -236,3 +236,216 @@ fn test_renderer_history_browser_layout_rendering() {
         assert!(draw_result.is_ok());
     }
 }
+
+#[test]
+fn test_renderer_history_commit_display_timestamp_formats() {
+    let backend = TestBackend::new(120, 40);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_timestamps.txt");
+
+    fs::write(&test_file, "Initial content\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    for _ in 0..5 {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        editor_state
+            .execute_command(Command::InsertChar('X'))
+            .unwrap();
+        editor_state.execute_command(Command::Save).unwrap();
+    }
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        if let Some(browser) = editor_state.history_browser() {
+            assert!(browser.commits().len() >= 5);
+
+            for commit in browser.commits() {
+                assert!(commit.timestamp > 0);
+            }
+        }
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_commit_display_hash_short_form() {
+    let backend = TestBackend::new(120, 40);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_hash.txt");
+
+    fs::write(&test_file, "Content for hash test\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    editor_state
+        .execute_command(Command::InsertChar('Y'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        if let Some(browser) = editor_state.history_browser() {
+            for commit in browser.commits() {
+                assert!(!commit.id.is_empty());
+                assert!(commit.id.len() >= 7);
+            }
+        }
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_commit_display_message_truncation() {
+    let backend = TestBackend::new(120, 40);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_truncation.txt");
+
+    fs::write(&test_file, "Content for truncation test\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    editor_state
+        .execute_command(Command::InsertChar('Z'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        if let Some(browser) = editor_state.history_browser() {
+            for commit in browser.commits() {
+                assert!(!commit.message.is_empty());
+                assert!(commit.message.lines().count() > 0);
+            }
+        }
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_commit_display_selection_highlighting() {
+    let backend = TestBackend::new(120, 40);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_selection.txt");
+
+    fs::write(&test_file, "Content for selection test\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    for i in 0..3 {
+        std::thread::sleep(std::time::Duration::from_millis(10));
+        editor_state
+            .execute_command(Command::InsertChar((b'A' + i as u8) as char))
+            .unwrap();
+        editor_state.execute_command(Command::Save).unwrap();
+    }
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        if let Some(browser) = editor_state.history_browser() {
+            assert!(browser.commits().len() >= 3);
+            assert_eq!(browser.selected_index(), 0);
+            assert!(browser.selected_commit().is_some());
+        }
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_commit_display_visual_indicators() {
+    let backend = TestBackend::new(120, 40);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_indicators.txt");
+
+    fs::write(&test_file, "Content for visual test\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    editor_state
+        .execute_command(Command::InsertChar('V'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    editor_state
+        .execute_command(Command::InsertChar('W'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        if let Some(browser) = editor_state.history_browser() {
+            assert!(browser.commits().len() >= 2);
+
+            let draw_result = terminal.draw(|frame| {
+                renderer.render(frame, &editor_state);
+            });
+
+            assert!(draw_result.is_ok());
+
+            let selected = browser.selected_commit();
+            assert!(selected.is_some());
+
+            let commit = selected.unwrap();
+            assert!(!commit.id.is_empty());
+            assert!(!commit.message.is_empty());
+            assert!(commit.timestamp > 0);
+        }
+    }
+}

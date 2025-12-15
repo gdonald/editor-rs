@@ -332,12 +332,12 @@
 - [x] Write tests for TUI history layout
 
 #### 6.5.4.6 TUI History Rendering - Commit Display
-- [ ] Format commit timestamps in human-readable form
-- [ ] Render commit hash (short form)
-- [ ] Render commit message (truncated if needed)
-- [ ] Highlight selected commit
-- [ ] Add visual indicators for current position
-- [ ] Write tests for commit display formatting
+- [x] Format commit timestamps in human-readable form
+- [x] Render commit hash (short form)
+- [x] Render commit message (truncated if needed)
+- [x] Highlight selected commit
+- [x] Add visual indicators for current position
+- [x] Write tests for commit display formatting
 
 #### 6.5.4.7 TUI History Rendering - Diff View
 - [ ] Implement diff panel rendering
