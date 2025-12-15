@@ -403,6 +403,31 @@ impl EditorState {
         self.history_browser.as_mut()
     }
 
+    pub fn get_history_diff(&self) -> Result<Option<String>> {
+        use crate::error::EditorError;
+
+        let browser = self.history_browser.as_ref().ok_or_else(|| {
+            EditorError::InvalidOperation("History browser is not open".to_string())
+        })?;
+
+        let (from_commit, to_commit) = match browser.get_diff_commits() {
+            Some(commits) => commits,
+            None => return Ok(None),
+        };
+
+        let file_path = self.buffer().file_path().ok_or_else(|| {
+            EditorError::InvalidOperation("No file path for current buffer".to_string())
+        })?;
+
+        let diff = self.git_history.get_diff_between_commits(
+            file_path.parent().unwrap_or(file_path),
+            &from_commit.id,
+            &to_commit.id,
+        )?;
+
+        Ok(Some(diff))
+    }
+
     fn history_navigate_next(&mut self) -> Result<()> {
         use crate::error::EditorError;
 

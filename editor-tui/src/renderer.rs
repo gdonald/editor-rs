@@ -9,18 +9,32 @@ use ratatui::{
 
 pub struct Renderer {
     show_line_numbers: bool,
+    diff_scroll_offset: usize,
 }
 
 impl Renderer {
     pub fn new() -> Self {
         Self {
             show_line_numbers: true,
+            diff_scroll_offset: 0,
         }
     }
 
     pub fn with_line_numbers(mut self, show: bool) -> Self {
         self.show_line_numbers = show;
         self
+    }
+
+    pub fn scroll_diff_up(&mut self) {
+        self.diff_scroll_offset = self.diff_scroll_offset.saturating_sub(1);
+    }
+
+    pub fn scroll_diff_down(&mut self) {
+        self.diff_scroll_offset = self.diff_scroll_offset.saturating_add(1);
+    }
+
+    pub fn reset_diff_scroll(&mut self) {
+        self.diff_scroll_offset = 0;
     }
 
     pub fn render(&self, frame: &mut Frame, editor_state: &EditorState) {
@@ -204,7 +218,7 @@ impl Renderer {
 
         self.render_commit_list(frame, browser, left_area);
         self.render_commit_details(frame, browser, details_area);
-        self.render_file_list(frame, browser, files_area);
+        self.render_file_list(frame, browser, editor_state, files_area);
     }
 
     fn render_commit_list(
@@ -330,11 +344,12 @@ impl Renderer {
         &self,
         frame: &mut Frame,
         browser: &editor_core::HistoryBrowser,
+        editor_state: &EditorState,
         area: Rect,
     ) {
         let block = Block::default()
             .borders(Borders::ALL)
-            .title(" Changed Files ")
+            .title(" Diff View ")
             .border_style(Style::default().fg(Color::Cyan));
 
         let inner_area = block.inner(area);
@@ -342,11 +357,107 @@ impl Renderer {
 
         let mut lines = Vec::new();
 
-        if let Some(_commit) = browser.selected_commit() {
-            lines.push(Line::from(Span::styled(
-                "File diff view coming in 6.5.4.7",
-                Style::default().fg(Color::DarkGray),
-            )));
+        if browser.selected_commit().is_some() {
+            if let Some((from_commit, to_commit)) = browser.get_diff_commits() {
+                lines.push(Line::from(vec![
+                    Span::styled("Comparing: ", Style::default().fg(Color::DarkGray)),
+                    Span::styled(
+                        &from_commit.id[..7.min(from_commit.id.len())],
+                        Style::default().fg(Color::Red),
+                    ),
+                    Span::styled(" → ", Style::default().fg(Color::DarkGray)),
+                    Span::styled(
+                        &to_commit.id[..7.min(to_commit.id.len())],
+                        Style::default().fg(Color::Green),
+                    ),
+                ]));
+                lines.push(Line::from(""));
+
+                match editor_state.get_history_diff() {
+                    Ok(Some(diff)) => {
+                        let diff_lines: Vec<&str> = diff.lines().collect();
+                        let visible_height = inner_area.height.saturating_sub(2) as usize;
+                        let max_scroll = diff_lines.len().saturating_sub(visible_height);
+                        let scroll_offset = self.diff_scroll_offset.min(max_scroll);
+
+                        for (idx, diff_line) in diff_lines
+                            .iter()
+                            .enumerate()
+                            .skip(scroll_offset)
+                            .take(visible_height)
+                        {
+                            let (style, prefix) = if diff_line.starts_with('+') {
+                                (
+                                    Style::default().fg(Color::Green).bg(Color::Rgb(0, 40, 0)),
+                                    "+",
+                                )
+                            } else if diff_line.starts_with('-') {
+                                (
+                                    Style::default().fg(Color::Red).bg(Color::Rgb(40, 0, 0)),
+                                    "-",
+                                )
+                            } else if diff_line.starts_with("@@") {
+                                (
+                                    Style::default()
+                                        .fg(Color::Cyan)
+                                        .add_modifier(Modifier::BOLD),
+                                    "@",
+                                )
+                            } else if diff_line.starts_with("diff")
+                                || diff_line.starts_with("index")
+                            {
+                                (Style::default().fg(Color::Yellow), " ")
+                            } else {
+                                (Style::default().fg(Color::White), " ")
+                            };
+
+                            let line_number = format!("{:4} ", scroll_offset + idx + 1);
+                            let line_number_span =
+                                Span::styled(line_number, Style::default().fg(Color::DarkGray));
+
+                            let content = if diff_line.starts_with('+')
+                                || diff_line.starts_with('-')
+                                || diff_line.starts_with(' ')
+                            {
+                                &diff_line[1..]
+                            } else {
+                                diff_line
+                            };
+
+                            let content_span =
+                                Span::styled(format!("{}{}", prefix, content), style);
+
+                            lines.push(Line::from(vec![line_number_span, content_span]));
+                        }
+
+                        if diff_lines.len() > visible_height {
+                            let scroll_info =
+                                format!(" [Scroll: {}/{}] ", scroll_offset + 1, max_scroll + 1);
+                            lines.push(Line::from(Span::styled(
+                                scroll_info,
+                                Style::default().fg(Color::DarkGray),
+                            )));
+                        }
+                    }
+                    Ok(None) => {
+                        lines.push(Line::from(Span::styled(
+                            "No parent commit to compare",
+                            Style::default().fg(Color::DarkGray),
+                        )));
+                    }
+                    Err(e) => {
+                        lines.push(Line::from(Span::styled(
+                            format!("Error getting diff: {}", e),
+                            Style::default().fg(Color::Red),
+                        )));
+                    }
+                }
+            } else {
+                lines.push(Line::from(Span::styled(
+                    "No parent commit to compare",
+                    Style::default().fg(Color::DarkGray),
+                )));
+            }
         } else {
             lines.push(Line::from(Span::styled(
                 "No commit selected",

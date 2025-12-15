@@ -340,12 +340,12 @@
 - [x] Write tests for commit display formatting
 
 #### 6.5.4.7 TUI History Rendering - Diff View
-- [ ] Implement diff panel rendering
-- [ ] Render line-by-line diff with +/- indicators
+- [x] Implement diff panel rendering
+- [x] Render line-by-line diff with +/- indicators
 - [ ] Add syntax highlighting to diff view
-- [ ] Implement scrolling in diff view
-- [ ] Add line numbers to diff view
-- [ ] Write tests for diff view rendering
+- [x] Implement scrolling in diff view
+- [x] Add line numbers to diff view
+- [x] Write tests for diff view rendering
 
 #### 6.5.4.8 TUI History Input Handling
 - [ ] Map up/down arrows to navigate commit list

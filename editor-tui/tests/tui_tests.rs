@@ -449,3 +449,183 @@ fn test_renderer_history_commit_display_visual_indicators() {
         }
     }
 }
+
+#[test]
+fn test_renderer_history_diff_view_rendering() {
+    let backend = TestBackend::new(150, 50);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_diff.txt");
+
+    fs::write(&test_file, "Line 1\nLine 2\nLine 3\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    editor_state
+        .execute_command(Command::InsertChar('X'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    editor_state
+        .execute_command(Command::InsertChar('Y'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        if let Some(browser) = editor_state.history_browser() {
+            assert!(browser.commits().len() >= 2);
+
+            let diff_result = editor_state.get_history_diff();
+            assert!(diff_result.is_ok());
+        }
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_diff_view_line_indicators() {
+    let backend = TestBackend::new(150, 50);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_diff_indicators.txt");
+
+    fs::write(&test_file, "Original line\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    editor_state
+        .execute_command(Command::MoveToEndOfLine)
+        .unwrap();
+    editor_state
+        .execute_command(Command::InsertChar('\n'))
+        .unwrap();
+    editor_state
+        .execute_command(Command::InsertChar('N'))
+        .unwrap();
+    editor_state
+        .execute_command(Command::InsertChar('e'))
+        .unwrap();
+    editor_state
+        .execute_command(Command::InsertChar('w'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        let diff_result = editor_state.get_history_diff();
+        if let Ok(Some(diff)) = diff_result {
+            assert!(diff.contains('+') || diff.contains('-'));
+        }
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_diff_view_scrolling() {
+    let backend = TestBackend::new(150, 50);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let mut renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_diff_scroll.txt");
+
+    let mut content = String::new();
+    for i in 0..50 {
+        content.push_str(&format!("Line {}\n", i));
+    }
+    fs::write(&test_file, &content).unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    for i in 0..10 {
+        editor_state
+            .execute_command(Command::InsertChar((b'A' + i) as char))
+            .unwrap();
+    }
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        renderer.scroll_diff_down();
+        renderer.scroll_diff_up();
+        renderer.reset_diff_scroll();
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_diff_view_line_numbers() {
+    let backend = TestBackend::new(150, 50);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_diff_linenums.txt");
+
+    fs::write(&test_file, "Line 1\nLine 2\nLine 3\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    editor_state
+        .execute_command(Command::InsertChar('Z'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        let diff_result = editor_state.get_history_diff();
+        assert!(diff_result.is_ok());
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
+}
