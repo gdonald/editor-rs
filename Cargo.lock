@@ -998,9 +998,11 @@ dependencies = [
 name = "editor-tui"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "crossterm",
  "editor-core",
  "ratatui",
+ "tempfile",
 ]
 
 [[package]]

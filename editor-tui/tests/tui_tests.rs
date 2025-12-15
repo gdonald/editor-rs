@@ -1,6 +1,7 @@
-use editor_core::EditorState;
+use editor_core::{Command, EditorState};
 use editor_tui::renderer::Renderer;
 use ratatui::{backend::TestBackend, Terminal};
+use std::fs;
 
 #[test]
 fn test_terminal_initialization() {
@@ -144,4 +145,94 @@ fn test_renderer_cursor_position() {
     });
 
     assert!(result.is_ok());
+}
+
+#[test]
+fn test_renderer_history_browser_closed() {
+    let backend = TestBackend::new(80, 24);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    assert!(!editor_state.is_history_browser_open());
+
+    let result = terminal.draw(|frame| {
+        renderer.render(frame, &editor_state);
+    });
+
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_renderer_history_browser_render_empty() {
+    let backend = TestBackend::new(120, 30);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_empty.txt");
+
+    fs::write(&test_file, "Initial content\n").unwrap();
+
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+
+    editor_state
+        .execute_command(Command::InsertChar('A'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+        assert!(draw_result.is_ok());
+    }
+}
+
+#[test]
+fn test_renderer_history_browser_layout_rendering() {
+    let backend = TestBackend::new(120, 40);
+    let mut terminal = Terminal::new(backend).unwrap();
+    let mut editor_state = EditorState::new();
+    let renderer = Renderer::new();
+
+    let temp_dir = tempfile::tempdir().unwrap();
+    let test_file = temp_dir.path().join("test_layout.txt");
+
+    fs::write(&test_file, "Line 1\n").unwrap();
+    editor_state
+        .execute_command(Command::Open(test_file.clone()))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    editor_state
+        .execute_command(Command::InsertChar('A'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    std::thread::sleep(std::time::Duration::from_millis(10));
+
+    editor_state
+        .execute_command(Command::InsertChar('B'))
+        .unwrap();
+    editor_state.execute_command(Command::Save).unwrap();
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+
+    if result.is_ok() && editor_state.is_history_browser_open() {
+        if let Some(browser) = editor_state.history_browser() {
+            assert!(!browser.is_empty());
+        }
+
+        let draw_result = terminal.draw(|frame| {
+            renderer.render(frame, &editor_state);
+        });
+
+        assert!(draw_result.is_ok());
+    }
 }

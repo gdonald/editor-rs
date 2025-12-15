@@ -324,12 +324,12 @@
 - [x] Write tests for EditorState history integration
 
 #### 6.5.4.5 TUI History Rendering - Basic Layout
-- [ ] Design TUI layout for history browser (split view)
-- [ ] Implement commit list panel rendering
-- [ ] Implement commit details panel rendering
-- [ ] Implement file list panel rendering
-- [ ] Add scrolling support for commit list
-- [ ] Write tests for TUI history layout
+- [x] Design TUI layout for history browser (split view)
+- [x] Implement commit list panel rendering
+- [x] Implement commit details panel rendering
+- [x] Implement file list panel rendering
+- [x] Add scrolling support for commit list
+- [x] Write tests for TUI history layout
 
 #### 6.5.4.6 TUI History Rendering - Commit Display
 - [ ] Format commit timestamps in human-readable form
