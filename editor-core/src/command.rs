@@ -98,6 +98,14 @@ pub enum Command {
     NextMatch,
     PreviousMatch,
 
+    OpenHistoryBrowser,
+    CloseHistoryBrowser,
+    HistoryNavigateNext,
+    HistoryNavigatePrevious,
+    HistorySelectCommit(usize),
+    HistoryToggleFileList,
+    HistoryViewDiff,
+
     Quit,
 }
 
@@ -173,6 +181,9 @@ impl Command {
                 | Command::ClearAllBookmarks
                 | Command::NextMatch
                 | Command::PreviousMatch
+                | Command::HistoryNavigateNext
+                | Command::HistoryNavigatePrevious
+                | Command::HistorySelectCommit(_)
         )
     }
 

@@ -306,14 +306,14 @@
 - [x] Write tests for history browser state
 
 #### 6.5.4.3 History Browser Commands
-- [ ] Add OpenHistoryBrowser command to Command enum
-- [ ] Add CloseHistoryBrowser command
-- [ ] Add HistoryNavigateNext command (next commit in list)
-- [ ] Add HistoryNavigatePrevious command (previous commit)
-- [ ] Add HistorySelectCommit command
-- [ ] Add HistoryToggleFileList command
-- [ ] Add HistoryViewDiff command
-- [ ] Write tests for history browser commands
+- [x] Add OpenHistoryBrowser command to Command enum
+- [x] Add CloseHistoryBrowser command
+- [x] Add HistoryNavigateNext command (next commit in list)
+- [x] Add HistoryNavigatePrevious command (previous commit)
+- [x] Add HistorySelectCommit command
+- [x] Add HistoryToggleFileList command
+- [x] Add HistoryViewDiff command
+- [x] Write tests for history browser commands
 
 #### 6.5.4.4 EditorState History Integration
 - [ ] Add history_browser field to EditorState

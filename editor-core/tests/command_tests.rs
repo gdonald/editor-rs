@@ -115,3 +115,45 @@ fn test_command_clipboard() {
     assert!(Command::Cut.is_editing_command());
     assert!(Command::Paste.is_editing_command());
 }
+
+#[test]
+fn test_command_history_browser() {
+    assert!(!Command::OpenHistoryBrowser.is_editing_command());
+    assert!(!Command::OpenHistoryBrowser.is_navigation_command());
+    assert!(!Command::OpenHistoryBrowser.is_file_command());
+
+    assert!(!Command::CloseHistoryBrowser.is_editing_command());
+    assert!(!Command::CloseHistoryBrowser.is_navigation_command());
+    assert!(!Command::CloseHistoryBrowser.is_file_command());
+
+    assert!(!Command::HistoryNavigateNext.is_editing_command());
+    assert!(Command::HistoryNavigateNext.is_navigation_command());
+    assert!(!Command::HistoryNavigateNext.is_file_command());
+
+    assert!(!Command::HistoryNavigatePrevious.is_editing_command());
+    assert!(Command::HistoryNavigatePrevious.is_navigation_command());
+    assert!(!Command::HistoryNavigatePrevious.is_file_command());
+
+    assert!(!Command::HistorySelectCommit(0).is_editing_command());
+    assert!(Command::HistorySelectCommit(0).is_navigation_command());
+    assert!(!Command::HistorySelectCommit(0).is_file_command());
+
+    assert!(!Command::HistoryToggleFileList.is_editing_command());
+    assert!(!Command::HistoryToggleFileList.is_navigation_command());
+    assert!(!Command::HistoryToggleFileList.is_file_command());
+
+    assert!(!Command::HistoryViewDiff.is_editing_command());
+    assert!(!Command::HistoryViewDiff.is_navigation_command());
+    assert!(!Command::HistoryViewDiff.is_file_command());
+}
+
+#[test]
+fn test_command_history_browser_clone() {
+    let cmd1 = Command::OpenHistoryBrowser;
+    let cmd2 = cmd1.clone();
+    assert!(!cmd2.is_editing_command());
+
+    let cmd1 = Command::HistorySelectCommit(42);
+    let cmd2 = cmd1.clone();
+    assert!(cmd2.is_navigation_command());
+}
