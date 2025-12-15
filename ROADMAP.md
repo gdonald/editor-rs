@@ -298,12 +298,12 @@
 - [x] Write tests for history data API
 
 #### 6.5.4.2 History Browser State
-- [ ] Design HistoryBrowser struct to hold browsing state
-- [ ] Implement commit list storage and pagination
-- [ ] Implement selected commit tracking
-- [ ] Implement selected file tracking (for file-level diffs)
-- [ ] Implement diff view state (current vs selected commit)
-- [ ] Write tests for history browser state
+- [x] Design HistoryBrowser struct to hold browsing state
+- [x] Implement commit list storage and pagination
+- [x] Implement selected commit tracking
+- [x] Implement selected file tracking (for file-level diffs)
+- [x] Implement diff view state (current vs selected commit)
+- [x] Write tests for history browser state
 
 #### 6.5.4.3 History Browser Commands
 - [ ] Add OpenHistoryBrowser command to Command enum
