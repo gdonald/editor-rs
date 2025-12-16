@@ -1,4 +1,4 @@
-use editor_core::{CommitInfo, DiffViewMode, HistoryBrowser};
+use editor_core::{CommitInfo, DiffViewMode, EditorState, HistoryBrowser};
 use eframe::egui;
 
 pub struct HistoryRenderer {
@@ -20,7 +20,12 @@ impl HistoryRenderer {
         }
     }
 
-    pub fn render(&mut self, ui: &mut egui::Ui, history_browser: &mut HistoryBrowser) {
+    pub fn render(
+        &mut self,
+        ui: &mut egui::Ui,
+        history_browser: &mut HistoryBrowser,
+        editor_state: &EditorState,
+    ) {
         egui::SidePanel::left("commit_list_panel")
             .resizable(true)
             .default_width(self.commit_list_width)
@@ -31,7 +36,7 @@ impl HistoryRenderer {
             });
 
         egui::CentralPanel::default().show_inside(ui, |ui| {
-            self.render_details_area(ui, history_browser);
+            self.render_details_area(ui, history_browser, editor_state);
         });
     }
 
@@ -134,7 +139,12 @@ impl HistoryRenderer {
         response
     }
 
-    fn render_details_area(&mut self, ui: &mut egui::Ui, history_browser: &HistoryBrowser) {
+    fn render_details_area(
+        &mut self,
+        ui: &mut egui::Ui,
+        history_browser: &HistoryBrowser,
+        editor_state: &EditorState,
+    ) {
         if let Some(commit) = history_browser.selected_commit() {
             egui::TopBottomPanel::top("commit_details_panel")
                 .resizable(true)
@@ -157,7 +167,7 @@ impl HistoryRenderer {
             }
 
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.render_diff_view(ui, history_browser);
+                self.render_diff_view(ui, editor_state);
             });
         } else {
             ui.centered_and_justified(|ui| {
@@ -206,15 +216,91 @@ impl HistoryRenderer {
             });
     }
 
-    fn render_diff_view(&self, ui: &mut egui::Ui, _history_browser: &HistoryBrowser) {
+    fn render_diff_view(&self, ui: &mut egui::Ui, editor_state: &EditorState) {
         ui.heading("Diff");
         ui.separator();
 
-        egui::ScrollArea::vertical()
-            .id_salt("diff_view_scroll")
-            .show(ui, |ui| {
-                ui.label("Diff view will be implemented in future task");
+        let diff_result = editor_state.get_history_diff();
+
+        match diff_result {
+            Ok(Some(diff)) => {
+                egui::ScrollArea::both()
+                    .id_salt("diff_view_scroll")
+                    .show(ui, |ui| {
+                        self.render_diff_content(ui, &diff);
+                    });
+            }
+            Ok(None) => {
+                ui.centered_and_justified(|ui| {
+                    ui.label("No diff available");
+                });
+            }
+            Err(e) => {
+                ui.centered_and_justified(|ui| {
+                    ui.label(format!("Error loading diff: {}", e));
+                });
+            }
+        }
+    }
+
+    fn render_diff_content(&self, ui: &mut egui::Ui, diff: &str) {
+        let font_id = egui::FontId::monospace(self.font_size);
+        let line_height = self.line_height;
+
+        let lines: Vec<&str> = diff.lines().collect();
+        let num_lines = lines.len();
+        let line_num_width = num_lines.to_string().len().max(3);
+
+        for (line_num, line) in lines.iter().enumerate() {
+            ui.horizontal(|ui| {
+                let line_num_text = format!("{:>width$}", line_num + 1, width = line_num_width);
+                ui.label(
+                    egui::RichText::new(line_num_text)
+                        .font(font_id.clone())
+                        .color(egui::Color32::DARK_GRAY),
+                );
+
+                ui.separator();
+
+                let (text_color, bg_color) = if line.starts_with('+') {
+                    (
+                        egui::Color32::from_rgb(100, 255, 100),
+                        Some(egui::Color32::from_rgb(30, 60, 30)),
+                    )
+                } else if line.starts_with('-') {
+                    (
+                        egui::Color32::from_rgb(255, 100, 100),
+                        Some(egui::Color32::from_rgb(60, 30, 30)),
+                    )
+                } else if line.starts_with("@@") {
+                    (
+                        egui::Color32::from_rgb(100, 200, 255),
+                        Some(egui::Color32::from_rgb(30, 40, 50)),
+                    )
+                } else if line.starts_with("diff --git") || line.starts_with("index ") {
+                    (egui::Color32::GRAY, None)
+                } else {
+                    (egui::Color32::WHITE, None)
+                };
+
+                let response = ui.allocate_response(
+                    egui::vec2(ui.available_width(), line_height),
+                    egui::Sense::hover(),
+                );
+
+                if let Some(bg) = bg_color {
+                    ui.painter().rect_filled(response.rect, 0.0, bg);
+                }
+
+                ui.painter().text(
+                    response.rect.left_top() + egui::vec2(4.0, 0.0),
+                    egui::Align2::LEFT_TOP,
+                    line,
+                    font_id.clone(),
+                    text_color,
+                );
             });
+        }
     }
 
     pub fn commit_list_width(&self) -> f32 {

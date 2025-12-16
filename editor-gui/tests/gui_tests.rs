@@ -236,3 +236,78 @@ fn test_history_renderer_diff_view_mode() {
         DiffViewMode::FileDiff(_)
     ));
 }
+
+#[test]
+fn test_history_diff_view_with_no_commits() {
+    let _renderer = HistoryRenderer::new();
+    let history_browser = HistoryBrowser::new();
+    let editor_state = EditorState::new();
+
+    assert!(history_browser.is_empty());
+    let diff_result = editor_state.get_history_diff();
+    assert!(diff_result.is_err());
+}
+
+#[test]
+fn test_history_diff_view_error_handling() {
+    let _renderer = HistoryRenderer::new();
+    let editor_state = EditorState::new();
+
+    let diff_result = editor_state.get_history_diff();
+    assert!(diff_result.is_err());
+}
+
+#[test]
+fn test_history_browser_with_selected_commit() {
+    let commits = vec![
+        CommitInfo {
+            id: "commit1".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567890,
+            message: "First commit".to_string(),
+        },
+        CommitInfo {
+            id: "commit2".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567900,
+            message: "Second commit".to_string(),
+        },
+    ];
+    let mut history_browser = HistoryBrowser::with_commits(commits);
+
+    assert_eq!(history_browser.selected_index(), 0);
+    assert!(history_browser.selected_commit().is_some());
+
+    history_browser.select_next();
+    assert_eq!(history_browser.selected_index(), 1);
+}
+
+#[test]
+fn test_history_diff_view_get_diff_commits() {
+    let commits = vec![
+        CommitInfo {
+            id: "commit1".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567890,
+            message: "First commit".to_string(),
+        },
+        CommitInfo {
+            id: "commit2".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567900,
+            message: "Second commit".to_string(),
+        },
+    ];
+    let history_browser = HistoryBrowser::with_commits(commits);
+
+    let diff_commits = history_browser.get_diff_commits();
+    assert!(diff_commits.is_some());
+
+    let (from_commit, to_commit) = diff_commits.unwrap();
+    assert_eq!(from_commit.id, "commit2");
+    assert_eq!(to_commit.id, "commit1");
+}

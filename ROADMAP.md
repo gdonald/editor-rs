@@ -373,12 +373,12 @@
 - [x] Write tests for GUI commit display
 
 #### 6.5.4.11 GUI History Rendering - Diff View
-- [ ] Implement diff view widget in egui
-- [ ] Render diff with proper formatting and colors
-- [ ] Add line numbers to diff view
-- [ ] Implement scrolling in diff view
-- [ ] Add syntax highlighting to diff
-- [ ] Write tests for GUI diff view
+- [x] Implement diff view widget in egui
+- [x] Render diff with proper formatting and colors
+- [x] Add line numbers to diff view
+- [x] Implement scrolling in diff view
+- [x] Add syntax highlighting to diff
+- [x] Write tests for GUI diff view
 
 #### 6.5.4.12 GUI History Input Handling
 - [ ] Handle mouse clicks to select commits
