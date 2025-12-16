@@ -42,6 +42,7 @@ impl HistoryRenderer {
         let selected_index = history_browser.selected_index();
         let commits_len = history_browser.commits().len();
         let mut new_selection = None;
+        let mut view_diff = false;
 
         egui::ScrollArea::vertical()
             .id_salt("commit_list_scroll")
@@ -54,6 +55,11 @@ impl HistoryRenderer {
                         if response.clicked() {
                             new_selection = Some(index);
                         }
+
+                        if response.double_clicked() {
+                            new_selection = Some(index);
+                            view_diff = true;
+                        }
                     }
                 }
 
@@ -64,6 +70,9 @@ impl HistoryRenderer {
 
         if let Some(index) = new_selection {
             history_browser.select_commit(index);
+            if view_diff {
+                history_browser.set_diff_view_mode(DiffViewMode::FullDiff);
+            }
         }
     }
 
@@ -73,52 +82,56 @@ impl HistoryRenderer {
         commit: &CommitInfo,
         is_selected: bool,
     ) -> egui::Response {
-        let frame = if is_selected {
-            egui::Frame::default()
-                .fill(egui::Color32::from_rgb(60, 90, 140))
-                .inner_margin(egui::Margin::same(8.0))
+        let (rect, mut response) =
+            ui.allocate_exact_size(egui::vec2(ui.available_width(), 80.0), egui::Sense::click());
+
+        let is_hovered = response.hovered();
+
+        let fill_color = if is_selected {
+            egui::Color32::from_rgb(60, 90, 140)
+        } else if is_hovered {
+            egui::Color32::from_rgb(45, 45, 45)
         } else {
-            egui::Frame::default()
-                .fill(egui::Color32::from_rgb(30, 30, 30))
-                .inner_margin(egui::Margin::same(8.0))
+            egui::Color32::from_rgb(30, 30, 30)
         };
 
-        frame
-            .show(ui, |ui| {
-                ui.set_width(ui.available_width());
+        ui.painter().rect_filled(rect, 0.0, fill_color);
 
-                let short_id = if commit.id.len() >= 7 {
-                    &commit.id[0..7]
-                } else {
-                    &commit.id
-                };
-                ui.label(
-                    egui::RichText::new(short_id)
-                        .color(egui::Color32::YELLOW)
-                        .monospace(),
-                );
+        let content_rect = rect.shrink(8.0);
+        let mut ui = ui.new_child(egui::UiBuilder::new().max_rect(content_rect));
 
-                let first_line = commit.message.lines().next().unwrap_or("");
-                ui.label(egui::RichText::new(first_line).color(egui::Color32::WHITE));
+        let short_id = if commit.id.len() >= 7 {
+            &commit.id[0..7]
+        } else {
+            &commit.id
+        };
+        ui.label(
+            egui::RichText::new(short_id)
+                .color(egui::Color32::YELLOW)
+                .monospace(),
+        );
 
-                ui.label(
-                    egui::RichText::new(format!(
-                        "{} <{}>",
-                        commit.author_name, commit.author_email
-                    ))
-                    .color(egui::Color32::GRAY)
-                    .small(),
-                );
+        let first_line = commit.message.lines().next().unwrap_or("");
+        ui.label(egui::RichText::new(first_line).color(egui::Color32::WHITE));
 
-                let timestamp_str = format_timestamp(commit.timestamp);
-                ui.label(
-                    egui::RichText::new(timestamp_str)
-                        .color(egui::Color32::GRAY)
-                        .small(),
-                );
-            })
-            .response
-            .interact(egui::Sense::click())
+        ui.label(
+            egui::RichText::new(format!("{} <{}>", commit.author_name, commit.author_email))
+                .color(egui::Color32::GRAY)
+                .small(),
+        );
+
+        let timestamp_str = format_timestamp(commit.timestamp);
+        ui.label(
+            egui::RichText::new(timestamp_str)
+                .color(egui::Color32::GRAY)
+                .small(),
+        );
+
+        if is_hovered {
+            response = response.on_hover_cursor(egui::CursorIcon::PointingHand);
+        }
+
+        response
     }
 
     fn render_details_area(&mut self, ui: &mut egui::Ui, history_browser: &HistoryBrowser) {

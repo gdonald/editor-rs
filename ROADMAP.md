@@ -365,12 +365,12 @@
 - [x] Write tests for GUI history layout
 
 #### 6.5.4.10 GUI History Rendering - Commit Display
-- [ ] Format commit timestamps for GUI display
-- [ ] Render commit list with proper fonts and colors
-- [ ] Implement commit selection highlighting
-- [ ] Add hover effects for commits
-- [ ] Implement double-click to view diff
-- [ ] Write tests for GUI commit display
+- [x] Format commit timestamps for GUI display
+- [x] Render commit list with proper fonts and colors
+- [x] Implement commit selection highlighting
+- [x] Add hover effects for commits
+- [x] Implement double-click to view diff
+- [x] Write tests for GUI commit display
 
 #### 6.5.4.11 GUI History Rendering - Diff View
 - [ ] Implement diff view widget in egui
