@@ -376,12 +376,6 @@ impl EditorState {
 
         let commits = self.git_history.list_commits(file_path)?;
 
-        if commits.is_empty() {
-            return Err(EditorError::InvalidOperation(
-                "No history available for this file".to_string(),
-            ));
-        }
-
         self.history_browser = Some(HistoryBrowser::with_commits(commits));
         Ok(())
     }

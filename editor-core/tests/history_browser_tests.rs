@@ -446,3 +446,14 @@ fn test_page_commits_partial_last_page() {
     assert_eq!(page_commits[0].id, "commit_20");
     assert_eq!(page_commits[4].id, "commit_24");
 }
+
+#[test]
+fn test_single_commit_no_diff_available() {
+    let commits = create_test_commits(1);
+    let browser = HistoryBrowser::with_commits(commits);
+
+    assert_eq!(browser.len(), 1);
+    assert!(!browser.is_empty());
+    assert!(browser.selected_commit().is_some());
+    assert!(browser.get_diff_commits().is_none());
+}

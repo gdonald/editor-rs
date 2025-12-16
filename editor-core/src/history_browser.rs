@@ -218,6 +218,9 @@ impl HistoryBrowser {
             Some((from_commit, to_commit))
         } else {
             let from_idx = self.selected_index + 1;
+            if from_idx >= self.commits.len() {
+                return None;
+            }
             let from_commit = self.commits.get(from_idx)?;
             Some((from_commit, to_commit))
         }

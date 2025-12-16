@@ -739,7 +739,12 @@ fn test_open_history_browser_no_history() {
 
     let mut editor = EditorState::from_file(path).unwrap();
     let result = editor.execute_command(Command::OpenHistoryBrowser);
-    assert!(result.is_err());
+    assert!(result.is_ok());
+    assert!(editor.is_history_browser_open());
+    if let Some(browser) = editor.history_browser() {
+        assert_eq!(browser.len(), 0);
+        assert!(browser.is_empty());
+    }
 }
 
 #[test]

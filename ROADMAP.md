@@ -389,13 +389,13 @@
 - [x] Write tests for GUI history input
 
 #### 6.5.4.13 History Browser Polish and Edge Cases
-- [ ] Handle empty history (no commits yet)
-- [ ] Handle single commit edge case
+- [x] Handle empty history (no commits yet)
+- [x] Handle single commit edge case
 - [ ] Add loading indicators for slow operations
 - [ ] Optimize performance for large commit histories
-- [ ] Add error handling for git operations
+- [x] Add error handling for git operations
 - [ ] Add keyboard shortcuts help overlay
-- [ ] Write tests for edge cases
+- [x] Write tests for edge cases
 
 ### 6.5.5 Time Travel Operations
 - [ ] Implement restore from historical commit

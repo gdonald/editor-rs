@@ -69,7 +69,20 @@ impl HistoryRenderer {
                 }
 
                 if commits_len == 0 {
-                    ui.label("No commits found");
+                    ui.vertical_centered(|ui| {
+                        ui.add_space(20.0);
+                        ui.label(
+                            egui::RichText::new("No commit history yet")
+                                .color(egui::Color32::GRAY)
+                                .size(16.0),
+                        );
+                        ui.add_space(10.0);
+                        ui.label(
+                            egui::RichText::new("Save the file to create your first auto-commit")
+                                .color(egui::Color32::DARK_GRAY)
+                                .size(12.0),
+                        );
+                    });
                 }
             });
 
@@ -230,7 +243,21 @@ impl HistoryRenderer {
             }
             None => {
                 ui.centered_and_justified(|ui| {
-                    ui.label("No diff available");
+                    ui.vertical_centered(|ui| {
+                        ui.label(
+                            egui::RichText::new("No diff available")
+                                .color(egui::Color32::GRAY)
+                                .size(14.0),
+                        );
+                        ui.add_space(10.0);
+                        ui.label(
+                            egui::RichText::new(
+                                "This is the first commit or no parent commit to compare with",
+                            )
+                            .color(egui::Color32::DARK_GRAY)
+                            .size(12.0),
+                        );
+                    });
                 });
             }
         }

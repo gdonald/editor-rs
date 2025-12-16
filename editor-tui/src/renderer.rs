@@ -277,8 +277,16 @@ impl Renderer {
         }
 
         if lines.is_empty() {
+            lines.push(Line::from(""));
             lines.push(Line::from(Span::styled(
-                "No commits found",
+                "No commit history yet",
+                Style::default()
+                    .fg(Color::Gray)
+                    .add_modifier(Modifier::BOLD),
+            )));
+            lines.push(Line::from(""));
+            lines.push(Line::from(Span::styled(
+                "Save the file to create your first auto-commit",
                 Style::default().fg(Color::DarkGray),
             )));
         }
@@ -330,9 +338,10 @@ impl Renderer {
                 )));
             }
         } else {
+            lines.push(Line::from(""));
             lines.push(Line::from(Span::styled(
                 "No commit selected",
-                Style::default().fg(Color::DarkGray),
+                Style::default().fg(Color::Gray),
             )));
         }
 
@@ -453,15 +462,22 @@ impl Renderer {
                     }
                 }
             } else {
+                lines.push(Line::from(""));
                 lines.push(Line::from(Span::styled(
                     "No parent commit to compare",
+                    Style::default().fg(Color::Gray),
+                )));
+                lines.push(Line::from(""));
+                lines.push(Line::from(Span::styled(
+                    "This is the first commit",
                     Style::default().fg(Color::DarkGray),
                 )));
             }
         } else {
+            lines.push(Line::from(""));
             lines.push(Line::from(Span::styled(
                 "No commit selected",
-                Style::default().fg(Color::DarkGray),
+                Style::default().fg(Color::Gray),
             )));
         }
 
