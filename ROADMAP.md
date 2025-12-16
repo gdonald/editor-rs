@@ -398,12 +398,12 @@
 - [x] Write tests for edge cases
 
 ### 6.5.5 Time Travel Operations
-- [ ] Implement restore from historical commit
-- [ ] Implement restore specific file from history
-- [ ] Implement preview before restore
-- [ ] Handle conflicts with current unsaved changes
+- [x] Implement restore from historical commit
+- [x] Implement restore specific file from history
+- [x] Implement preview before restore
+- [x] Handle conflicts with current unsaved changes
 - [ ] Implement cherry-pick from history (restore specific changes)
-- [ ] Write tests for time travel operations
+- [x] Write tests for time travel operations
 
 ### 6.5.6 History Management
 - [ ] Implement git gc for compression/optimization

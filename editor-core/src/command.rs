@@ -19,8 +19,12 @@ pub enum Command {
     MoveLinesUp,
     MoveLinesDown,
     JoinLines,
-    SortLines { numerical: bool },
-    ChangeCase { mode: CaseMode },
+    SortLines {
+        numerical: bool,
+    },
+    ChangeCase {
+        mode: CaseMode,
+    },
     TransposeCharacters,
     Indent,
     Dedent,
@@ -71,9 +75,18 @@ pub enum Command {
     SelectionEnd,
 
     Search(String),
-    ReplaceNext { find: String, replace: String },
-    ReplaceAll { find: String, replace: String },
-    ReplaceInSelection { find: String, replace: String },
+    ReplaceNext {
+        find: String,
+        replace: String,
+    },
+    ReplaceAll {
+        find: String,
+        replace: String,
+    },
+    ReplaceInSelection {
+        find: String,
+        replace: String,
+    },
 
     GotoLine(usize),
     JumpToMatchingBracket,
@@ -105,6 +118,12 @@ pub enum Command {
     HistorySelectCommit(usize),
     HistoryToggleFileList,
     HistoryViewDiff,
+    HistoryRestoreCommit(String),
+    HistoryRestoreFile {
+        commit_id: String,
+        file_path: String,
+    },
+    HistoryPreviewRestore(String),
 
     Quit,
 }

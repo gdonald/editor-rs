@@ -222,6 +222,12 @@ impl EditorState {
             Command::HistorySelectCommit(index) => self.history_select_commit(index),
             Command::HistoryToggleFileList => self.history_toggle_file_list(),
             Command::HistoryViewDiff => self.history_view_diff(),
+            Command::HistoryRestoreCommit(commit_id) => self.history_restore_commit(&commit_id),
+            Command::HistoryRestoreFile {
+                commit_id,
+                file_path,
+            } => self.history_restore_file(&commit_id, &file_path),
+            Command::HistoryPreviewRestore(commit_id) => self.history_preview_restore(&commit_id),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -483,6 +489,100 @@ impl EditorState {
     }
 
     fn history_view_diff(&mut self) -> Result<()> {
+        Ok(())
+    }
+
+    fn history_restore_commit(&mut self, commit_id: &str) -> Result<()> {
+        use crate::error::EditorError;
+
+        if self.buffer().is_modified() {
+            return Err(EditorError::InvalidOperation(
+                "Cannot restore: buffer has unsaved changes. Save or discard changes first."
+                    .to_string(),
+            ));
+        }
+
+        let file_path = self.buffer().file_path().ok_or_else(|| {
+            EditorError::InvalidOperation("Cannot restore: buffer has no file path".to_string())
+        })?;
+
+        let project_path = file_path
+            .parent()
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file path".to_string()))?;
+
+        self.git_history.restore_commit(project_path, commit_id)?;
+
+        let buffer = Buffer::from_file(file_path.to_path_buf())?;
+        self.buffers[self.current_buffer_index] = buffer;
+
+        self.set_status_message(format!("Restored from commit {}", commit_id));
+        Ok(())
+    }
+
+    fn history_restore_file(&mut self, commit_id: &str, file_path: &str) -> Result<()> {
+        use crate::error::EditorError;
+
+        if self.buffer().is_modified() {
+            return Err(EditorError::InvalidOperation(
+                "Cannot restore: buffer has unsaved changes. Save or discard changes first."
+                    .to_string(),
+            ));
+        }
+
+        let current_file_path = self.buffer().file_path().ok_or_else(|| {
+            EditorError::InvalidOperation("Cannot restore: buffer has no file path".to_string())
+        })?;
+
+        let project_path = current_file_path
+            .parent()
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file path".to_string()))?;
+
+        let content =
+            self.git_history
+                .get_file_content_at_commit(project_path, file_path, commit_id)?;
+
+        let target_path = project_path.join(file_path);
+        std::fs::write(&target_path, content).map_err(EditorError::Io)?;
+
+        if &target_path == current_file_path {
+            let buffer = Buffer::from_file(target_path)?;
+            self.buffers[self.current_buffer_index] = buffer;
+        }
+
+        self.set_status_message(format!(
+            "Restored file {} from commit {}",
+            file_path, commit_id
+        ));
+        Ok(())
+    }
+
+    fn history_preview_restore(&mut self, commit_id: &str) -> Result<()> {
+        use crate::error::EditorError;
+
+        let file_path = self.buffer().file_path().ok_or_else(|| {
+            EditorError::InvalidOperation("Cannot preview: buffer has no file path".to_string())
+        })?;
+
+        let project_path = file_path
+            .parent()
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file path".to_string()))?;
+
+        let current_file_name = file_path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file name".to_string()))?;
+
+        let content = self.git_history.get_file_content_at_commit(
+            project_path,
+            current_file_name,
+            commit_id,
+        )?;
+
+        self.set_status_message(format!(
+            "Preview of commit {}: {} bytes",
+            commit_id,
+            content.len()
+        ));
         Ok(())
     }
 
