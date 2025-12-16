@@ -348,13 +348,13 @@
 - [x] Write tests for diff view rendering
 
 #### 6.5.4.8 TUI History Input Handling
-- [ ] Map up/down arrows to navigate commit list
-- [ ] Map Enter to view commit details/diff
-- [ ] Map Tab to switch between panels
-- [ ] Map Esc to close history browser
-- [ ] Map 'q' to close history browser
-- [ ] Map 'f' to toggle file list view
-- [ ] Write tests for history input handling
+- [x] Map up/down arrows to navigate commit list
+- [x] Map Enter to view commit details/diff
+- [x] Map Tab to switch between panels
+- [x] Map Esc to close history browser
+- [x] Map 'q' to close history browser
+- [x] Map 'f' to toggle file list view
+- [x] Write tests for history input handling
 
 #### 6.5.4.9 GUI History Rendering - Basic Layout
 - [ ] Design GUI layout for history browser (split view with egui)

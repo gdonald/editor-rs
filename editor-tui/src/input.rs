@@ -40,9 +40,19 @@ impl InputHandler {
         self
     }
 
-    pub fn handle_event(&mut self, event: Event) -> Option<InputAction> {
+    pub fn handle_event(
+        &mut self,
+        event: Event,
+        is_history_browser_open: bool,
+    ) -> Option<InputAction> {
         match event {
-            Event::Key(key_event) => self.handle_key_event(key_event),
+            Event::Key(key_event) => {
+                if is_history_browser_open {
+                    self.handle_history_browser_key_event(key_event)
+                } else {
+                    self.handle_key_event(key_event)
+                }
+            }
             Event::Mouse(mouse_event) if self.mouse_enabled => self.handle_mouse_event(mouse_event),
             Event::Resize(_, _) => Some(InputAction::Resize),
             _ => None,
@@ -231,6 +241,26 @@ impl InputHandler {
             }
             MouseEventKind::ScrollDown => Some(InputAction::Command(Command::MoveCursorDown)),
             MouseEventKind::ScrollUp => Some(InputAction::Command(Command::MoveCursorUp)),
+            _ => None,
+        }
+    }
+
+    fn handle_history_browser_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
+        let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
+        let _alt = key_event.modifiers.contains(KeyModifiers::ALT);
+        let _shift = key_event.modifiers.contains(KeyModifiers::SHIFT);
+
+        match (key_event.code, ctrl) {
+            (KeyCode::Up, false) => Some(InputAction::Command(Command::HistoryNavigatePrevious)),
+            (KeyCode::Down, false) => Some(InputAction::Command(Command::HistoryNavigateNext)),
+            (KeyCode::Enter, false) => Some(InputAction::Command(Command::HistoryViewDiff)),
+            (KeyCode::Tab, false) => Some(InputAction::Command(Command::HistoryToggleFileList)),
+            (KeyCode::Esc, false) => Some(InputAction::Command(Command::CloseHistoryBrowser)),
+            (KeyCode::Char('q'), false) => Some(InputAction::Command(Command::CloseHistoryBrowser)),
+            (KeyCode::Char('f'), false) => {
+                Some(InputAction::Command(Command::HistoryToggleFileList))
+            }
+            (code, _) if code == self.key_bindings.quit_key && ctrl => Some(InputAction::Quit),
             _ => None,
         }
     }

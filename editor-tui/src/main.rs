@@ -58,7 +58,8 @@ fn run_event_loop(
 
         if event::poll(std::time::Duration::from_millis(100))? {
             let event = event::read()?;
-            if let Some(action) = input_handler.handle_event(event) {
+            let is_history_browser_open = editor_state.is_history_browser_open();
+            if let Some(action) = input_handler.handle_event(event, is_history_browser_open) {
                 match action {
                     editor_tui::input::InputAction::Quit => break,
                     editor_tui::input::InputAction::Command(cmd) => {
