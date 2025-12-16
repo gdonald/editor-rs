@@ -357,12 +357,12 @@
 - [x] Write tests for history input handling
 
 #### 6.5.4.9 GUI History Rendering - Basic Layout
-- [ ] Design GUI layout for history browser (split view with egui)
-- [ ] Implement commit list panel (scrollable list)
-- [ ] Implement commit details panel
-- [ ] Implement file list panel
-- [ ] Add resizable splitters between panels
-- [ ] Write tests for GUI history layout
+- [x] Design GUI layout for history browser (split view with egui)
+- [x] Implement commit list panel (scrollable list)
+- [x] Implement commit details panel
+- [x] Implement file list panel
+- [x] Add resizable splitters between panels
+- [x] Write tests for GUI history layout
 
 #### 6.5.4.10 GUI History Rendering - Commit Display
 - [ ] Format commit timestamps for GUI display

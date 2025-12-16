@@ -989,6 +989,7 @@ dependencies = [
 name = "editor-gui"
 version = "0.1.0"
 dependencies = [
+ "chrono",
  "editor-core",
  "eframe",
  "egui",

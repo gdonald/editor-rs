@@ -1,5 +1,7 @@
 use editor_core::command::Command;
 use editor_core::editor::EditorState;
+use editor_core::{CommitInfo, HistoryBrowser};
+use editor_gui::history_renderer::HistoryRenderer;
 use editor_gui::renderer::Renderer;
 
 #[test]
@@ -47,4 +49,45 @@ fn test_renderer_with_line_numbers() {
 fn test_renderer_cursor_blink_reset() {
     let mut renderer = Renderer::new();
     renderer.reset_cursor_blink();
+}
+
+#[test]
+fn test_history_renderer_initialization() {
+    let _renderer = HistoryRenderer::new();
+}
+
+#[test]
+fn test_history_renderer_default() {
+    let _renderer = HistoryRenderer::default();
+}
+
+#[test]
+fn test_history_renderer_commit_list_width() {
+    let renderer = HistoryRenderer::new();
+    assert_eq!(renderer.commit_list_width(), 300.0);
+}
+
+#[test]
+fn test_history_renderer_file_list_height() {
+    let renderer = HistoryRenderer::new();
+    assert_eq!(renderer.file_list_height(), 150.0);
+}
+
+#[test]
+fn test_history_renderer_with_empty_history() {
+    let _renderer = HistoryRenderer::new();
+    let _history_browser = HistoryBrowser::new();
+}
+
+#[test]
+fn test_history_renderer_with_commits() {
+    let _renderer = HistoryRenderer::new();
+    let commits = vec![CommitInfo {
+        id: "abc123".to_string(),
+        author_name: "Test Author".to_string(),
+        author_email: "test@example.com".to_string(),
+        timestamp: 1234567890,
+        message: "Test commit message".to_string(),
+    }];
+    let _history_browser = HistoryBrowser::with_commits(commits);
 }
