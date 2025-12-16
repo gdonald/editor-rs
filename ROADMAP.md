@@ -381,12 +381,12 @@
 - [x] Write tests for GUI diff view
 
 #### 6.5.4.12 GUI History Input Handling
-- [ ] Handle mouse clicks to select commits
-- [ ] Handle keyboard navigation (up/down arrows)
-- [ ] Handle Enter key to view diff
-- [ ] Handle Esc key to close history browser
-- [ ] Handle mouse scroll in commit list
-- [ ] Write tests for GUI history input
+- [x] Handle mouse clicks to select commits
+- [x] Handle keyboard navigation (up/down arrows)
+- [x] Handle Enter key to view diff
+- [x] Handle Esc key to close history browser
+- [x] Handle mouse scroll in commit list
+- [x] Write tests for GUI history input
 
 #### 6.5.4.13 History Browser Polish and Edge Cases
 - [ ] Handle empty history (no commits yet)

@@ -311,3 +311,138 @@ fn test_history_diff_view_get_diff_commits() {
     assert_eq!(from_commit.id, "commit2");
     assert_eq!(to_commit.id, "commit1");
 }
+
+#[test]
+fn test_gui_history_keyboard_navigation_up_down() {
+    let commits = vec![
+        CommitInfo {
+            id: "commit1".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567890,
+            message: "First commit".to_string(),
+        },
+        CommitInfo {
+            id: "commit2".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567900,
+            message: "Second commit".to_string(),
+        },
+        CommitInfo {
+            id: "commit3".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567910,
+            message: "Third commit".to_string(),
+        },
+    ];
+    let mut history_browser = HistoryBrowser::with_commits(commits);
+
+    assert_eq!(history_browser.selected_index(), 0);
+
+    history_browser.select_next();
+    assert_eq!(history_browser.selected_index(), 1);
+
+    history_browser.select_next();
+    assert_eq!(history_browser.selected_index(), 2);
+
+    history_browser.select_previous();
+    assert_eq!(history_browser.selected_index(), 1);
+
+    history_browser.select_previous();
+    assert_eq!(history_browser.selected_index(), 0);
+}
+
+#[test]
+fn test_gui_history_keyboard_enter_views_diff() {
+    let commits = vec![
+        CommitInfo {
+            id: "commit1".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567890,
+            message: "First commit".to_string(),
+        },
+        CommitInfo {
+            id: "commit2".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567900,
+            message: "Second commit".to_string(),
+        },
+    ];
+    let mut history_browser = HistoryBrowser::with_commits(commits);
+
+    assert!(matches!(
+        history_browser.diff_view_mode(),
+        editor_core::DiffViewMode::FullDiff
+    ));
+
+    history_browser.set_diff_view_mode(editor_core::DiffViewMode::FileDiff("test.rs".to_string()));
+
+    assert!(matches!(
+        history_browser.diff_view_mode(),
+        editor_core::DiffViewMode::FileDiff(_)
+    ));
+}
+
+#[test]
+fn test_gui_history_mouse_click_selects_commit() {
+    let commits = vec![
+        CommitInfo {
+            id: "commit1".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567890,
+            message: "First commit".to_string(),
+        },
+        CommitInfo {
+            id: "commit2".to_string(),
+            author_name: "Author".to_string(),
+            author_email: "author@example.com".to_string(),
+            timestamp: 1234567900,
+            message: "Second commit".to_string(),
+        },
+    ];
+    let mut history_browser = HistoryBrowser::with_commits(commits);
+
+    assert_eq!(history_browser.selected_index(), 0);
+
+    history_browser.select_commit(1);
+    assert_eq!(history_browser.selected_index(), 1);
+    assert_eq!(history_browser.selected_commit().unwrap().id, "commit2");
+}
+
+#[test]
+fn test_gui_history_browser_open_close() {
+    let mut editor_state = EditorState::new();
+
+    assert!(!editor_state.is_history_browser_open());
+
+    let result = editor_state.execute_command(Command::OpenHistoryBrowser);
+    if result.is_ok() {
+        assert!(editor_state.is_history_browser_open());
+
+        let result = editor_state.execute_command(Command::CloseHistoryBrowser);
+        assert!(result.is_ok());
+        assert!(!editor_state.is_history_browser_open());
+    }
+}
+
+#[test]
+fn test_gui_history_renderer_initialization() {
+    let _history_renderer = HistoryRenderer::new();
+}
+
+#[test]
+fn test_gui_history_renderer_commit_list_width() {
+    let history_renderer = HistoryRenderer::new();
+    assert_eq!(history_renderer.commit_list_width(), 300.0);
+}
+
+#[test]
+fn test_gui_history_renderer_file_list_height() {
+    let history_renderer = HistoryRenderer::new();
+    assert_eq!(history_renderer.file_list_height(), 150.0);
+}

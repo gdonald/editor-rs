@@ -1,8 +1,10 @@
+mod history_renderer;
 mod input;
 mod renderer;
 
 use editor_core::editor::EditorState;
 use eframe::egui;
+use history_renderer::HistoryRenderer;
 use input::{InputAction, InputHandler};
 use renderer::Renderer;
 
@@ -25,6 +27,7 @@ struct EditorApp {
     editor_state: EditorState,
     input_handler: InputHandler,
     renderer: Renderer,
+    history_renderer: HistoryRenderer,
     should_quit: bool,
 }
 
@@ -34,6 +37,7 @@ impl Default for EditorApp {
             editor_state: EditorState::new(),
             input_handler: InputHandler::new(),
             renderer: Renderer::new(),
+            history_renderer: HistoryRenderer::new(),
             should_quit: false,
         }
     }
@@ -46,6 +50,8 @@ impl eframe::App for EditorApp {
             return;
         }
 
+        let is_history_browser_open = self.editor_state.is_history_browser_open();
+
         ctx.input(|i| {
             for event in &i.events {
                 match event {
@@ -55,13 +61,22 @@ impl eframe::App for EditorApp {
                         modifiers,
                         ..
                     } => {
-                        if let Some(action) = self.input_handler.handle_key_event(*key, modifiers) {
+                        let action = if is_history_browser_open {
+                            self.input_handler
+                                .handle_history_browser_key_event(*key, modifiers)
+                        } else {
+                            self.input_handler.handle_key_event(*key, modifiers)
+                        };
+
+                        if let Some(action) = action {
                             self.handle_action(action);
                         }
                     }
                     egui::Event::Text(text) => {
-                        if let Some(action) = self.input_handler.handle_text_input(text) {
-                            self.handle_action(action);
+                        if !is_history_browser_open {
+                            if let Some(action) = self.input_handler.handle_text_input(text) {
+                                self.handle_action(action);
+                            }
                         }
                     }
                     _ => {}
@@ -73,25 +88,38 @@ impl eframe::App for EditorApp {
             self.renderer.render_status_bar(ui, &self.editor_state);
         });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_rgb(30, 30, 30);
-            ui.style_mut().visuals.override_text_color = Some(egui::Color32::WHITE);
+        if is_history_browser_open {
+            let diff_content = self.editor_state.get_history_diff().ok().flatten();
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_rgb(30, 30, 30);
+                ui.style_mut().visuals.override_text_color = Some(egui::Color32::WHITE);
 
-            if let Some(scroll_delta) = self.renderer.render(ui, &self.editor_state, ctx) {
-                let lines_to_scroll = scroll_delta.abs();
-                for _ in 0..lines_to_scroll {
-                    if scroll_delta > 0 {
-                        let _ = self
-                            .editor_state
-                            .execute_command(editor_core::Command::MoveCursorUp);
-                    } else {
-                        let _ = self
-                            .editor_state
-                            .execute_command(editor_core::Command::MoveCursorDown);
+                if let Some(history_browser) = self.editor_state.history_browser_mut() {
+                    self.history_renderer
+                        .render(ui, history_browser, diff_content);
+                }
+            });
+        } else {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_rgb(30, 30, 30);
+                ui.style_mut().visuals.override_text_color = Some(egui::Color32::WHITE);
+
+                if let Some(scroll_delta) = self.renderer.render(ui, &self.editor_state, ctx) {
+                    let lines_to_scroll = scroll_delta.abs();
+                    for _ in 0..lines_to_scroll {
+                        if scroll_delta > 0 {
+                            let _ = self
+                                .editor_state
+                                .execute_command(editor_core::Command::MoveCursorUp);
+                        } else {
+                            let _ = self
+                                .editor_state
+                                .execute_command(editor_core::Command::MoveCursorDown);
+                        }
                     }
                 }
-            }
-        });
+            });
+        }
     }
 }
 

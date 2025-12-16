@@ -1,4 +1,4 @@
-use editor_core::{CommitInfo, DiffViewMode, EditorState, HistoryBrowser};
+use editor_core::{CommitInfo, DiffViewMode, HistoryBrowser};
 use eframe::egui;
 
 pub struct HistoryRenderer {
@@ -24,7 +24,7 @@ impl HistoryRenderer {
         &mut self,
         ui: &mut egui::Ui,
         history_browser: &mut HistoryBrowser,
-        editor_state: &EditorState,
+        diff_content: Option<String>,
     ) {
         egui::SidePanel::left("commit_list_panel")
             .resizable(true)
@@ -36,7 +36,7 @@ impl HistoryRenderer {
             });
 
         egui::CentralPanel::default().show_inside(ui, |ui| {
-            self.render_details_area(ui, history_browser, editor_state);
+            self.render_details_area(ui, history_browser, diff_content);
         });
     }
 
@@ -143,7 +143,7 @@ impl HistoryRenderer {
         &mut self,
         ui: &mut egui::Ui,
         history_browser: &HistoryBrowser,
-        editor_state: &EditorState,
+        diff_content: Option<String>,
     ) {
         if let Some(commit) = history_browser.selected_commit() {
             egui::TopBottomPanel::top("commit_details_panel")
@@ -167,7 +167,7 @@ impl HistoryRenderer {
             }
 
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.render_diff_view(ui, editor_state);
+                self.render_diff_view(ui, diff_content);
             });
         } else {
             ui.centered_and_justified(|ui| {
@@ -216,28 +216,21 @@ impl HistoryRenderer {
             });
     }
 
-    fn render_diff_view(&self, ui: &mut egui::Ui, editor_state: &EditorState) {
+    fn render_diff_view(&self, ui: &mut egui::Ui, diff_content: Option<String>) {
         ui.heading("Diff");
         ui.separator();
 
-        let diff_result = editor_state.get_history_diff();
-
-        match diff_result {
-            Ok(Some(diff)) => {
+        match diff_content {
+            Some(diff) => {
                 egui::ScrollArea::both()
                     .id_salt("diff_view_scroll")
                     .show(ui, |ui| {
                         self.render_diff_content(ui, &diff);
                     });
             }
-            Ok(None) => {
+            None => {
                 ui.centered_and_justified(|ui| {
                     ui.label("No diff available");
-                });
-            }
-            Err(e) => {
-                ui.centered_and_justified(|ui| {
-                    ui.label(format!("Error loading diff: {}", e));
                 });
             }
         }
@@ -303,10 +296,12 @@ impl HistoryRenderer {
         }
     }
 
+    #[allow(dead_code)]
     pub fn commit_list_width(&self) -> f32 {
         self.commit_list_width
     }
 
+    #[allow(dead_code)]
     pub fn file_list_height(&self) -> f32 {
         self.file_list_height
     }

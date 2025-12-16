@@ -186,6 +186,30 @@ impl InputHandler {
                 Some(InputAction::Command(Command::ClearSecondaryCursors))
             }
 
+            egui::Key::T if ctrl && !alt && !shift => {
+                Some(InputAction::Command(Command::OpenHistoryBrowser))
+            }
+
+            _ => None,
+        }
+    }
+
+    pub fn handle_history_browser_key_event(
+        &mut self,
+        key: egui::Key,
+        modifiers: &egui::Modifiers,
+    ) -> Option<InputAction> {
+        let ctrl = modifiers.ctrl || modifiers.command;
+
+        match key {
+            egui::Key::Q if ctrl && self.key_bindings.quit_key == 'q' => Some(InputAction::Quit),
+            egui::Key::ArrowUp => Some(InputAction::Command(Command::HistoryNavigatePrevious)),
+            egui::Key::ArrowDown => Some(InputAction::Command(Command::HistoryNavigateNext)),
+            egui::Key::Enter => Some(InputAction::Command(Command::HistoryViewDiff)),
+            egui::Key::Tab => Some(InputAction::Command(Command::HistoryToggleFileList)),
+            egui::Key::Escape => Some(InputAction::Command(Command::CloseHistoryBrowser)),
+            egui::Key::Q if !ctrl => Some(InputAction::Command(Command::CloseHistoryBrowser)),
+            egui::Key::F => Some(InputAction::Command(Command::HistoryToggleFileList)),
             _ => None,
         }
     }
