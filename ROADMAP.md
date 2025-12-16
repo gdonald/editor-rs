@@ -406,13 +406,77 @@
 - [x] Write tests for time travel operations
 
 ### 6.5.6 History Management
-- [ ] Implement git gc for compression/optimization
-- [ ] Default retention policy: forever
-- [ ] Implement optional retention policy configuration
-- [ ] Implement history statistics (size, commit count, etc.)
-- [ ] Implement manual history cleanup command
-- [ ] Handle large file scenarios efficiently
-- [ ] Write tests for history management
+
+#### 6.5.6.1 Git Repository Optimization
+- [ ] Add method to GitHistoryManager to run git gc (garbage collection)
+- [ ] Implement automatic gc trigger (e.g., after N commits)
+- [ ] Implement configurable gc thresholds
+- [ ] Add error handling for gc failures
+- [ ] Write tests for git gc functionality
+
+#### 6.5.6.2 History Statistics API
+- [ ] Add method to get total commit count
+- [ ] Add method to get repository size on disk
+- [ ] Add method to get date range of history (oldest to newest)
+- [ ] Add method to get per-file statistics (commits, size)
+- [ ] Add method to get commits per day/week/month
+- [ ] Write tests for statistics API
+
+#### 6.5.6.3 History Statistics Display
+- [ ] Design HistoryStats struct to hold statistics data
+- [ ] Add ShowHistoryStats command to Command enum
+- [ ] Implement statistics gathering in EditorState
+- [ ] Implement TUI rendering of statistics (commit count, size, date range)
+- [ ] Implement GUI rendering of statistics
+- [ ] Write tests for statistics display
+
+#### 6.5.6.4 Retention Policy Configuration
+- [ ] Design RetentionPolicy enum (Forever, Days(u32), Commits(usize), Size(u64))
+- [ ] Add retention_policy field to configuration
+- [ ] Default retention policy: Forever
+- [ ] Add method to check if commit should be retained
+- [ ] Add configuration loading for retention policy
+- [ ] Write tests for retention policy configuration
+
+#### 6.5.6.5 Manual History Cleanup
+- [ ] Add method to GitHistoryManager to delete old commits
+- [ ] Implement cleanup based on retention policy
+- [ ] Add CleanupHistory command to Command enum
+- [ ] Implement cleanup confirmation dialog (TUI)
+- [ ] Implement cleanup confirmation dialog (GUI)
+- [ ] Show statistics before/after cleanup
+- [ ] Write tests for manual cleanup
+
+#### 6.5.6.6 Automatic History Cleanup
+- [ ] Implement automatic cleanup trigger (on save, on startup, etc.)
+- [ ] Add configurable automatic cleanup option (default: off)
+- [ ] Implement background cleanup to avoid blocking
+- [ ] Add cleanup progress indicator
+- [ ] Write tests for automatic cleanup
+
+#### 6.5.6.7 Large File Handling
+- [ ] Implement detection of large files (configurable threshold)
+- [ ] Add git LFS support for large files (optional)
+- [ ] Implement compression for large file history
+- [ ] Add warning when large files are added to history
+- [ ] Implement option to exclude large files from history
+- [ ] Write tests for large file handling
+
+#### 6.5.6.8 History Export and Import
+- [ ] Add method to export history as regular git repository
+- [ ] Add method to import history from regular git repository
+- [ ] Implement export command (ExportHistory)
+- [ ] Implement import command (ImportHistory)
+- [ ] Add file dialogs for export/import paths
+- [ ] Write tests for export/import functionality
+
+#### 6.5.6.9 History Integrity and Recovery
+- [ ] Add method to verify repository integrity (git fsck)
+- [ ] Implement automatic integrity checks (on startup, periodic)
+- [ ] Add method to repair corrupted repository
+- [ ] Implement backup before cleanup/repair operations
+- [ ] Add error recovery for common git issues
+- [ ] Write tests for integrity and recovery
 
 ### 6.5.7 Project vs File Tracking
 - [ ] Implement project-level tracking (directory opened as project)
