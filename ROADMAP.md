@@ -415,12 +415,12 @@
 - [x] Write tests for git gc functionality
 
 #### 6.5.6.2 History Statistics API
-- [ ] Add method to get total commit count
-- [ ] Add method to get repository size on disk
-- [ ] Add method to get date range of history (oldest to newest)
-- [ ] Add method to get per-file statistics (commits, size)
-- [ ] Add method to get commits per day/week/month
-- [ ] Write tests for statistics API
+- [x] Add method to get total commit count
+- [x] Add method to get repository size on disk
+- [x] Add method to get date range of history (oldest to newest)
+- [x] Add method to get per-file statistics (commits, size)
+- [x] Add method to get commits per day/week/month
+- [x] Write tests for statistics API
 
 #### 6.5.6.3 History Statistics Display
 - [ ] Design HistoryStats struct to hold statistics data
