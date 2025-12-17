@@ -38,6 +38,14 @@ pub struct FileStats {
     pub total_size: u64,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HistoryStats {
+    pub total_commits: usize,
+    pub repository_size: u64,
+    pub date_range: Option<(i64, i64)>,
+    pub file_stats: Vec<FileStats>,
+}
+
 impl Default for GcConfig {
     fn default() -> Self {
         Self {

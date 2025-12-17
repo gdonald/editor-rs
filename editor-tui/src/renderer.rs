@@ -50,6 +50,8 @@ impl Renderer {
 
         if editor_state.is_history_browser_open() {
             self.render_history_browser(frame, editor_state, editor_area);
+        } else if editor_state.is_history_stats_open() {
+            self.render_history_stats(frame, editor_state, editor_area);
         } else {
             self.render_editor_area(frame, editor_state, editor_area);
         }
@@ -480,6 +482,123 @@ impl Renderer {
                 Style::default().fg(Color::Gray),
             )));
         }
+
+        let paragraph = Paragraph::new(lines);
+        frame.render_widget(paragraph, inner_area);
+    }
+
+    fn render_history_stats(&self, frame: &mut Frame, editor_state: &EditorState, area: Rect) {
+        let stats = match editor_state.history_stats() {
+            Some(s) => s,
+            None => return,
+        };
+
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .title(" History Statistics ")
+            .border_style(Style::default().fg(Color::Cyan));
+
+        let inner_area = block.inner(area);
+        frame.render_widget(block, area);
+
+        let mut lines = Vec::new();
+
+        lines.push(Line::from(Span::styled(
+            "Repository Statistics",
+            Style::default()
+                .fg(Color::Yellow)
+                .add_modifier(Modifier::BOLD),
+        )));
+        lines.push(Line::from(""));
+
+        lines.push(Line::from(vec![
+            Span::styled("Total Commits: ", Style::default().fg(Color::Green)),
+            Span::styled(
+                stats.total_commits.to_string(),
+                Style::default().fg(Color::White),
+            ),
+        ]));
+
+        let size_mb = stats.repository_size as f64 / (1024.0 * 1024.0);
+        lines.push(Line::from(vec![
+            Span::styled("Repository Size: ", Style::default().fg(Color::Green)),
+            Span::styled(
+                format!("{:.2} MB", size_mb),
+                Style::default().fg(Color::White),
+            ),
+        ]));
+
+        if let Some((oldest, newest)) = stats.date_range {
+            lines.push(Line::from(""));
+            lines.push(Line::from(Span::styled(
+                "Date Range",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )));
+            lines.push(Line::from(""));
+
+            lines.push(Line::from(vec![
+                Span::styled("Oldest Commit: ", Style::default().fg(Color::Green)),
+                Span::styled(
+                    self.format_full_timestamp(oldest),
+                    Style::default().fg(Color::White),
+                ),
+            ]));
+
+            lines.push(Line::from(vec![
+                Span::styled("Newest Commit: ", Style::default().fg(Color::Green)),
+                Span::styled(
+                    self.format_full_timestamp(newest),
+                    Style::default().fg(Color::White),
+                ),
+            ]));
+        }
+
+        if !stats.file_stats.is_empty() {
+            lines.push(Line::from(""));
+            lines.push(Line::from(Span::styled(
+                "Top Files by Commit Count",
+                Style::default()
+                    .fg(Color::Yellow)
+                    .add_modifier(Modifier::BOLD),
+            )));
+            lines.push(Line::from(""));
+
+            for (idx, file_stat) in stats.file_stats.iter().take(10).enumerate() {
+                let size_kb = file_stat.total_size as f64 / 1024.0;
+                lines.push(Line::from(vec![
+                    Span::styled(
+                        format!("{}. ", idx + 1),
+                        Style::default().fg(Color::DarkGray),
+                    ),
+                    Span::styled(
+                        format!("{:4} commits ", file_stat.commit_count),
+                        Style::default().fg(Color::Cyan),
+                    ),
+                    Span::styled(
+                        format!("{:8.2} KB ", size_kb),
+                        Style::default().fg(Color::Blue),
+                    ),
+                    Span::styled(&file_stat.path, Style::default().fg(Color::White)),
+                ]));
+            }
+
+            if stats.file_stats.len() > 10 {
+                lines.push(Line::from(""));
+                lines.push(Line::from(Span::styled(
+                    format!("... and {} more files", stats.file_stats.len() - 10),
+                    Style::default().fg(Color::DarkGray),
+                )));
+            }
+        }
+
+        lines.push(Line::from(""));
+        lines.push(Line::from(""));
+        lines.push(Line::from(Span::styled(
+            "Press Esc or q to close",
+            Style::default().fg(Color::DarkGray),
+        )));
 
         let paragraph = Paragraph::new(lines);
         frame.render_widget(paragraph, inner_area);

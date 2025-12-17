@@ -214,6 +214,21 @@ impl InputHandler {
         }
     }
 
+    pub fn handle_history_stats_key_event(
+        &mut self,
+        key: egui::Key,
+        modifiers: &egui::Modifiers,
+    ) -> Option<InputAction> {
+        let ctrl = modifiers.ctrl || modifiers.command;
+
+        match key {
+            egui::Key::Q if ctrl && self.key_bindings.quit_key == 'q' => Some(InputAction::Quit),
+            egui::Key::Escape => Some(InputAction::CloseHistoryStats),
+            egui::Key::Q if !ctrl => Some(InputAction::CloseHistoryStats),
+            _ => None,
+        }
+    }
+
     pub fn handle_text_input(&mut self, text: &str) -> Option<InputAction> {
         if text.len() == 1 {
             let c = text.chars().next().unwrap();
@@ -270,4 +285,5 @@ pub enum InputAction {
     Replace,
     GotoLine,
     SelectAll,
+    CloseHistoryStats,
 }

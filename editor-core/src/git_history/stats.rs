@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use std::path::Path;
 
 use super::repository::GitHistoryManager;
-use super::types::FileStats;
+use super::types::{FileStats, HistoryStats};
 
 impl GitHistoryManager {
     pub fn get_date_range(&self, project_path: &Path) -> Result<Option<(i64, i64)>> {
@@ -133,5 +133,19 @@ impl GitHistoryManager {
         }
 
         Ok(commits_by_month)
+    }
+
+    pub fn get_history_stats(&self, project_path: &Path) -> Result<HistoryStats> {
+        let total_commits = self.get_commit_count(project_path)?;
+        let repository_size = self.get_repo_size(project_path)?;
+        let date_range = self.get_date_range(project_path)?;
+        let file_stats = self.get_per_file_stats(project_path)?;
+
+        Ok(HistoryStats {
+            total_commits,
+            repository_size,
+            date_range,
+            file_stats,
+        })
     }
 }

@@ -1,12 +1,14 @@
 mod history_renderer;
 mod input;
 mod renderer;
+mod stats_renderer;
 
 use editor_core::editor::EditorState;
 use eframe::egui;
 use history_renderer::HistoryRenderer;
 use input::{InputAction, InputHandler};
 use renderer::Renderer;
+use stats_renderer::StatsRenderer;
 
 fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
@@ -28,6 +30,7 @@ struct EditorApp {
     input_handler: InputHandler,
     renderer: Renderer,
     history_renderer: HistoryRenderer,
+    stats_renderer: StatsRenderer,
     should_quit: bool,
 }
 
@@ -38,6 +41,7 @@ impl Default for EditorApp {
             input_handler: InputHandler::new(),
             renderer: Renderer::new(),
             history_renderer: HistoryRenderer::new(),
+            stats_renderer: StatsRenderer::new(),
             should_quit: false,
         }
     }
@@ -51,6 +55,7 @@ impl eframe::App for EditorApp {
         }
 
         let is_history_browser_open = self.editor_state.is_history_browser_open();
+        let is_history_stats_open = self.editor_state.is_history_stats_open();
 
         ctx.input(|i| {
             for event in &i.events {
@@ -64,6 +69,9 @@ impl eframe::App for EditorApp {
                         let action = if is_history_browser_open {
                             self.input_handler
                                 .handle_history_browser_key_event(*key, modifiers)
+                        } else if is_history_stats_open {
+                            self.input_handler
+                                .handle_history_stats_key_event(*key, modifiers)
                         } else {
                             self.input_handler.handle_key_event(*key, modifiers)
                         };
@@ -73,7 +81,7 @@ impl eframe::App for EditorApp {
                         }
                     }
                     egui::Event::Text(text) => {
-                        if !is_history_browser_open {
+                        if !is_history_browser_open && !is_history_stats_open {
                             if let Some(action) = self.input_handler.handle_text_input(text) {
                                 self.handle_action(action);
                             }
@@ -97,6 +105,15 @@ impl eframe::App for EditorApp {
                 if let Some(history_browser) = self.editor_state.history_browser_mut() {
                     self.history_renderer
                         .render(ui, history_browser, diff_content);
+                }
+            });
+        } else if is_history_stats_open {
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.style_mut().visuals.extreme_bg_color = egui::Color32::from_rgb(30, 30, 30);
+                ui.style_mut().visuals.override_text_color = Some(egui::Color32::WHITE);
+
+                if let Some(stats) = self.editor_state.history_stats() {
+                    self.stats_renderer.render(ui, stats);
                 }
             });
         } else {
@@ -155,6 +172,9 @@ impl EditorApp {
             InputAction::SelectAll => {
                 self.editor_state
                     .set_status_message("Select all not yet implemented".to_string());
+            }
+            InputAction::CloseHistoryStats => {
+                self.editor_state.close_history_stats();
             }
         }
     }

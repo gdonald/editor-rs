@@ -152,3 +152,70 @@ fn test_get_commits_per_month() {
     let total_commits: usize = commits_per_month.values().sum();
     assert_eq!(total_commits, 3);
 }
+
+#[test]
+fn test_get_history_stats() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let file1_path = project_dir.path().join("file1.txt");
+    let file2_path = project_dir.path().join("file2.txt");
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+
+    fs::write(&file1_path, "Content 1").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &file1_path)
+        .unwrap();
+
+    fs::write(&file2_path, "Content 2 with more data").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &file2_path)
+        .unwrap();
+
+    fs::write(&file1_path, "Updated content 1").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &file1_path)
+        .unwrap();
+
+    let stats = manager.get_history_stats(project_dir.path()).unwrap();
+
+    assert_eq!(stats.total_commits, 3);
+
+    assert!(stats.repository_size > 0);
+
+    assert!(stats.date_range.is_some());
+    let (oldest, newest) = stats.date_range.unwrap();
+    assert!(oldest <= newest);
+
+    assert_eq!(stats.file_stats.len(), 2);
+
+    let file1_stats = stats
+        .file_stats
+        .iter()
+        .find(|s| s.path == "file1.txt")
+        .unwrap();
+    assert_eq!(file1_stats.commit_count, 2);
+
+    let file2_stats = stats
+        .file_stats
+        .iter()
+        .find(|s| s.path == "file2.txt")
+        .unwrap();
+    assert_eq!(file2_stats.commit_count, 1);
+}
+
+#[test]
+fn test_get_history_stats_empty() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+    let stats = manager.get_history_stats(project_dir.path()).unwrap();
+
+    assert_eq!(stats.total_commits, 0);
+    assert!(stats.repository_size > 0);
+    assert!(stats.date_range.is_none());
+    assert_eq!(stats.file_stats.len(), 0);
+}

@@ -59,7 +59,10 @@ fn run_event_loop(
         if event::poll(std::time::Duration::from_millis(100))? {
             let event = event::read()?;
             let is_history_browser_open = editor_state.is_history_browser_open();
-            if let Some(action) = input_handler.handle_event(event, is_history_browser_open) {
+            let is_history_stats_open = editor_state.is_history_stats_open();
+            if let Some(action) =
+                input_handler.handle_event(event, is_history_browser_open, is_history_stats_open)
+            {
                 match action {
                     editor_tui::input::InputAction::Quit => break,
                     editor_tui::input::InputAction::Command(cmd) => {
@@ -88,6 +91,9 @@ fn run_event_loop(
                             .set_status_message("Select all not yet implemented".to_string());
                     }
                     editor_tui::input::InputAction::Resize => {}
+                    editor_tui::input::InputAction::CloseHistoryStats => {
+                        editor_state.close_history_stats();
+                    }
                 }
             }
         }

@@ -44,11 +44,14 @@ impl InputHandler {
         &mut self,
         event: Event,
         is_history_browser_open: bool,
+        is_history_stats_open: bool,
     ) -> Option<InputAction> {
         match event {
             Event::Key(key_event) => {
                 if is_history_browser_open {
                     self.handle_history_browser_key_event(key_event)
+                } else if is_history_stats_open {
+                    self.handle_history_stats_key_event(key_event)
                 } else {
                     self.handle_key_event(key_event)
                 }
@@ -264,6 +267,17 @@ impl InputHandler {
             _ => None,
         }
     }
+
+    fn handle_history_stats_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
+        let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
+
+        match (key_event.code, ctrl) {
+            (KeyCode::Esc, false) => Some(InputAction::CloseHistoryStats),
+            (KeyCode::Char('q'), false) => Some(InputAction::CloseHistoryStats),
+            (code, _) if code == self.key_bindings.quit_key && ctrl => Some(InputAction::Quit),
+            _ => None,
+        }
+    }
 }
 
 impl Default for InputHandler {
@@ -282,4 +296,5 @@ pub enum InputAction {
     GotoLine,
     SelectAll,
     Resize,
+    CloseHistoryStats,
 }

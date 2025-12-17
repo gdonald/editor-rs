@@ -124,6 +124,7 @@ pub enum Command {
         file_path: String,
     },
     HistoryPreviewRestore(String),
+    ShowHistoryStats,
 
     Quit,
 }

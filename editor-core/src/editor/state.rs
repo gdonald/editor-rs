@@ -4,7 +4,7 @@ use crate::clipboard::ClipboardManager;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
-use crate::git_history::GitHistoryManager;
+use crate::git_history::{GitHistoryManager, HistoryStats};
 use crate::history::History;
 use crate::history_browser::HistoryBrowser;
 use crate::selection::Selection;
@@ -34,6 +34,7 @@ pub struct EditorState {
     pub(super) git_history: GitHistoryManager,
     pub(super) auto_commit_enabled: bool,
     pub(super) history_browser: Option<HistoryBrowser>,
+    pub(super) history_stats: Option<HistoryStats>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -77,6 +78,7 @@ impl EditorState {
             git_history: GitHistoryManager::default(),
             auto_commit_enabled: true,
             history_browser: None,
+            history_stats: None,
         }
     }
 
@@ -104,6 +106,7 @@ impl EditorState {
             git_history: GitHistoryManager::default(),
             auto_commit_enabled: true,
             history_browser: None,
+            history_stats: None,
         })
     }
 
@@ -228,6 +231,7 @@ impl EditorState {
                 file_path,
             } => self.history_restore_file(&commit_id, &file_path),
             Command::HistoryPreviewRestore(commit_id) => self.history_preview_restore(&commit_id),
+            Command::ShowHistoryStats => self.show_history_stats(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -584,6 +588,36 @@ impl EditorState {
             content.len()
         ));
         Ok(())
+    }
+
+    fn show_history_stats(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        let file_path = self.buffer().file_path().ok_or_else(|| {
+            EditorError::InvalidOperation(
+                "Cannot show history stats for unsaved buffer".to_string(),
+            )
+        })?;
+
+        let project_path = file_path
+            .parent()
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file path".to_string()))?;
+
+        let stats = self.git_history.get_history_stats(project_path)?;
+        self.history_stats = Some(stats);
+        Ok(())
+    }
+
+    pub fn is_history_stats_open(&self) -> bool {
+        self.history_stats.is_some()
+    }
+
+    pub fn history_stats(&self) -> Option<&HistoryStats> {
+        self.history_stats.as_ref()
+    }
+
+    pub fn close_history_stats(&mut self) {
+        self.history_stats = None;
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {

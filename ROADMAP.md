@@ -423,12 +423,12 @@
 - [x] Write tests for statistics API
 
 #### 6.5.6.3 History Statistics Display
-- [ ] Design HistoryStats struct to hold statistics data
-- [ ] Add ShowHistoryStats command to Command enum
-- [ ] Implement statistics gathering in EditorState
-- [ ] Implement TUI rendering of statistics (commit count, size, date range)
-- [ ] Implement GUI rendering of statistics
-- [ ] Write tests for statistics display
+- [x] Design HistoryStats struct to hold statistics data
+- [x] Add ShowHistoryStats command to Command enum
+- [x] Implement statistics gathering in EditorState
+- [x] Implement TUI rendering of statistics (commit count, size, date range)
+- [x] Implement GUI rendering of statistics
+- [x] Write tests for statistics display
 
 #### 6.5.6.4 Retention Policy Configuration
 - [ ] Design RetentionPolicy enum (Forever, Days(u32), Commits(usize), Size(u64))
