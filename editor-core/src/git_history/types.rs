@@ -1,5 +1,6 @@
 use crate::{EditorError, Result};
 use git2::{Signature, Time};
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommitInfo {
@@ -23,7 +24,7 @@ pub enum ChangeStatus {
     Modified,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GcConfig {
     pub enabled: bool,
     pub commits_threshold: usize,
@@ -55,6 +56,15 @@ impl Default for GcConfig {
             aggressive: false,
         }
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub enum RetentionPolicy {
+    #[default]
+    Forever,
+    Days(u32),
+    Commits(usize),
+    Size(u64),
 }
 
 pub fn create_signature() -> Result<Signature<'static>> {

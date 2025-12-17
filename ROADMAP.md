@@ -431,12 +431,12 @@
 - [x] Write tests for statistics display
 
 #### 6.5.6.4 Retention Policy Configuration
-- [ ] Design RetentionPolicy enum (Forever, Days(u32), Commits(usize), Size(u64))
-- [ ] Add retention_policy field to configuration
-- [ ] Default retention policy: Forever
-- [ ] Add method to check if commit should be retained
-- [ ] Add configuration loading for retention policy
-- [ ] Write tests for retention policy configuration
+- [x] Design RetentionPolicy enum (Forever, Days(u32), Commits(usize), Size(u64))
+- [x] Add retention_policy field to configuration
+- [x] Default retention policy: Forever
+- [x] Add method to check if commit should be retained
+- [x] Add configuration loading for retention policy
+- [x] Write tests for retention policy configuration
 
 #### 6.5.6.5 Manual History Cleanup
 - [ ] Add method to GitHistoryManager to delete old commits

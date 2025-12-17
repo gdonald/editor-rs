@@ -3,5 +3,6 @@ mod git_history_tests {
     mod diff;
     mod gc;
     mod repository;
+    mod retention;
     mod stats;
 }

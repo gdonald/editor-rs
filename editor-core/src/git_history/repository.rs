@@ -4,11 +4,12 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::types::GcConfig;
+use super::types::{GcConfig, RetentionPolicy};
 
 pub struct GitHistoryManager {
     storage_root: PathBuf,
     gc_config: GcConfig,
+    retention_policy: RetentionPolicy,
 }
 
 impl GitHistoryManager {
@@ -17,6 +18,7 @@ impl GitHistoryManager {
         Ok(Self {
             storage_root,
             gc_config: GcConfig::default(),
+            retention_policy: RetentionPolicy::default(),
         })
     }
 
@@ -24,6 +26,7 @@ impl GitHistoryManager {
         Ok(Self {
             storage_root,
             gc_config: GcConfig::default(),
+            retention_policy: RetentionPolicy::default(),
         })
     }
 
@@ -32,8 +35,17 @@ impl GitHistoryManager {
         self
     }
 
+    pub fn with_retention_policy(mut self, retention_policy: RetentionPolicy) -> Self {
+        self.retention_policy = retention_policy;
+        self
+    }
+
     pub fn gc_config(&self) -> &GcConfig {
         &self.gc_config
+    }
+
+    pub fn retention_policy(&self) -> &RetentionPolicy {
+        &self.retention_policy
     }
 
     fn default_storage_root() -> Result<PathBuf> {
