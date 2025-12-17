@@ -408,11 +408,11 @@
 ### 6.5.6 History Management
 
 #### 6.5.6.1 Git Repository Optimization
-- [ ] Add method to GitHistoryManager to run git gc (garbage collection)
-- [ ] Implement automatic gc trigger (e.g., after N commits)
-- [ ] Implement configurable gc thresholds
-- [ ] Add error handling for gc failures
-- [ ] Write tests for git gc functionality
+- [x] Add method to GitHistoryManager to run git gc (garbage collection)
+- [x] Implement automatic gc trigger (e.g., after N commits)
+- [x] Implement configurable gc thresholds
+- [x] Add error handling for gc failures
+- [x] Write tests for git gc functionality
 
 #### 6.5.6.2 History Statistics API
 - [ ] Add method to get total commit count
