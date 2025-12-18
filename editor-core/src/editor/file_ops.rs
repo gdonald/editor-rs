@@ -26,6 +26,10 @@ impl EditorState {
                 if let Err(e) = self.git_history.auto_commit_on_save(project_path, &path) {
                     eprintln!("Warning: Git auto-commit failed: {}", e);
                 }
+
+                if let Ok(Some(stats)) = self.git_history.auto_cleanup_if_needed(project_path) {
+                    self.cleanup_stats = Some(stats);
+                }
             }
         }
 
@@ -63,6 +67,12 @@ impl EditorState {
                             .auto_commit_on_save_multiple(project_path, &file_refs)
                         {
                             eprintln!("Warning: Git auto-commit failed: {}", e);
+                        }
+
+                        if let Ok(Some(stats)) =
+                            self.git_history.auto_cleanup_if_needed(project_path)
+                        {
+                            self.cleanup_stats = Some(stats);
                         }
                     }
                 }

@@ -13,6 +13,24 @@ pub struct CleanupStats {
 }
 
 impl GitHistoryManager {
+    pub fn auto_cleanup_if_needed(&self, project_path: &Path) -> Result<Option<CleanupStats>> {
+        if !self.auto_cleanup_enabled() {
+            return Ok(None);
+        }
+
+        if self.retention_policy() == &crate::git_history::RetentionPolicy::Forever {
+            return Ok(None);
+        }
+
+        let stats = self.cleanup_old_commits(project_path)?;
+
+        if stats.commits_before == stats.commits_after {
+            return Ok(None);
+        }
+
+        Ok(Some(stats))
+    }
+
     pub fn cleanup_old_commits(&self, project_path: &Path) -> Result<CleanupStats> {
         let repo = self.open_repository(project_path)?;
         let commits_before_list = self.list_commits(project_path)?;

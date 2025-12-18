@@ -10,6 +10,7 @@ pub struct GitHistoryManager {
     storage_root: PathBuf,
     gc_config: GcConfig,
     retention_policy: RetentionPolicy,
+    auto_cleanup_enabled: bool,
 }
 
 impl GitHistoryManager {
@@ -19,6 +20,7 @@ impl GitHistoryManager {
             storage_root,
             gc_config: GcConfig::default(),
             retention_policy: RetentionPolicy::default(),
+            auto_cleanup_enabled: false,
         })
     }
 
@@ -27,6 +29,7 @@ impl GitHistoryManager {
             storage_root,
             gc_config: GcConfig::default(),
             retention_policy: RetentionPolicy::default(),
+            auto_cleanup_enabled: false,
         })
     }
 
@@ -46,6 +49,14 @@ impl GitHistoryManager {
 
     pub fn retention_policy(&self) -> &RetentionPolicy {
         &self.retention_policy
+    }
+
+    pub fn auto_cleanup_enabled(&self) -> bool {
+        self.auto_cleanup_enabled
+    }
+
+    pub fn set_auto_cleanup_enabled(&mut self, enabled: bool) {
+        self.auto_cleanup_enabled = enabled;
     }
 
     fn default_storage_root() -> Result<PathBuf> {

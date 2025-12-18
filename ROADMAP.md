@@ -448,11 +448,11 @@
 - [x] Write tests for manual cleanup
 
 #### 6.5.6.6 Automatic History Cleanup
-- [ ] Implement automatic cleanup trigger (on save, on startup, etc.)
-- [ ] Add configurable automatic cleanup option (default: off)
+- [x] Implement automatic cleanup trigger (on save, on startup, etc.)
+- [x] Add configurable automatic cleanup option (default: off)
 - [ ] Implement background cleanup to avoid blocking
 - [ ] Add cleanup progress indicator
-- [ ] Write tests for automatic cleanup
+- [x] Write tests for automatic cleanup
 
 #### 6.5.6.7 Large File Handling
 - [ ] Implement detection of large files (configurable threshold)

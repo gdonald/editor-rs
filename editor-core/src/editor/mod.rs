@@ -3,6 +3,7 @@ mod clipboard_ops;
 mod code_intelligence_ops;
 mod cursor_ops;
 mod file_ops;
+mod git_history_ops;
 mod mode;
 mod mouse_ops;
 mod replace_ops;

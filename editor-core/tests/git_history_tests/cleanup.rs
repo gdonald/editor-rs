@@ -151,3 +151,99 @@ fn test_cleanup_after_cleanup_stats_are_consistent() {
     let actual_commits = manager_keep_2.list_commits(&project_path).unwrap();
     assert_eq!(stats.commits_after, actual_commits.len());
 }
+
+#[test]
+fn test_auto_cleanup_with_disabled_flag() {
+    let (_temp_dir, project_path, manager) = setup_test_repo();
+
+    create_commit_at_project(&manager, &project_path, "test.txt", "content1");
+    create_commit_at_project(&manager, &project_path, "test.txt", "content2");
+    create_commit_at_project(&manager, &project_path, "test.txt", "content3");
+
+    let mut manager_keep_1 = manager.with_retention_policy(RetentionPolicy::Commits(1));
+    manager_keep_1.set_auto_cleanup_enabled(false);
+
+    let result = manager_keep_1
+        .auto_cleanup_if_needed(&project_path)
+        .unwrap();
+    assert!(result.is_none());
+
+    let commits = manager_keep_1.list_commits(&project_path).unwrap();
+    assert_eq!(commits.len(), 3);
+}
+
+#[test]
+fn test_auto_cleanup_with_enabled_flag() {
+    let (_temp_dir, project_path, manager) = setup_test_repo();
+
+    create_commit_at_project(&manager, &project_path, "test.txt", "content1");
+    create_commit_at_project(&manager, &project_path, "test.txt", "content2");
+    create_commit_at_project(&manager, &project_path, "test.txt", "content3");
+
+    let mut manager_keep_1 = manager.with_retention_policy(RetentionPolicy::Commits(1));
+    manager_keep_1.set_auto_cleanup_enabled(true);
+
+    let result = manager_keep_1
+        .auto_cleanup_if_needed(&project_path)
+        .unwrap();
+    assert!(result.is_some());
+
+    let stats = result.unwrap();
+    assert_eq!(stats.commits_before, 3);
+    assert_eq!(stats.commits_after, 1);
+
+    let commits = manager_keep_1.list_commits(&project_path).unwrap();
+    assert_eq!(commits.len(), 1);
+}
+
+#[test]
+fn test_auto_cleanup_with_forever_retention_returns_none() {
+    let (_temp_dir, project_path, manager) = setup_test_repo();
+
+    create_commit_at_project(&manager, &project_path, "test.txt", "content1");
+    create_commit_at_project(&manager, &project_path, "test.txt", "content2");
+
+    let mut manager_forever = manager.with_retention_policy(RetentionPolicy::Forever);
+    manager_forever.set_auto_cleanup_enabled(true);
+
+    let result = manager_forever
+        .auto_cleanup_if_needed(&project_path)
+        .unwrap();
+    assert!(result.is_none());
+
+    let commits = manager_forever.list_commits(&project_path).unwrap();
+    assert_eq!(commits.len(), 2);
+}
+
+#[test]
+fn test_auto_cleanup_with_no_commits_to_delete_returns_none() {
+    let (_temp_dir, project_path, manager) = setup_test_repo();
+
+    create_commit_at_project(&manager, &project_path, "test.txt", "content1");
+    create_commit_at_project(&manager, &project_path, "test.txt", "content2");
+
+    let mut manager_keep_10 = manager.with_retention_policy(RetentionPolicy::Commits(10));
+    manager_keep_10.set_auto_cleanup_enabled(true);
+
+    let result = manager_keep_10
+        .auto_cleanup_if_needed(&project_path)
+        .unwrap();
+    assert!(result.is_none());
+
+    let commits = manager_keep_10.list_commits(&project_path).unwrap();
+    assert_eq!(commits.len(), 2);
+}
+
+#[test]
+fn test_auto_cleanup_enabled_getter_and_setter() {
+    let (_temp_dir, _project_path, manager) = setup_test_repo();
+
+    assert!(!manager.auto_cleanup_enabled());
+
+    let mut manager_mut = manager;
+    manager_mut.set_auto_cleanup_enabled(true);
+    assert!(manager_mut.auto_cleanup_enabled());
+
+    manager_mut.set_auto_cleanup_enabled(false);
+    assert!(!manager_mut.auto_cleanup_enabled());
+}
