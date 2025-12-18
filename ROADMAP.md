@@ -439,13 +439,13 @@
 - [x] Write tests for retention policy configuration
 
 #### 6.5.6.5 Manual History Cleanup
-- [ ] Add method to GitHistoryManager to delete old commits
-- [ ] Implement cleanup based on retention policy
-- [ ] Add CleanupHistory command to Command enum
+- [x] Add method to GitHistoryManager to delete old commits
+- [x] Implement cleanup based on retention policy
+- [x] Add CleanupHistory command to Command enum
 - [ ] Implement cleanup confirmation dialog (TUI)
 - [ ] Implement cleanup confirmation dialog (GUI)
 - [ ] Show statistics before/after cleanup
-- [ ] Write tests for manual cleanup
+- [x] Write tests for manual cleanup
 
 #### 6.5.6.6 Automatic History Cleanup
 - [ ] Implement automatic cleanup trigger (on save, on startup, etc.)

@@ -125,6 +125,7 @@ pub enum Command {
     },
     HistoryPreviewRestore(String),
     ShowHistoryStats,
+    CleanupHistory,
 
     Quit,
 }

@@ -4,7 +4,7 @@ use crate::clipboard::ClipboardManager;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
-use crate::git_history::{GitHistoryManager, HistoryStats};
+use crate::git_history::{CleanupStats, GitHistoryManager, HistoryStats};
 use crate::history::History;
 use crate::history_browser::HistoryBrowser;
 use crate::selection::Selection;
@@ -35,6 +35,7 @@ pub struct EditorState {
     pub(super) auto_commit_enabled: bool,
     pub(super) history_browser: Option<HistoryBrowser>,
     pub(super) history_stats: Option<HistoryStats>,
+    pub(super) cleanup_stats: Option<CleanupStats>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -79,6 +80,7 @@ impl EditorState {
             auto_commit_enabled: true,
             history_browser: None,
             history_stats: None,
+            cleanup_stats: None,
         }
     }
 
@@ -107,6 +109,7 @@ impl EditorState {
             auto_commit_enabled: true,
             history_browser: None,
             history_stats: None,
+            cleanup_stats: None,
         })
     }
 
@@ -232,6 +235,7 @@ impl EditorState {
             } => self.history_restore_file(&commit_id, &file_path),
             Command::HistoryPreviewRestore(commit_id) => self.history_preview_restore(&commit_id),
             Command::ShowHistoryStats => self.show_history_stats(),
+            Command::CleanupHistory => self.cleanup_history(),
 
             _ => Err(EditorError::InvalidOperation(
                 "Command not yet implemented".to_string(),
@@ -618,6 +622,34 @@ impl EditorState {
 
     pub fn close_history_stats(&mut self) {
         self.history_stats = None;
+    }
+
+    fn cleanup_history(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        let file_path = self.buffer().file_path().ok_or_else(|| {
+            EditorError::InvalidOperation("Cannot cleanup history for unsaved buffer".to_string())
+        })?;
+
+        let project_path = file_path
+            .parent()
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file path".to_string()))?;
+
+        let stats = self.git_history.cleanup_old_commits(project_path)?;
+        self.cleanup_stats = Some(stats);
+        Ok(())
+    }
+
+    pub fn is_cleanup_stats_open(&self) -> bool {
+        self.cleanup_stats.is_some()
+    }
+
+    pub fn cleanup_stats(&self) -> Option<&CleanupStats> {
+        self.cleanup_stats.as_ref()
+    }
+
+    pub fn close_cleanup_stats(&mut self) {
+        self.cleanup_stats = None;
     }
 
     pub(super) fn validate_position(&self, position: CursorPosition) -> Result<()> {
