@@ -552,7 +552,19 @@
 - [ ] Implement word count/character count display
 - [x] Write tests for rendering logic
 
-### 8.4 TUI Features
+### 8.4 TUI Menu System
+- [ ] Implement menu bar (File, Edit, View, Search, Tools, Help)
+- [ ] Implement menu keyboard navigation (Alt+F for File, etc.)
+- [ ] Implement menu mouse support (click to open/select)
+- [ ] Implement File menu (New, Open, Save, Save As, Close, Quit)
+- [ ] Implement Edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
+- [ ] Implement View menu (Toggle Line Numbers, Toggle Status Bar, Zoom In/Out)
+- [ ] Implement Search menu (Find, Replace, Go to Line, Next/Previous Match)
+- [ ] Implement Tools menu (Toggle Comments, Change Case, Sort Lines)
+- [ ] Implement Help menu (Keyboard Shortcuts, About)
+- [ ] Write tests for TUI menu system
+
+### 8.5 TUI Features
 - [ ] Implement command palette/prompt
 - [ ] Implement file browser/picker
 - [ ] Implement quick open (fuzzy file finder)
@@ -597,8 +609,19 @@
 - [ ] Implement word count/character count display
 - [x] Write tests for rendering logic
 
-### 9.4 GUI Menus and Dialogs
-- [ ] Implement menu bar (File, Edit, View, Help)
+### 9.4 GUI Menu System
+- [ ] Implement menu bar (File, Edit, View, Search, Tools, Help)
+- [ ] Implement menu keyboard navigation (Alt+F for File, etc.)
+- [ ] Implement menu mouse support (click to open/select)
+- [ ] Implement File menu (New, Open, Save, Save As, Close, Quit)
+- [ ] Implement Edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
+- [ ] Implement View menu (Toggle Line Numbers, Toggle Status Bar, Zoom In/Out)
+- [ ] Implement Search menu (Find, Replace, Go to Line, Next/Previous Match)
+- [ ] Implement Tools menu (Toggle Comments, Change Case, Sort Lines)
+- [ ] Implement Help menu (Keyboard Shortcuts, About)
+- [ ] Write tests for GUI menu system
+
+### 9.5 GUI Dialogs
 - [ ] Implement file open dialog
 - [ ] Implement save as dialog
 - [ ] Implement search dialog
@@ -607,7 +630,7 @@
 - [ ] Implement about dialog
 - [ ] Write tests for dialogs
 
-### 9.5 GUI Polish
+### 9.6 GUI Polish
 - [ ] Implement font selection
 - [ ] Implement font size adjustment (keyboard zoom in/out)
 - [ ] Implement line spacing adjustment
@@ -617,7 +640,7 @@
 - [ ] Implement macOS native menu bar integration
 - [ ] Write tests for GUI polish features
 
-### 9.6 GUI Advanced Features
+### 9.7 GUI Advanced Features
 - [ ] Implement quick open dialog (fuzzy file finder)
 - [ ] Implement command palette
 - [ ] Implement symbol outline panel

@@ -2,6 +2,42 @@ use editor_core::{CaseMode, Command};
 use editor_gui::input::{InputAction, InputHandler, KeyBindings};
 use eframe::egui;
 
+fn cmd_modifiers() -> egui::Modifiers {
+    #[cfg(target_os = "macos")]
+    {
+        egui::Modifiers {
+            command: true,
+            ..Default::default()
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        egui::Modifiers {
+            ctrl: true,
+            ..Default::default()
+        }
+    }
+}
+
+fn cmd_shift_modifiers() -> egui::Modifiers {
+    #[cfg(target_os = "macos")]
+    {
+        egui::Modifiers {
+            command: true,
+            shift: true,
+            ..Default::default()
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        egui::Modifiers {
+            ctrl: true,
+            shift: true,
+            ..Default::default()
+        }
+    }
+}
+
 #[test]
 fn test_input_handler_initialization() {
     let _handler = InputHandler::new();
@@ -138,10 +174,7 @@ fn test_handle_key_event_arrow_right() {
 #[test]
 fn test_handle_key_event_ctrl_arrow_left() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::ArrowLeft, &modifiers);
     assert!(matches!(
         action,
@@ -152,10 +185,7 @@ fn test_handle_key_event_ctrl_arrow_left() {
 #[test]
 fn test_handle_key_event_ctrl_arrow_right() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::ArrowRight, &modifiers);
     assert!(matches!(
         action,
@@ -188,10 +218,7 @@ fn test_handle_key_event_end() {
 #[test]
 fn test_handle_key_event_ctrl_home() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::Home, &modifiers);
     assert!(matches!(
         action,
@@ -202,10 +229,7 @@ fn test_handle_key_event_ctrl_home() {
 #[test]
 fn test_handle_key_event_ctrl_end() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::End, &modifiers);
     assert!(matches!(
         action,
@@ -238,10 +262,7 @@ fn test_handle_key_event_page_down() {
 #[test]
 fn test_handle_key_event_ctrl_s() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::S, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Save))));
 }
@@ -249,10 +270,7 @@ fn test_handle_key_event_ctrl_s() {
 #[test]
 fn test_handle_key_event_ctrl_o() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::O, &modifiers);
     assert!(matches!(action, Some(InputAction::OpenFile)));
 }
@@ -260,10 +278,7 @@ fn test_handle_key_event_ctrl_o() {
 #[test]
 fn test_handle_key_event_ctrl_n() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::N, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::New))));
 }
@@ -271,10 +286,7 @@ fn test_handle_key_event_ctrl_n() {
 #[test]
 fn test_handle_key_event_ctrl_w() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::W, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Close))));
 }
@@ -282,10 +294,7 @@ fn test_handle_key_event_ctrl_w() {
 #[test]
 fn test_handle_key_event_ctrl_z() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::Z, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Undo))));
 }
@@ -293,10 +302,7 @@ fn test_handle_key_event_ctrl_z() {
 #[test]
 fn test_handle_key_event_ctrl_y() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::Y, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Redo))));
 }
@@ -304,11 +310,7 @@ fn test_handle_key_event_ctrl_y() {
 #[test]
 fn test_handle_key_event_ctrl_shift_z() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        shift: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_shift_modifiers();
     let action = handler.handle_key_event(egui::Key::Z, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Redo))));
 }
@@ -316,10 +318,7 @@ fn test_handle_key_event_ctrl_shift_z() {
 #[test]
 fn test_handle_key_event_ctrl_c() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::C, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Copy))));
 }
@@ -327,10 +326,7 @@ fn test_handle_key_event_ctrl_c() {
 #[test]
 fn test_handle_key_event_ctrl_x() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::X, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Cut))));
 }
@@ -338,10 +334,7 @@ fn test_handle_key_event_ctrl_x() {
 #[test]
 fn test_handle_key_event_ctrl_v() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::V, &modifiers);
     assert!(matches!(action, Some(InputAction::Command(Command::Paste))));
 }
@@ -349,10 +342,7 @@ fn test_handle_key_event_ctrl_v() {
 #[test]
 fn test_handle_key_event_ctrl_a() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::A, &modifiers);
     assert!(matches!(action, Some(InputAction::SelectAll)));
 }
@@ -360,10 +350,7 @@ fn test_handle_key_event_ctrl_a() {
 #[test]
 fn test_handle_key_event_ctrl_f() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::F, &modifiers);
     assert!(matches!(action, Some(InputAction::Search)));
 }
@@ -371,10 +358,7 @@ fn test_handle_key_event_ctrl_f() {
 #[test]
 fn test_handle_key_event_ctrl_h() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::H, &modifiers);
     assert!(matches!(action, Some(InputAction::Replace)));
 }
@@ -382,10 +366,7 @@ fn test_handle_key_event_ctrl_h() {
 #[test]
 fn test_handle_key_event_ctrl_g() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::G, &modifiers);
     assert!(matches!(action, Some(InputAction::GotoLine)));
 }
@@ -418,10 +399,7 @@ fn test_handle_key_event_shift_f3() {
 #[test]
 fn test_handle_key_event_ctrl_d() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::D, &modifiers);
     assert!(matches!(
         action,
@@ -432,10 +410,7 @@ fn test_handle_key_event_ctrl_d() {
 #[test]
 fn test_handle_key_event_ctrl_k() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::K, &modifiers);
     assert!(matches!(
         action,
@@ -446,10 +421,7 @@ fn test_handle_key_event_ctrl_k() {
 #[test]
 fn test_handle_key_event_ctrl_j() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::J, &modifiers);
     assert!(matches!(
         action,
@@ -460,11 +432,7 @@ fn test_handle_key_event_ctrl_j() {
 #[test]
 fn test_handle_key_event_ctrl_shift_arrow_up() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        shift: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_shift_modifiers();
     let action = handler.handle_key_event(egui::Key::ArrowUp, &modifiers);
     assert!(matches!(
         action,
@@ -475,11 +443,7 @@ fn test_handle_key_event_ctrl_shift_arrow_up() {
 #[test]
 fn test_handle_key_event_ctrl_shift_arrow_down() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        shift: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_shift_modifiers();
     let action = handler.handle_key_event(egui::Key::ArrowDown, &modifiers);
     assert!(matches!(
         action,
@@ -490,10 +454,7 @@ fn test_handle_key_event_ctrl_shift_arrow_down() {
 #[test]
 fn test_handle_key_event_ctrl_slash() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::Slash, &modifiers);
     assert!(matches!(
         action,
@@ -504,11 +465,7 @@ fn test_handle_key_event_ctrl_slash() {
 #[test]
 fn test_handle_key_event_ctrl_shift_slash() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        shift: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_shift_modifiers();
     let action = handler.handle_key_event(egui::Key::Slash, &modifiers);
     assert!(matches!(
         action,
@@ -519,10 +476,7 @@ fn test_handle_key_event_ctrl_shift_slash() {
 #[test]
 fn test_handle_key_event_ctrl_u() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::U, &modifiers);
     assert!(matches!(
         action,
@@ -535,11 +489,7 @@ fn test_handle_key_event_ctrl_u() {
 #[test]
 fn test_handle_key_event_ctrl_shift_u() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        shift: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_shift_modifiers();
     let action = handler.handle_key_event(egui::Key::U, &modifiers);
     assert!(matches!(
         action,
@@ -552,10 +502,7 @@ fn test_handle_key_event_ctrl_shift_u() {
 #[test]
 fn test_handle_key_event_ctrl_b() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::B, &modifiers);
     assert!(matches!(
         action,
@@ -566,10 +513,7 @@ fn test_handle_key_event_ctrl_b() {
 #[test]
 fn test_handle_key_event_ctrl_m() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::M, &modifiers);
     assert!(matches!(
         action,
@@ -616,10 +560,7 @@ fn test_handle_key_event_insert() {
 #[test]
 fn test_handle_key_event_ctrl_r() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::R, &modifiers);
     assert!(matches!(
         action,
@@ -641,10 +582,7 @@ fn test_handle_key_event_escape() {
 #[test]
 fn test_handle_key_event_ctrl_q() {
     let mut handler = InputHandler::new();
-    let modifiers = egui::Modifiers {
-        ctrl: true,
-        ..Default::default()
-    };
+    let modifiers = cmd_modifiers();
     let action = handler.handle_key_event(egui::Key::Q, &modifiers);
     assert!(matches!(action, Some(InputAction::Quit)));
 }

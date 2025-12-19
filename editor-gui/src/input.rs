@@ -37,7 +37,11 @@ impl InputHandler {
         key: egui::Key,
         modifiers: &egui::Modifiers,
     ) -> Option<InputAction> {
-        let ctrl = modifiers.ctrl || modifiers.command;
+        #[cfg(target_os = "macos")]
+        let ctrl = modifiers.command;
+        #[cfg(not(target_os = "macos"))]
+        let ctrl = modifiers.ctrl;
+
         let alt = modifiers.alt;
         let shift = modifiers.shift;
 
@@ -199,7 +203,10 @@ impl InputHandler {
         key: egui::Key,
         modifiers: &egui::Modifiers,
     ) -> Option<InputAction> {
-        let ctrl = modifiers.ctrl || modifiers.command;
+        #[cfg(target_os = "macos")]
+        let ctrl = modifiers.command;
+        #[cfg(not(target_os = "macos"))]
+        let ctrl = modifiers.ctrl;
 
         match key {
             egui::Key::Q if ctrl && self.key_bindings.quit_key == 'q' => Some(InputAction::Quit),
@@ -219,7 +226,10 @@ impl InputHandler {
         key: egui::Key,
         modifiers: &egui::Modifiers,
     ) -> Option<InputAction> {
-        let ctrl = modifiers.ctrl || modifiers.command;
+        #[cfg(target_os = "macos")]
+        let ctrl = modifiers.command;
+        #[cfg(not(target_os = "macos"))]
+        let ctrl = modifiers.ctrl;
 
         match key {
             egui::Key::Q if ctrl && self.key_bindings.quit_key == 'q' => Some(InputAction::Quit),

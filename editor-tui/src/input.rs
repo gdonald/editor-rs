@@ -63,21 +63,28 @@ impl InputHandler {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
+        #[cfg(target_os = "macos")]
+        let ctrl = key_event.modifiers.contains(KeyModifiers::SUPER);
+        #[cfg(not(target_os = "macos"))]
         let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
+
         let alt = key_event.modifiers.contains(KeyModifiers::ALT);
         let shift = key_event.modifiers.contains(KeyModifiers::SHIFT);
+
+        let has_any_ctrl_modifier = key_event.modifiers.contains(KeyModifiers::CONTROL)
+            || key_event.modifiers.contains(KeyModifiers::SUPER);
 
         match (key_event.code, ctrl, alt, shift) {
             (code, _, _, _) if code == self.key_bindings.quit_key && ctrl => {
                 Some(InputAction::Quit)
             }
 
-            (KeyCode::Char(c), false, false, false) => {
+            (KeyCode::Char(c), false, false, false) if !has_any_ctrl_modifier => {
                 Some(InputAction::Command(Command::InsertChar(c)))
             }
-            (KeyCode::Char(c), false, false, true) => Some(InputAction::Command(
-                Command::InsertChar(c.to_ascii_uppercase()),
-            )),
+            (KeyCode::Char(c), false, false, true) if !has_any_ctrl_modifier => Some(
+                InputAction::Command(Command::InsertChar(c.to_ascii_uppercase())),
+            ),
 
             (KeyCode::Backspace, false, false, false) => {
                 Some(InputAction::Command(Command::Backspace))
@@ -249,7 +256,11 @@ impl InputHandler {
     }
 
     fn handle_history_browser_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
+        #[cfg(target_os = "macos")]
+        let ctrl = key_event.modifiers.contains(KeyModifiers::SUPER);
+        #[cfg(not(target_os = "macos"))]
         let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
+
         let _alt = key_event.modifiers.contains(KeyModifiers::ALT);
         let _shift = key_event.modifiers.contains(KeyModifiers::SHIFT);
 
@@ -269,6 +280,9 @@ impl InputHandler {
     }
 
     fn handle_history_stats_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
+        #[cfg(target_os = "macos")]
+        let ctrl = key_event.modifiers.contains(KeyModifiers::SUPER);
+        #[cfg(not(target_os = "macos"))]
         let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
 
         match (key_event.code, ctrl) {
