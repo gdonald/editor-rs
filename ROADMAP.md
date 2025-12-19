@@ -455,12 +455,86 @@
 - [x] Write tests for automatic cleanup
 
 #### 6.5.6.7 Large File Handling
-- [ ] Implement detection of large files (configurable threshold)
-- [ ] Add git LFS support for large files (optional)
-- [ ] Implement compression for large file history
-- [ ] Add warning when large files are added to history
-- [ ] Implement option to exclude large files from history
-- [ ] Write tests for large file handling
+
+##### 6.5.6.7.1 Configuration Infrastructure
+- [ ] Design LargeFileConfig struct with threshold, strategy, and options
+- [ ] Add large_file_threshold_mb field (default: 50 MB)
+- [ ] Add LargeFileStrategy enum (Warn, Skip, Error, Lfs)
+- [ ] Add exclude_large_files_from_history boolean option (default: false)
+- [ ] Add with_large_file_config() method to GitHistoryManager builder
+- [ ] Write tests for LargeFileConfig creation and defaults
+
+##### 6.5.6.7.2 File Size Detection
+- [ ] Add get_file_size() helper method in commit.rs
+- [ ] Add check_file_size() method that returns size and whether it exceeds threshold
+- [ ] Add is_large_file() predicate method
+- [ ] Modify auto_commit_on_save_multiple() to check file sizes before copying
+- [ ] Write tests for file size detection with various file sizes
+
+##### 6.5.6.7.3 Warning System
+- [ ] Add LargeFileWarning error variant to EditorError enum
+- [ ] Add log_large_file_warning() helper function
+- [ ] Modify commit process to emit warnings for large files (when strategy is Warn)
+- [ ] Include file path and size in warning messages
+- [ ] Write tests for warning generation
+
+##### 6.5.6.7.4 Exclusion Logic (Skip Strategy)
+- [ ] Implement file filtering in auto_commit_on_save_multiple() to skip large files
+- [ ] Add commit message notation when files are skipped (e.g., "2 large files excluded")
+- [ ] Track excluded files in commit metadata or message
+- [ ] Return list of skipped files to caller
+- [ ] Write tests for file exclusion behavior
+
+##### 6.5.6.7.5 Error Strategy
+- [ ] Implement Error strategy that blocks commit if large file detected
+- [ ] Return descriptive error with file path and size
+- [ ] Allow users to override with explicit flag if needed
+- [ ] Write tests for error blocking behavior
+
+##### 6.5.6.7.6 Git LFS Integration (Optional)
+- [ ] Research git2-rs LFS support or external git-lfs integration
+- [ ] Add optional git-lfs dependency to Cargo.toml
+- [ ] Implement LFS initialization in repository setup
+- [ ] Add configure_lfs() method to GitHistoryManager
+- [ ] Implement LFS tracking for large files (create .gitattributes)
+- [ ] Modify commit process to use LFS for large files when strategy is Lfs
+- [ ] Write tests for LFS integration (if implemented)
+
+##### 6.5.6.7.7 Compression for Large Files
+- [ ] Research git compression settings and optimization
+- [ ] Implement custom compression for large file blobs (if needed beyond git's default)
+- [ ] Add compression_enabled option to LargeFileConfig
+- [ ] Apply compression during file copy to repository
+- [ ] Write tests for compression behavior
+
+##### 6.5.6.7.8 Statistics and Reporting
+- [ ] Add large_file_count to HistoryStats
+- [ ] Add total_large_file_size to HistoryStats
+- [ ] Add list_large_files() method to return all large files in history
+- [ ] Update get_per_file_stats() to flag large files
+- [ ] Write tests for large file statistics
+
+##### 6.5.6.7.9 Integration with EditorState
+- [ ] Add large_file_config field to EditorState
+- [ ] Pass large file config to GitHistoryManager during initialization
+- [ ] Handle warnings/errors from git history in file_ops.rs save methods
+- [ ] Display warnings to user (via status message or dialog)
+- [ ] Write tests for EditorState integration
+
+##### 6.5.6.7.10 Edge Cases and Error Handling
+- [ ] Handle case where file size changes between check and commit
+- [ ] Handle case where file is deleted before commit
+- [ ] Handle case where threshold is set to 0 (all files are large)
+- [ ] Handle case where threshold is set to u64::MAX (no files are large)
+- [ ] Handle mixed commits with both normal and large files
+- [ ] Write tests for all edge cases
+
+##### 6.5.6.7.11 Documentation and Examples
+- [ ] Document LargeFileConfig in code comments
+- [ ] Document all strategies (Warn, Skip, Error, Lfs) with examples
+- [ ] Add usage examples in git_history module documentation
+- [ ] Update ROADMAP.md to mark completed subtasks
+- [ ] Write integration test demonstrating full workflow
 
 #### 6.5.6.8 History Export and Import
 - [ ] Add method to export history as regular git repository
