@@ -21,7 +21,7 @@ pub use editor::{EditorState, VirtualViewport};
 pub use error::{EditorError, Result};
 pub use git_history::{
     create_signature, ChangeStatus, CleanupStats, CommitInfo, FileChange, FileStats, GcConfig,
-    GitHistoryManager, HistoryStats, RetentionPolicy,
+    GitHistoryManager, HistoryStats, LargeFileConfig, LargeFileStrategy, RetentionPolicy,
 };
 pub use history::{Edit, History, HistoryEntry};
 pub use history_browser::{DiffViewMode, HistoryBrowser};

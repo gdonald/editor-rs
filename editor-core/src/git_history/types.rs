@@ -67,6 +67,31 @@ pub enum RetentionPolicy {
     Size(u64),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum LargeFileStrategy {
+    Warn,
+    Skip,
+    Error,
+    Lfs,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LargeFileConfig {
+    pub threshold_mb: u64,
+    pub strategy: LargeFileStrategy,
+    pub exclude_from_history: bool,
+}
+
+impl Default for LargeFileConfig {
+    fn default() -> Self {
+        Self {
+            threshold_mb: 50,
+            strategy: LargeFileStrategy::Warn,
+            exclude_from_history: false,
+        }
+    }
+}
+
 pub fn create_signature() -> Result<Signature<'static>> {
     let now = Time::new(
         std::time::SystemTime::now()

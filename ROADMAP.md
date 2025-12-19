@@ -457,12 +457,12 @@
 #### 6.5.6.7 Large File Handling
 
 ##### 6.5.6.7.1 Configuration Infrastructure
-- [ ] Design LargeFileConfig struct with threshold, strategy, and options
-- [ ] Add large_file_threshold_mb field (default: 50 MB)
-- [ ] Add LargeFileStrategy enum (Warn, Skip, Error, Lfs)
-- [ ] Add exclude_large_files_from_history boolean option (default: false)
-- [ ] Add with_large_file_config() method to GitHistoryManager builder
-- [ ] Write tests for LargeFileConfig creation and defaults
+- [x] Design LargeFileConfig struct with threshold, strategy, and options
+- [x] Add large_file_threshold_mb field (default: 50 MB)
+- [x] Add LargeFileStrategy enum (Warn, Skip, Error, Lfs)
+- [x] Add exclude_large_files_from_history boolean option (default: false)
+- [x] Add with_large_file_config() method to GitHistoryManager builder
+- [x] Write tests for LargeFileConfig creation and defaults
 
 ##### 6.5.6.7.2 File Size Detection
 - [ ] Add get_file_size() helper method in commit.rs

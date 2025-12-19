@@ -3,6 +3,7 @@ mod git_history_tests {
     mod commit;
     mod diff;
     mod gc;
+    mod large_file_config;
     mod repository;
     mod retention;
     mod stats;

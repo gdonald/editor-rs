@@ -12,5 +12,5 @@ pub use cleanup::CleanupStats;
 pub use repository::GitHistoryManager;
 pub use types::{
     create_signature, ChangeStatus, CommitInfo, FileChange, FileStats, GcConfig, HistoryStats,
-    RetentionPolicy,
+    LargeFileConfig, LargeFileStrategy, RetentionPolicy,
 };

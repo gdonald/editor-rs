@@ -4,13 +4,14 @@ use sha2::{Digest, Sha256};
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use super::types::{GcConfig, RetentionPolicy};
+use super::types::{GcConfig, LargeFileConfig, RetentionPolicy};
 
 pub struct GitHistoryManager {
     storage_root: PathBuf,
     gc_config: GcConfig,
     retention_policy: RetentionPolicy,
     auto_cleanup_enabled: bool,
+    large_file_config: LargeFileConfig,
 }
 
 impl GitHistoryManager {
@@ -21,6 +22,7 @@ impl GitHistoryManager {
             gc_config: GcConfig::default(),
             retention_policy: RetentionPolicy::default(),
             auto_cleanup_enabled: false,
+            large_file_config: LargeFileConfig::default(),
         })
     }
 
@@ -30,6 +32,7 @@ impl GitHistoryManager {
             gc_config: GcConfig::default(),
             retention_policy: RetentionPolicy::default(),
             auto_cleanup_enabled: false,
+            large_file_config: LargeFileConfig::default(),
         })
     }
 
@@ -43,12 +46,21 @@ impl GitHistoryManager {
         self
     }
 
+    pub fn with_large_file_config(mut self, large_file_config: LargeFileConfig) -> Self {
+        self.large_file_config = large_file_config;
+        self
+    }
+
     pub fn gc_config(&self) -> &GcConfig {
         &self.gc_config
     }
 
     pub fn retention_policy(&self) -> &RetentionPolicy {
         &self.retention_policy
+    }
+
+    pub fn large_file_config(&self) -> &LargeFileConfig {
+        &self.large_file_config
     }
 
     pub fn auto_cleanup_enabled(&self) -> bool {
