@@ -465,11 +465,11 @@
 - [x] Write tests for LargeFileConfig creation and defaults
 
 ##### 6.5.6.7.2 File Size Detection
-- [ ] Add get_file_size() helper method in commit.rs
-- [ ] Add check_file_size() method that returns size and whether it exceeds threshold
-- [ ] Add is_large_file() predicate method
-- [ ] Modify auto_commit_on_save_multiple() to check file sizes before copying
-- [ ] Write tests for file size detection with various file sizes
+- [x] Add get_file_size() helper method in commit.rs
+- [x] Add check_file_size() method that returns size and whether it exceeds threshold
+- [x] Add is_large_file() predicate method
+- [x] Modify auto_commit_on_save_multiple() to check file sizes before copying
+- [x] Write tests for file size detection with various file sizes
 
 ##### 6.5.6.7.3 Warning System
 - [ ] Add LargeFileWarning error variant to EditorError enum

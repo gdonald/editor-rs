@@ -6,7 +6,33 @@ use std::path::{Path, PathBuf};
 use super::repository::GitHistoryManager;
 use super::types::{create_signature, ChangeStatus, CommitInfo, FileChange};
 
+pub struct FileSizeInfo {
+    pub size_bytes: u64,
+    pub exceeds_threshold: bool,
+}
+
 impl GitHistoryManager {
+    fn get_file_size(file_path: &Path) -> Result<u64> {
+        let metadata = fs::metadata(file_path).map_err(EditorError::Io)?;
+        Ok(metadata.len())
+    }
+
+    pub fn check_file_size(&self, file_path: &Path) -> Result<FileSizeInfo> {
+        let size_bytes = Self::get_file_size(file_path)?;
+        let threshold_bytes = self.large_file_config().threshold_mb * 1024 * 1024;
+        let exceeds_threshold = size_bytes > threshold_bytes;
+
+        Ok(FileSizeInfo {
+            size_bytes,
+            exceeds_threshold,
+        })
+    }
+
+    pub fn is_large_file(&self, file_path: &Path) -> Result<bool> {
+        let info = self.check_file_size(file_path)?;
+        Ok(info.exceeds_threshold)
+    }
+
     pub fn auto_commit_on_save(&self, project_path: &Path, file_path: &Path) -> Result<()> {
         let path_buf = file_path.to_path_buf();
         self.auto_commit_on_save_multiple(project_path, &[&path_buf])
@@ -51,6 +77,16 @@ impl GitHistoryManager {
                     continue;
                 }
             };
+
+            let size_info = self.check_file_size(&canonical_file)?;
+            if size_info.exceeds_threshold {
+                eprintln!(
+                    "Warning: File {} ({} bytes) exceeds threshold of {} MB",
+                    canonical_file.display(),
+                    size_info.size_bytes,
+                    self.large_file_config().threshold_mb
+                );
+            }
 
             let repo_file_path = repo
                 .workdir()
