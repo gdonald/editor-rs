@@ -682,99 +682,7 @@ fn test_normal_mode_arrow_keys_not_history_navigation() {
 }
 
 #[test]
-#[cfg(target_os = "macos")]
-fn test_macos_cmd_key_for_save() {
-    let mut handler = InputHandler::new();
-
-    let cmd_s = Event::Key(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::SUPER));
-    assert!(matches!(
-        handler.handle_event(cmd_s, false, false),
-        Some(InputAction::Command(Command::Save))
-    ));
-}
-
-#[test]
-#[cfg(target_os = "macos")]
-fn test_macos_cmd_key_for_copy() {
-    let mut handler = InputHandler::new();
-
-    let cmd_c = Event::Key(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::SUPER));
-    assert!(matches!(
-        handler.handle_event(cmd_c, false, false),
-        Some(InputAction::Command(Command::Copy))
-    ));
-}
-
-#[test]
-#[cfg(target_os = "macos")]
-fn test_macos_cmd_key_for_undo() {
-    let mut handler = InputHandler::new();
-
-    let cmd_z = Event::Key(KeyEvent::new(KeyCode::Char('z'), KeyModifiers::SUPER));
-    assert!(matches!(
-        handler.handle_event(cmd_z, false, false),
-        Some(InputAction::Command(Command::Undo))
-    ));
-}
-
-#[test]
-#[cfg(target_os = "macos")]
-fn test_macos_cmd_shift_z_for_redo() {
-    let mut handler = InputHandler::new();
-
-    let cmd_shift_z = Event::Key(KeyEvent::new(
-        KeyCode::Char('z'),
-        KeyModifiers::SUPER | KeyModifiers::SHIFT,
-    ));
-    assert!(matches!(
-        handler.handle_event(cmd_shift_z, false, false),
-        Some(InputAction::Command(Command::Redo))
-    ));
-}
-
-#[test]
-#[cfg(target_os = "macos")]
-fn test_macos_ctrl_key_does_not_trigger_save() {
-    let mut handler = InputHandler::new();
-
-    let ctrl_s = Event::Key(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::CONTROL));
-    let action = handler.handle_event(ctrl_s, false, false);
-    assert!(action.is_none());
-}
-
-#[test]
-#[cfg(target_os = "macos")]
-fn test_macos_cmd_q_quits() {
-    let mut handler = InputHandler::new();
-
-    let cmd_q = Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::SUPER));
-    assert!(matches!(
-        handler.handle_event(cmd_q, false, false),
-        Some(InputAction::Quit)
-    ));
-}
-
-#[test]
-#[cfg(target_os = "macos")]
-fn test_macos_cmd_arrow_for_word_movement() {
-    let mut handler = InputHandler::new();
-
-    let cmd_left = Event::Key(KeyEvent::new(KeyCode::Left, KeyModifiers::SUPER));
-    assert!(matches!(
-        handler.handle_event(cmd_left, false, false),
-        Some(InputAction::Command(Command::MoveCursorWordLeft))
-    ));
-
-    let cmd_right = Event::Key(KeyEvent::new(KeyCode::Right, KeyModifiers::SUPER));
-    assert!(matches!(
-        handler.handle_event(cmd_right, false, false),
-        Some(InputAction::Command(Command::MoveCursorWordRight))
-    ));
-}
-
-#[test]
-#[cfg(not(target_os = "macos"))]
-fn test_non_macos_ctrl_key_for_save() {
+fn test_ctrl_key_for_save_all_platforms() {
     let mut handler = InputHandler::new();
 
     let ctrl_s = Event::Key(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::CONTROL));
@@ -785,8 +693,7 @@ fn test_non_macos_ctrl_key_for_save() {
 }
 
 #[test]
-#[cfg(not(target_os = "macos"))]
-fn test_non_macos_ctrl_key_for_copy() {
+fn test_ctrl_key_for_copy_all_platforms() {
     let mut handler = InputHandler::new();
 
     let ctrl_c = Event::Key(KeyEvent::new(KeyCode::Char('c'), KeyModifiers::CONTROL));
@@ -797,8 +704,60 @@ fn test_non_macos_ctrl_key_for_copy() {
 }
 
 #[test]
-#[cfg(not(target_os = "macos"))]
-fn test_non_macos_super_key_does_not_trigger_save() {
+fn test_ctrl_key_for_undo_all_platforms() {
+    let mut handler = InputHandler::new();
+
+    let ctrl_z = Event::Key(KeyEvent::new(KeyCode::Char('z'), KeyModifiers::CONTROL));
+    assert!(matches!(
+        handler.handle_event(ctrl_z, false, false),
+        Some(InputAction::Command(Command::Undo))
+    ));
+}
+
+#[test]
+fn test_ctrl_shift_z_for_redo_all_platforms() {
+    let mut handler = InputHandler::new();
+
+    let ctrl_shift_z = Event::Key(KeyEvent::new(
+        KeyCode::Char('z'),
+        KeyModifiers::CONTROL | KeyModifiers::SHIFT,
+    ));
+    assert!(matches!(
+        handler.handle_event(ctrl_shift_z, false, false),
+        Some(InputAction::Command(Command::Redo))
+    ));
+}
+
+#[test]
+fn test_ctrl_q_quits_all_platforms() {
+    let mut handler = InputHandler::new();
+
+    let ctrl_q = Event::Key(KeyEvent::new(KeyCode::Char('q'), KeyModifiers::CONTROL));
+    assert!(matches!(
+        handler.handle_event(ctrl_q, false, false),
+        Some(InputAction::Quit)
+    ));
+}
+
+#[test]
+fn test_ctrl_arrow_for_word_movement_all_platforms() {
+    let mut handler = InputHandler::new();
+
+    let ctrl_left = Event::Key(KeyEvent::new(KeyCode::Left, KeyModifiers::CONTROL));
+    assert!(matches!(
+        handler.handle_event(ctrl_left, false, false),
+        Some(InputAction::Command(Command::MoveCursorWordLeft))
+    ));
+
+    let ctrl_right = Event::Key(KeyEvent::new(KeyCode::Right, KeyModifiers::CONTROL));
+    assert!(matches!(
+        handler.handle_event(ctrl_right, false, false),
+        Some(InputAction::Command(Command::MoveCursorWordRight))
+    ));
+}
+
+#[test]
+fn test_super_key_does_not_trigger_save() {
     let mut handler = InputHandler::new();
 
     let super_s = Event::Key(KeyEvent::new(KeyCode::Char('s'), KeyModifiers::SUPER));

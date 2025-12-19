@@ -63,11 +63,7 @@ impl InputHandler {
     }
 
     fn handle_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
-        #[cfg(target_os = "macos")]
-        let ctrl = key_event.modifiers.contains(KeyModifiers::SUPER);
-        #[cfg(not(target_os = "macos"))]
         let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
-
         let alt = key_event.modifiers.contains(KeyModifiers::ALT);
         let shift = key_event.modifiers.contains(KeyModifiers::SHIFT);
 
@@ -256,11 +252,7 @@ impl InputHandler {
     }
 
     fn handle_history_browser_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
-        #[cfg(target_os = "macos")]
-        let ctrl = key_event.modifiers.contains(KeyModifiers::SUPER);
-        #[cfg(not(target_os = "macos"))]
         let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
-
         let _alt = key_event.modifiers.contains(KeyModifiers::ALT);
         let _shift = key_event.modifiers.contains(KeyModifiers::SHIFT);
 
@@ -280,9 +272,6 @@ impl InputHandler {
     }
 
     fn handle_history_stats_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
-        #[cfg(target_os = "macos")]
-        let ctrl = key_event.modifiers.contains(KeyModifiers::SUPER);
-        #[cfg(not(target_os = "macos"))]
         let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
 
         match (key_event.code, ctrl) {
