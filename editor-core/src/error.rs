@@ -4,7 +4,10 @@ use std::io;
 #[derive(Debug)]
 pub enum EditorError {
     Io(io::Error),
-    InvalidPosition { line: usize, column: usize },
+    InvalidPosition {
+        line: usize,
+        column: usize,
+    },
     InvalidOperation(String),
     FileNotFound(String),
     EncodingError(String),
@@ -12,10 +15,19 @@ pub enum EditorError {
     BinaryFile(String),
     DiskFull(String),
     CorruptedFile(String),
-    FileTooLarge { path: String, size: u64, limit: u64 },
+    FileTooLarge {
+        path: String,
+        size: u64,
+        limit: u64,
+    },
     OutOfMemory(String),
     Git(String),
     Parse(String),
+    LargeFileWarning {
+        path: String,
+        size: u64,
+        threshold: u64,
+    },
 }
 
 impl fmt::Display for EditorError {
@@ -42,6 +54,17 @@ impl fmt::Display for EditorError {
             EditorError::OutOfMemory(msg) => write!(f, "Out of memory: {}", msg),
             EditorError::Git(msg) => write!(f, "Git error: {}", msg),
             EditorError::Parse(msg) => write!(f, "Parse error: {}", msg),
+            EditorError::LargeFileWarning {
+                path,
+                size,
+                threshold,
+            } => {
+                write!(
+                    f,
+                    "Warning: Large file {} ({} bytes exceeds {} MB threshold)",
+                    path, size, threshold
+                )
+            }
         }
     }
 }

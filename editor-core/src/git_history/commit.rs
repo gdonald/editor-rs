@@ -4,11 +4,20 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use super::repository::GitHistoryManager;
-use super::types::{create_signature, ChangeStatus, CommitInfo, FileChange};
+use super::types::{create_signature, ChangeStatus, CommitInfo, FileChange, LargeFileStrategy};
 
 pub struct FileSizeInfo {
     pub size_bytes: u64,
     pub exceeds_threshold: bool,
+}
+
+fn log_large_file_warning(file_path: &Path, size_bytes: u64, threshold_mb: u64) {
+    eprintln!(
+        "Warning: Large file {} ({} bytes) exceeds threshold of {} MB",
+        file_path.display(),
+        size_bytes,
+        threshold_mb
+    );
 }
 
 impl GitHistoryManager {
@@ -79,12 +88,13 @@ impl GitHistoryManager {
             };
 
             let size_info = self.check_file_size(&canonical_file)?;
-            if size_info.exceeds_threshold {
-                eprintln!(
-                    "Warning: File {} ({} bytes) exceeds threshold of {} MB",
-                    canonical_file.display(),
+            if size_info.exceeds_threshold
+                && self.large_file_config().strategy == LargeFileStrategy::Warn
+            {
+                log_large_file_warning(
+                    &canonical_file,
                     size_info.size_bytes,
-                    self.large_file_config().threshold_mb
+                    self.large_file_config().threshold_mb,
                 );
             }
 

@@ -472,11 +472,11 @@
 - [x] Write tests for file size detection with various file sizes
 
 ##### 6.5.6.7.3 Warning System
-- [ ] Add LargeFileWarning error variant to EditorError enum
-- [ ] Add log_large_file_warning() helper function
-- [ ] Modify commit process to emit warnings for large files (when strategy is Warn)
-- [ ] Include file path and size in warning messages
-- [ ] Write tests for warning generation
+- [x] Add LargeFileWarning error variant to EditorError enum
+- [x] Add log_large_file_warning() helper function
+- [x] Modify commit process to emit warnings for large files (when strategy is Warn)
+- [x] Include file path and size in warning messages
+- [x] Write tests for warning generation
 
 ##### 6.5.6.7.4 Exclusion Logic (Skip Strategy)
 - [ ] Implement file filtering in auto_commit_on_save_multiple() to skip large files
