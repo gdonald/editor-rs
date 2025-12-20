@@ -11,6 +11,10 @@ pub struct FileSizeInfo {
     pub exceeds_threshold: bool,
 }
 
+pub struct CommitResult {
+    pub skipped_files: Vec<PathBuf>,
+}
+
 fn log_large_file_warning(file_path: &Path, size_bytes: u64, threshold_mb: u64) {
     eprintln!(
         "Warning: Large file {} ({} bytes) exceeds threshold of {} MB",
@@ -42,7 +46,11 @@ impl GitHistoryManager {
         Ok(info.exceeds_threshold)
     }
 
-    pub fn auto_commit_on_save(&self, project_path: &Path, file_path: &Path) -> Result<()> {
+    pub fn auto_commit_on_save(
+        &self,
+        project_path: &Path,
+        file_path: &Path,
+    ) -> Result<CommitResult> {
         let path_buf = file_path.to_path_buf();
         self.auto_commit_on_save_multiple(project_path, &[&path_buf])
     }
@@ -51,9 +59,11 @@ impl GitHistoryManager {
         &self,
         project_path: &Path,
         file_paths: &[&PathBuf],
-    ) -> Result<()> {
+    ) -> Result<CommitResult> {
         if file_paths.is_empty() {
-            return Ok(());
+            return Ok(CommitResult {
+                skipped_files: Vec::new(),
+            });
         }
 
         let repo = self.open_repository(project_path)?;
@@ -61,6 +71,7 @@ impl GitHistoryManager {
 
         let mut index = repo.index().map_err(|e| EditorError::Git(e.to_string()))?;
         let mut relative_paths = Vec::new();
+        let mut skipped_files = Vec::new();
 
         for file_path in file_paths {
             let canonical_file = match file_path.canonicalize() {
@@ -88,14 +99,27 @@ impl GitHistoryManager {
             };
 
             let size_info = self.check_file_size(&canonical_file)?;
-            if size_info.exceeds_threshold
-                && self.large_file_config().strategy == LargeFileStrategy::Warn
-            {
-                log_large_file_warning(
-                    &canonical_file,
-                    size_info.size_bytes,
-                    self.large_file_config().threshold_mb,
-                );
+            if size_info.exceeds_threshold {
+                match self.large_file_config().strategy {
+                    LargeFileStrategy::Warn => {
+                        log_large_file_warning(
+                            &canonical_file,
+                            size_info.size_bytes,
+                            self.large_file_config().threshold_mb,
+                        );
+                    }
+                    LargeFileStrategy::Skip => {
+                        eprintln!(
+                            "Skipping large file {} ({} bytes exceeds {} MB threshold)",
+                            canonical_file.display(),
+                            size_info.size_bytes,
+                            self.large_file_config().threshold_mb
+                        );
+                        skipped_files.push(relative_path.to_path_buf());
+                        continue;
+                    }
+                    _ => {}
+                }
             }
 
             let repo_file_path = repo
@@ -117,7 +141,7 @@ impl GitHistoryManager {
         }
 
         if relative_paths.is_empty() {
-            return Ok(());
+            return Ok(CommitResult { skipped_files });
         }
 
         index.write().map_err(|e| EditorError::Git(e.to_string()))?;
@@ -131,7 +155,7 @@ impl GitHistoryManager {
             .map_err(|e| EditorError::Git(e.to_string()))?;
 
         let timestamp = chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-        let message = if relative_paths.len() == 1 {
+        let mut message = if relative_paths.len() == 1 {
             format!(
                 "Auto-save: {} at {}",
                 relative_paths[0].display(),
@@ -151,6 +175,21 @@ impl GitHistoryManager {
             )
         };
 
+        if !skipped_files.is_empty() {
+            let skipped_count = skipped_files.len();
+            let skipped_list = skipped_files
+                .iter()
+                .map(|p| format!("  - {}", p.display()))
+                .collect::<Vec<_>>()
+                .join("\n");
+            message.push_str(&format!(
+                "\n\n({} large file{} excluded)\n{}",
+                skipped_count,
+                if skipped_count == 1 { "" } else { "s" },
+                skipped_list
+            ));
+        }
+
         let parent_commit = repo.head().ok().and_then(|head| head.peel_to_commit().ok());
 
         let parents: Vec<_> = parent_commit.iter().collect();
@@ -165,7 +204,7 @@ impl GitHistoryManager {
         )
         .map_err(|e| EditorError::Git(e.to_string()))?;
 
-        Ok(())
+        Ok(CommitResult { skipped_files })
     }
 
     pub fn list_commits(&self, project_path: &Path) -> Result<Vec<CommitInfo>> {

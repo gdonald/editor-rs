@@ -9,7 +9,7 @@ mod stats;
 mod types;
 
 pub use cleanup::CleanupStats;
-pub use commit::FileSizeInfo;
+pub use commit::{CommitResult, FileSizeInfo};
 pub use repository::GitHistoryManager;
 pub use types::{
     create_signature, ChangeStatus, CommitInfo, FileChange, FileStats, GcConfig, HistoryStats,

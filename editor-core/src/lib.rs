@@ -20,8 +20,9 @@ pub use cursor::{CursorPosition, MultiCursor};
 pub use editor::{EditorState, VirtualViewport};
 pub use error::{EditorError, Result};
 pub use git_history::{
-    create_signature, ChangeStatus, CleanupStats, CommitInfo, FileChange, FileSizeInfo, FileStats,
-    GcConfig, GitHistoryManager, HistoryStats, LargeFileConfig, LargeFileStrategy, RetentionPolicy,
+    create_signature, ChangeStatus, CleanupStats, CommitInfo, CommitResult, FileChange,
+    FileSizeInfo, FileStats, GcConfig, GitHistoryManager, HistoryStats, LargeFileConfig,
+    LargeFileStrategy, RetentionPolicy,
 };
 pub use history::{Edit, History, HistoryEntry};
 pub use history_browser::{DiffViewMode, HistoryBrowser};

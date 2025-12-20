@@ -479,11 +479,11 @@
 - [x] Write tests for warning generation
 
 ##### 6.5.6.7.4 Exclusion Logic (Skip Strategy)
-- [ ] Implement file filtering in auto_commit_on_save_multiple() to skip large files
-- [ ] Add commit message notation when files are skipped (e.g., "2 large files excluded")
-- [ ] Track excluded files in commit metadata or message
-- [ ] Return list of skipped files to caller
-- [ ] Write tests for file exclusion behavior
+- [x] Implement file filtering in auto_commit_on_save_multiple() to skip large files
+- [x] Add commit message notation when files are skipped (e.g., "2 large files excluded")
+- [x] Track excluded files in commit metadata or message
+- [x] Return list of skipped files to caller
+- [x] Write tests for file exclusion behavior
 
 ##### 6.5.6.7.5 Error Strategy
 - [ ] Implement Error strategy that blocks commit if large file detected
