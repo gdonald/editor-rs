@@ -11,6 +11,7 @@ pub struct FileSizeInfo {
     pub exceeds_threshold: bool,
 }
 
+#[derive(Debug)]
 pub struct CommitResult {
     pub skipped_files: Vec<PathBuf>,
 }
@@ -117,6 +118,13 @@ impl GitHistoryManager {
                         );
                         skipped_files.push(relative_path.to_path_buf());
                         continue;
+                    }
+                    LargeFileStrategy::Error => {
+                        return Err(EditorError::FileTooLarge {
+                            path: canonical_file.to_string_lossy().to_string(),
+                            size: size_info.size_bytes,
+                            limit: self.large_file_config().threshold_mb * 1024 * 1024,
+                        });
                     }
                     _ => {}
                 }
