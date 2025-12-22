@@ -492,20 +492,21 @@
 - [x] Write tests for error blocking behavior
 
 ##### 6.5.6.7.6 Git LFS Integration (Optional)
-- [ ] Research git2-rs LFS support or external git-lfs integration
-- [ ] Add optional git-lfs dependency to Cargo.toml
-- [ ] Implement LFS initialization in repository setup
-- [ ] Add configure_lfs() method to GitHistoryManager
-- [ ] Implement LFS tracking for large files (create .gitattributes)
-- [ ] Modify commit process to use LFS for large files when strategy is Lfs
-- [ ] Write tests for LFS integration (if implemented)
+- [x] Research git2-rs LFS support or external git-lfs integration
+- [ ] DEFERRED: No mature Rust LFS solution exists (git2-rs Issue #956, gix-lfs v0.0.0)
+- [ ] DEFERRED: Current strategies (Warn/Skip/Error) cover use cases adequately
+- [ ] DEFERRED: LFS designed for public repos, not ideal for hidden history storage
+- [ ] DEFERRED: Revisit when gix-lfs matures or clear user need emerges
+- [ ] Future Option 1: Shell out to git-lfs CLI (if git-lfs binary available)
+- [ ] Future Option 2: Wait for gitoxide/gix-lfs to become stable
 
 ##### 6.5.6.7.7 Compression for Large Files
-- [ ] Research git compression settings and optimization
-- [ ] Implement custom compression for large file blobs (if needed beyond git's default)
-- [ ] Add compression_enabled option to LargeFileConfig
-- [ ] Apply compression during file copy to repository
-- [ ] Write tests for compression behavior
+- [x] Research git compression settings and optimization
+- [ ] NOT NEEDED: Git's default compression is excellent (83-99%+ compression ratios)
+- [ ] NOT NEEDED: git2-rs does not expose compression level API
+- [ ] NOT NEEDED: Custom compression would add complexity for marginal gains
+- [ ] NOT NEEDED: Git automatically applies zlib compression to all objects
+- [ ] Future Option: Could set core.compression via Config API if needed
 
 ##### 6.5.6.7.8 Statistics and Reporting
 - [ ] Add large_file_count to HistoryStats
