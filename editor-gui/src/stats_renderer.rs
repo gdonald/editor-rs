@@ -39,6 +39,28 @@ impl StatsRenderer {
                     );
                 });
 
+                ui.horizontal(|ui| {
+                    ui.label(egui::RichText::new("Large Files:").color(egui::Color32::GREEN));
+                    ui.label(
+                        egui::RichText::new(stats.large_file_count.to_string())
+                            .color(egui::Color32::WHITE),
+                    );
+                });
+
+                if stats.large_file_count > 0 {
+                    let large_size_mb = stats.total_large_file_size as f64 / (1024.0 * 1024.0);
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            egui::RichText::new("Total Large File Size:")
+                                .color(egui::Color32::GREEN),
+                        );
+                        ui.label(
+                            egui::RichText::new(format!("{:.2} MB", large_size_mb))
+                                .color(egui::Color32::WHITE),
+                        );
+                    });
+                }
+
                 if let Some((oldest, newest)) = stats.date_range {
                     ui.add_space(20.0);
                     ui.heading("Date Range");
@@ -80,6 +102,11 @@ impl StatsRenderer {
 
                             for (idx, file_stat) in stats.file_stats.iter().take(10).enumerate() {
                                 let size_kb = file_stat.total_size as f64 / 1024.0;
+                                let size_color = if file_stat.is_large {
+                                    egui::Color32::from_rgb(255, 100, 100)
+                                } else {
+                                    egui::Color32::from_rgb(100, 150, 255)
+                                };
 
                                 ui.label(
                                     egui::RichText::new(format!("{}.", idx + 1))
@@ -91,11 +118,15 @@ impl StatsRenderer {
                                 );
                                 ui.label(
                                     egui::RichText::new(format!("{:.2} KB", size_kb))
-                                        .color(egui::Color32::from_rgb(100, 150, 255)),
+                                        .color(size_color),
                                 );
+                                let path_text = if file_stat.is_large {
+                                    format!("{} [LARGE]", file_stat.path)
+                                } else {
+                                    file_stat.path.clone()
+                                };
                                 ui.label(
-                                    egui::RichText::new(&file_stat.path)
-                                        .color(egui::Color32::WHITE),
+                                    egui::RichText::new(&path_text).color(egui::Color32::WHITE),
                                 );
                                 ui.end_row();
                             }

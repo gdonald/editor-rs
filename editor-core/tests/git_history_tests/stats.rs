@@ -75,10 +75,12 @@ fn test_get_per_file_stats() {
     let file1_stats = stats.iter().find(|s| s.path == "file1.txt").unwrap();
     assert_eq!(file1_stats.commit_count, 2);
     assert!(file1_stats.total_size > 0);
+    assert!(!file1_stats.is_large);
 
     let file2_stats = stats.iter().find(|s| s.path == "file2.txt").unwrap();
     assert_eq!(file2_stats.commit_count, 1);
     assert!(file2_stats.total_size > 0);
+    assert!(!file2_stats.is_large);
 }
 
 #[test]
@@ -218,4 +220,151 @@ fn test_get_history_stats_empty() {
     assert!(stats.repository_size > 0);
     assert!(stats.date_range.is_none());
     assert_eq!(stats.file_stats.len(), 0);
+    assert_eq!(stats.large_file_count, 0);
+    assert_eq!(stats.total_large_file_size, 0);
+}
+
+#[test]
+fn test_get_per_file_stats_with_large_files() {
+    use editor_core::LargeFileConfig;
+
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let config = LargeFileConfig {
+        threshold_mb: 0,
+        strategy: editor_core::LargeFileStrategy::Warn,
+        exclude_from_history: false,
+    };
+
+    let manager = GitHistoryManager::with_storage_root(storage_root)
+        .unwrap()
+        .with_large_file_config(config);
+
+    let small_file = project_dir.path().join("small.txt");
+    let large_file = project_dir.path().join("large.txt");
+
+    fs::write(&small_file, "").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &small_file)
+        .unwrap();
+
+    fs::write(&large_file, "Large content").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &large_file)
+        .unwrap();
+
+    let stats = manager.get_per_file_stats(project_dir.path()).unwrap();
+
+    assert_eq!(stats.len(), 2);
+
+    let small_stats = stats.iter().find(|s| s.path == "small.txt").unwrap();
+    assert!(!small_stats.is_large);
+
+    let large_stats = stats.iter().find(|s| s.path == "large.txt").unwrap();
+    assert!(large_stats.is_large);
+}
+
+#[test]
+fn test_list_large_files() {
+    use editor_core::LargeFileConfig;
+
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let config = LargeFileConfig {
+        threshold_mb: 0,
+        strategy: editor_core::LargeFileStrategy::Warn,
+        exclude_from_history: false,
+    };
+
+    let manager = GitHistoryManager::with_storage_root(storage_root)
+        .unwrap()
+        .with_large_file_config(config);
+
+    let small_file = project_dir.path().join("small.txt");
+    let large_file1 = project_dir.path().join("large1.txt");
+    let large_file2 = project_dir.path().join("large2.txt");
+
+    fs::write(&small_file, "").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &small_file)
+        .unwrap();
+
+    fs::write(&large_file1, "Large content 1").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &large_file1)
+        .unwrap();
+
+    fs::write(&large_file2, "Large content 2").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &large_file2)
+        .unwrap();
+
+    let large_files = manager.list_large_files(project_dir.path()).unwrap();
+
+    assert_eq!(large_files.len(), 2);
+    assert!(large_files.iter().all(|f| f.is_large));
+    assert!(large_files.iter().any(|f| f.path == "large1.txt"));
+    assert!(large_files.iter().any(|f| f.path == "large2.txt"));
+}
+
+#[test]
+fn test_get_history_stats_with_large_files() {
+    use editor_core::LargeFileConfig;
+
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let config = LargeFileConfig {
+        threshold_mb: 0,
+        strategy: editor_core::LargeFileStrategy::Warn,
+        exclude_from_history: false,
+    };
+
+    let manager = GitHistoryManager::with_storage_root(storage_root)
+        .unwrap()
+        .with_large_file_config(config);
+
+    let small_file = project_dir.path().join("small.txt");
+    let large_file = project_dir.path().join("large.txt");
+
+    fs::write(&small_file, "").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &small_file)
+        .unwrap();
+
+    fs::write(&large_file, "Large content").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &large_file)
+        .unwrap();
+
+    let stats = manager.get_history_stats(project_dir.path()).unwrap();
+
+    assert_eq!(stats.total_commits, 2);
+    assert_eq!(stats.large_file_count, 1);
+    assert!(stats.total_large_file_size > 0);
+    assert_eq!(stats.file_stats.len(), 2);
+}
+
+#[test]
+fn test_list_large_files_empty() {
+    let temp_dir = TempDir::new().unwrap();
+    let storage_root = temp_dir.path().join("storage");
+    let project_dir = TempDir::new().unwrap();
+
+    let manager = GitHistoryManager::with_storage_root(storage_root).unwrap();
+
+    let small_file = project_dir.path().join("small.txt");
+    fs::write(&small_file, "Small content").unwrap();
+    manager
+        .auto_commit_on_save(project_dir.path(), &small_file)
+        .unwrap();
+
+    let large_files = manager.list_large_files(project_dir.path()).unwrap();
+
+    assert_eq!(large_files.len(), 0);
 }

@@ -528,6 +528,25 @@ impl Renderer {
             ),
         ]));
 
+        lines.push(Line::from(vec![
+            Span::styled("Large Files: ", Style::default().fg(Color::Green)),
+            Span::styled(
+                stats.large_file_count.to_string(),
+                Style::default().fg(Color::White),
+            ),
+        ]));
+
+        if stats.large_file_count > 0 {
+            let large_size_mb = stats.total_large_file_size as f64 / (1024.0 * 1024.0);
+            lines.push(Line::from(vec![
+                Span::styled("Total Large File Size: ", Style::default().fg(Color::Green)),
+                Span::styled(
+                    format!("{:.2} MB", large_size_mb),
+                    Style::default().fg(Color::White),
+                ),
+            ]));
+        }
+
         if let Some((oldest, newest)) = stats.date_range {
             lines.push(Line::from(""));
             lines.push(Line::from(Span::styled(
@@ -567,7 +586,13 @@ impl Renderer {
 
             for (idx, file_stat) in stats.file_stats.iter().take(10).enumerate() {
                 let size_kb = file_stat.total_size as f64 / 1024.0;
-                lines.push(Line::from(vec![
+                let size_color = if file_stat.is_large {
+                    Color::Red
+                } else {
+                    Color::Blue
+                };
+
+                let mut spans = vec![
                     Span::styled(
                         format!("{}. ", idx + 1),
                         Style::default().fg(Color::DarkGray),
@@ -578,10 +603,23 @@ impl Renderer {
                     ),
                     Span::styled(
                         format!("{:8.2} KB ", size_kb),
-                        Style::default().fg(Color::Blue),
+                        Style::default().fg(size_color),
                     ),
-                    Span::styled(&file_stat.path, Style::default().fg(Color::White)),
-                ]));
+                ];
+
+                if file_stat.is_large {
+                    spans.push(Span::styled(
+                        format!("{} [LARGE]", file_stat.path),
+                        Style::default().fg(Color::White),
+                    ));
+                } else {
+                    spans.push(Span::styled(
+                        file_stat.path.clone(),
+                        Style::default().fg(Color::White),
+                    ));
+                }
+
+                lines.push(Line::from(spans));
             }
 
             if stats.file_stats.len() > 10 {

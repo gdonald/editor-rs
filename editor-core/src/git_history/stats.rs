@@ -79,12 +79,18 @@ impl GitHistoryManager {
             .map_err(|e| EditorError::Git(e.to_string()))?;
         }
 
+        let threshold_bytes = self.large_file_config().threshold_mb * 1024 * 1024;
+
         let mut stats: Vec<FileStats> = file_commit_counts
             .into_iter()
-            .map(|(path, commit_count)| FileStats {
-                path: path.clone(),
-                commit_count,
-                total_size: *file_sizes.get(&path).unwrap_or(&0),
+            .map(|(path, commit_count)| {
+                let total_size = *file_sizes.get(&path).unwrap_or(&0);
+                FileStats {
+                    path: path.clone(),
+                    commit_count,
+                    total_size,
+                    is_large: total_size > threshold_bytes,
+                }
             })
             .collect();
 
@@ -135,17 +141,31 @@ impl GitHistoryManager {
         Ok(commits_by_month)
     }
 
+    pub fn list_large_files(&self, project_path: &Path) -> Result<Vec<FileStats>> {
+        let file_stats = self.get_per_file_stats(project_path)?;
+        Ok(file_stats.into_iter().filter(|fs| fs.is_large).collect())
+    }
+
     pub fn get_history_stats(&self, project_path: &Path) -> Result<HistoryStats> {
         let total_commits = self.get_commit_count(project_path)?;
         let repository_size = self.get_repo_size(project_path)?;
         let date_range = self.get_date_range(project_path)?;
         let file_stats = self.get_per_file_stats(project_path)?;
 
+        let large_file_count = file_stats.iter().filter(|fs| fs.is_large).count();
+        let total_large_file_size: u64 = file_stats
+            .iter()
+            .filter(|fs| fs.is_large)
+            .map(|fs| fs.total_size)
+            .sum();
+
         Ok(HistoryStats {
             total_commits,
             repository_size,
             date_range,
             file_stats,
+            large_file_count,
+            total_large_file_size,
         })
     }
 }

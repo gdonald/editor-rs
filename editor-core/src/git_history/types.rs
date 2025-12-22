@@ -37,6 +37,7 @@ pub struct FileStats {
     pub path: String,
     pub commit_count: usize,
     pub total_size: u64,
+    pub is_large: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -45,6 +46,8 @@ pub struct HistoryStats {
     pub repository_size: u64,
     pub date_range: Option<(i64, i64)>,
     pub file_stats: Vec<FileStats>,
+    pub large_file_count: usize,
+    pub total_large_file_size: u64,
 }
 
 impl Default for GcConfig {

@@ -509,11 +509,11 @@
 - [ ] Future Option: Could set core.compression via Config API if needed
 
 ##### 6.5.6.7.8 Statistics and Reporting
-- [ ] Add large_file_count to HistoryStats
-- [ ] Add total_large_file_size to HistoryStats
-- [ ] Add list_large_files() method to return all large files in history
-- [ ] Update get_per_file_stats() to flag large files
-- [ ] Write tests for large file statistics
+- [x] Add large_file_count to HistoryStats
+- [x] Add total_large_file_size to HistoryStats
+- [x] Add list_large_files() method to return all large files in history
+- [x] Update get_per_file_stats() to flag large files
+- [x] Write tests for large file statistics
 
 ##### 6.5.6.7.9 Integration with EditorState
 - [ ] Add large_file_config field to EditorState
