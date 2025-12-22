@@ -516,11 +516,11 @@
 - [x] Write tests for large file statistics
 
 ##### 6.5.6.7.9 Integration with EditorState
-- [ ] Add large_file_config field to EditorState
-- [ ] Pass large file config to GitHistoryManager during initialization
-- [ ] Handle warnings/errors from git history in file_ops.rs save methods
-- [ ] Display warnings to user (via status message or dialog)
-- [ ] Write tests for EditorState integration
+- [x] Add large_file_config field to EditorState
+- [x] Pass large file config to GitHistoryManager during initialization
+- [x] Handle warnings/errors from git history in file_ops.rs save methods
+- [x] Display warnings to user (via status message or dialog)
+- [x] Write tests for EditorState integration
 
 ##### 6.5.6.7.10 Edge Cases and Error Handling
 - [ ] Handle case where file size changes between check and commit

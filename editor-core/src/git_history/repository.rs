@@ -71,6 +71,10 @@ impl GitHistoryManager {
         self.auto_cleanup_enabled = enabled;
     }
 
+    pub fn set_large_file_config(&mut self, large_file_config: LargeFileConfig) {
+        self.large_file_config = large_file_config;
+    }
+
     fn default_storage_root() -> Result<PathBuf> {
         let home = dirs::home_dir().ok_or_else(|| {
             EditorError::Io(std::io::Error::new(

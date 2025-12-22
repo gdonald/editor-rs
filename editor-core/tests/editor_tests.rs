@@ -460,6 +460,7 @@ fn test_editor_save() {
     fs::write(&path, "").unwrap();
 
     let mut editor = EditorState::from_file(path.clone()).unwrap();
+    editor.set_auto_commit_enabled(false);
     editor.execute_command(Command::InsertChar('T')).unwrap();
     editor.execute_command(Command::InsertChar('e')).unwrap();
     editor.execute_command(Command::InsertChar('s')).unwrap();

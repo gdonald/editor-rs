@@ -4,7 +4,7 @@ use crate::clipboard::ClipboardManager;
 use crate::command::Command;
 use crate::cursor::{CursorPosition, MultiCursor};
 use crate::error::Result;
-use crate::git_history::{CleanupStats, GitHistoryManager, HistoryStats};
+use crate::git_history::{CleanupStats, GitHistoryManager, HistoryStats, LargeFileConfig};
 use crate::history::History;
 use crate::history_browser::HistoryBrowser;
 use crate::selection::Selection;
@@ -33,6 +33,7 @@ pub struct EditorState {
     pub(super) history: History,
     pub(super) git_history: GitHistoryManager,
     pub(super) auto_commit_enabled: bool,
+    pub(super) large_file_config: LargeFileConfig,
     pub(super) history_browser: Option<HistoryBrowser>,
     pub(super) history_stats: Option<HistoryStats>,
     pub(super) cleanup_stats: Option<CleanupStats>,
@@ -57,6 +58,9 @@ impl Default for SearchOptions {
 
 impl EditorState {
     pub fn new() -> Self {
+        let large_file_config = LargeFileConfig::default();
+        let git_history =
+            GitHistoryManager::default().with_large_file_config(large_file_config.clone());
         Self {
             buffers: vec![Buffer::new()],
             current_buffer_index: 0,
@@ -76,8 +80,9 @@ impl EditorState {
             search_history: Vec::new(),
             replace_history: Vec::new(),
             history: History::new(),
-            git_history: GitHistoryManager::default(),
+            git_history,
             auto_commit_enabled: true,
+            large_file_config,
             history_browser: None,
             history_stats: None,
             cleanup_stats: None,
@@ -86,6 +91,9 @@ impl EditorState {
 
     pub fn from_file(path: PathBuf) -> Result<Self> {
         let buffer = Buffer::from_file(path)?;
+        let large_file_config = LargeFileConfig::default();
+        let git_history =
+            GitHistoryManager::default().with_large_file_config(large_file_config.clone());
         Ok(Self {
             buffers: vec![buffer],
             current_buffer_index: 0,
@@ -105,8 +113,9 @@ impl EditorState {
             search_history: Vec::new(),
             replace_history: Vec::new(),
             history: History::new(),
-            git_history: GitHistoryManager::default(),
+            git_history,
             auto_commit_enabled: true,
+            large_file_config,
             history_browser: None,
             history_stats: None,
             cleanup_stats: None,
@@ -337,6 +346,15 @@ impl EditorState {
 
     pub fn set_auto_commit_enabled(&mut self, enabled: bool) {
         self.auto_commit_enabled = enabled;
+    }
+
+    pub fn large_file_config(&self) -> &LargeFileConfig {
+        &self.large_file_config
+    }
+
+    pub fn set_large_file_config(&mut self, config: LargeFileConfig) {
+        self.large_file_config = config.clone();
+        self.git_history.set_large_file_config(config);
     }
 
     pub fn selection(&self) -> Option<&Selection> {

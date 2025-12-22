@@ -23,17 +23,34 @@ impl EditorState {
 
         if self.auto_commit_enabled {
             if let Some(project_path) = path.parent() {
-                if let Err(e) = self.git_history.auto_commit_on_save(project_path, &path) {
-                    eprintln!("Warning: Git auto-commit failed: {}", e);
+                match self.git_history.auto_commit_on_save(project_path, &path) {
+                    Ok(commit_result) => {
+                        if !commit_result.skipped_files.is_empty() {
+                            let file_name =
+                                path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
+                            self.status_message = format!(
+                                "File saved (large file {} skipped from history)",
+                                file_name
+                            );
+                        } else {
+                            self.status_message = "File saved".to_string();
+                        }
+                    }
+                    Err(e) => {
+                        self.status_message = format!("File saved (git history error: {})", e);
+                    }
                 }
 
                 if let Ok(Some(stats)) = self.git_history.auto_cleanup_if_needed(project_path) {
                     self.cleanup_stats = Some(stats);
                 }
+            } else {
+                self.status_message = "File saved".to_string();
             }
+        } else {
+            self.status_message = "File saved".to_string();
         }
 
-        self.status_message = "File saved".to_string();
         Ok(())
     }
 
@@ -58,15 +75,49 @@ impl EditorState {
         }
 
         if !saved_files.is_empty() {
+            let file_count = saved_files.len();
+
             if self.auto_commit_enabled {
                 if let Some(first_file) = saved_files.first() {
                     if let Some(project_path) = first_file.parent() {
                         let file_refs: Vec<&PathBuf> = saved_files.iter().collect();
-                        if let Err(e) = self
+                        match self
                             .git_history
                             .auto_commit_on_save_multiple(project_path, &file_refs)
                         {
-                            eprintln!("Warning: Git auto-commit failed: {}", e);
+                            Ok(commit_result) => {
+                                if !commit_result.skipped_files.is_empty() {
+                                    let skipped_count = commit_result.skipped_files.len();
+                                    if file_count == 1 {
+                                        self.status_message =
+                                            "File saved (large file skipped from history)"
+                                                .to_string();
+                                    } else if skipped_count == file_count {
+                                        self.status_message = format!(
+                                            "{} files saved (all skipped from history: too large)",
+                                            file_count
+                                        );
+                                    } else {
+                                        self.status_message = format!(
+                                            "{} files saved ({} large files skipped from history)",
+                                            file_count, skipped_count
+                                        );
+                                    }
+                                } else {
+                                    self.status_message = if file_count == 1 {
+                                        "File saved".to_string()
+                                    } else {
+                                        format!("{} files saved", file_count)
+                                    };
+                                }
+                            }
+                            Err(e) => {
+                                self.status_message = if file_count == 1 {
+                                    format!("File saved (git history error: {})", e)
+                                } else {
+                                    format!("{} files saved (git history error: {})", file_count, e)
+                                };
+                            }
                         }
 
                         if let Ok(Some(stats)) =
@@ -74,16 +125,27 @@ impl EditorState {
                         {
                             self.cleanup_stats = Some(stats);
                         }
+                    } else {
+                        self.status_message = if file_count == 1 {
+                            "File saved".to_string()
+                        } else {
+                            format!("{} files saved", file_count)
+                        };
                     }
+                } else {
+                    self.status_message = if file_count == 1 {
+                        "File saved".to_string()
+                    } else {
+                        format!("{} files saved", file_count)
+                    };
                 }
-            }
-
-            let file_count = saved_files.len();
-            self.status_message = if file_count == 1 {
-                "File saved".to_string()
             } else {
-                format!("{} files saved", file_count)
-            };
+                self.status_message = if file_count == 1 {
+                    "File saved".to_string()
+                } else {
+                    format!("{} files saved", file_count)
+                };
+            }
         } else {
             self.status_message = "No modified files to save".to_string();
         }
