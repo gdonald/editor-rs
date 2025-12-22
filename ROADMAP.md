@@ -523,12 +523,12 @@
 - [x] Write tests for EditorState integration
 
 ##### 6.5.6.7.10 Edge Cases and Error Handling
-- [ ] Handle case where file size changes between check and commit
-- [ ] Handle case where file is deleted before commit
-- [ ] Handle case where threshold is set to 0 (all files are large)
-- [ ] Handle case where threshold is set to u64::MAX (no files are large)
-- [ ] Handle mixed commits with both normal and large files
-- [ ] Write tests for all edge cases
+- [x] Handle case where file size changes between check and commit
+- [x] Handle case where file is deleted before commit
+- [x] Handle case where threshold is set to 0 (all files are large)
+- [x] Handle case where threshold is set to u64::MAX (no files are large)
+- [x] Handle mixed commits with both normal and large files
+- [x] Write tests for all edge cases
 
 ##### 6.5.6.7.11 Documentation and Examples
 - [ ] Document LargeFileConfig in code comments
