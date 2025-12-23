@@ -5,6 +5,7 @@ mod git_history_tests {
     mod editor_state_integration;
     mod export_import;
     mod gc;
+    mod integrity;
     mod large_file_config;
     mod repository;
     mod retention;

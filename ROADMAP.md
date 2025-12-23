@@ -542,12 +542,12 @@
 - [x] Write tests for export/import functionality
 
 #### 6.5.6.9 History Integrity and Recovery
-- [ ] Add method to verify repository integrity (git fsck)
+- [x] Add method to verify repository integrity (git fsck)
 - [ ] Implement automatic integrity checks (on startup, periodic)
-- [ ] Add method to repair corrupted repository
-- [ ] Implement backup before cleanup/repair operations
-- [ ] Add error recovery for common git issues
-- [ ] Write tests for integrity and recovery
+- [x] Add method to repair corrupted repository
+- [x] Implement backup before cleanup/repair operations
+- [x] Add error recovery for common git issues
+- [x] Write tests for integrity and recovery
 
 ### 6.5.7 Project vs File Tracking
 - [ ] Implement project-level tracking (directory opened as project)

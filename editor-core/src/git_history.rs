@@ -3,6 +3,7 @@ mod commit;
 mod diff;
 mod export_import;
 mod gc;
+mod integrity;
 mod repository;
 mod restore;
 mod retention;
@@ -11,6 +12,7 @@ mod types;
 
 pub use cleanup::CleanupStats;
 pub use commit::{CommitResult, FileSizeInfo};
+pub use integrity::IntegrityReport;
 pub use repository::GitHistoryManager;
 pub use types::{
     create_signature, ChangeStatus, CommitInfo, FileChange, FileStats, GcConfig, HistoryStats,
