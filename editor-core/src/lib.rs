@@ -22,7 +22,7 @@ pub use error::{EditorError, Result};
 pub use git_history::{
     create_signature, ChangeStatus, CleanupStats, CommitInfo, CommitResult, FileChange,
     FileSizeInfo, FileStats, GcConfig, GitHistoryManager, HistoryStats, IntegrityReport,
-    LargeFileConfig, LargeFileStrategy, RetentionPolicy,
+    LargeFileConfig, LargeFileStrategy, RetentionPolicy, TrackingMode,
 };
 pub use history::{Edit, History, HistoryEntry};
 pub use history_browser::{DiffViewMode, HistoryBrowser};

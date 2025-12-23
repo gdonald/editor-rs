@@ -550,12 +550,12 @@
 - [x] Write tests for integrity and recovery
 
 ### 6.5.7 Project vs File Tracking
-- [ ] Implement project-level tracking (directory opened as project)
-- [ ] Implement single-file tracking (file opened outside project)
-- [ ] Implement project detection logic
-- [ ] Handle moving files between projects
-- [ ] Handle renaming projects/files
-- [ ] Write tests for project vs file tracking
+- [x] Implement project-level tracking (directory opened as project)
+- [x] Implement single-file tracking (file opened outside project)
+- [x] Implement project detection logic
+- [x] Handle moving files between projects
+- [x] Handle renaming projects/files
+- [x] Write tests for project vs file tracking
 
 ### 6.5.8 History Panel/Tab Integration
 - [ ] Create history panel/tab for TUI

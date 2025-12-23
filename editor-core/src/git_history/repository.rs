@@ -138,7 +138,11 @@ impl GitHistoryManager {
         }
     }
 
-    fn write_project_metadata(&self, repo: &Repository, project_path: &Path) -> Result<()> {
+    pub(crate) fn write_project_metadata(
+        &self,
+        repo: &Repository,
+        project_path: &Path,
+    ) -> Result<()> {
         let metadata_path = repo.path().join("project_metadata.toml");
         let canonical_path = project_path.canonicalize().map_err(EditorError::Io)?;
 

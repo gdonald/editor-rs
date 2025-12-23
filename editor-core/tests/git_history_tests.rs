@@ -7,6 +7,7 @@ mod git_history_tests {
     mod gc;
     mod integrity;
     mod large_file_config;
+    mod project_tracking;
     mod repository;
     mod retention;
     mod stats;
