@@ -126,6 +126,8 @@ pub enum Command {
     HistoryPreviewRestore(String),
     ShowHistoryStats,
     CleanupHistory,
+    ExportHistory(PathBuf),
+    ImportHistory(PathBuf),
 
     Quit,
 }

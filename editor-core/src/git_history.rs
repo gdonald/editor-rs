@@ -1,6 +1,7 @@
 mod cleanup;
 mod commit;
 mod diff;
+mod export_import;
 mod gc;
 mod repository;
 mod restore;

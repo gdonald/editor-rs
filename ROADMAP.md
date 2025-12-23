@@ -534,12 +534,12 @@
 - [x] Write integration test for LargeFileConfig demonstrating full workflow
 
 #### 6.5.6.8 History Export and Import
-- [ ] Add method to export history as regular git repository
-- [ ] Add method to import history from regular git repository
-- [ ] Implement export command (ExportHistory)
-- [ ] Implement import command (ImportHistory)
+- [x] Add method to export history as regular git repository
+- [x] Add method to import history from regular git repository
+- [x] Implement export command (ExportHistory)
+- [x] Implement import command (ImportHistory)
 - [ ] Add file dialogs for export/import paths
-- [ ] Write tests for export/import functionality
+- [x] Write tests for export/import functionality
 
 #### 6.5.6.9 History Integrity and Recovery
 - [ ] Add method to verify repository integrity (git fsck)
