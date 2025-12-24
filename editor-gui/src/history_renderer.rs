@@ -1,4 +1,4 @@
-use editor_core::{CommitInfo, DiffViewMode, HistoryBrowser};
+use editor_core::{CommitInfo, DiffLineType, DiffViewMode, HistoryBrowser, SideBySideDiff};
 use eframe::egui;
 
 pub struct HistoryRenderer {
@@ -44,6 +44,48 @@ impl HistoryRenderer {
         ui.heading("Commits");
         ui.separator();
 
+        let mut search_text = history_browser.search_query().unwrap_or("").to_string();
+        let text_edit = egui::TextEdit::singleline(&mut search_text)
+            .hint_text("Search commits... (Ctrl+F)")
+            .desired_width(ui.available_width());
+
+        let response = ui.add(text_edit);
+
+        if response.changed() {
+            if search_text.is_empty() {
+                history_browser.clear_search();
+            } else {
+                history_browser.set_search_query(Some(search_text));
+            }
+        }
+
+        let mut file_filter_text = history_browser.file_filter().unwrap_or("").to_string();
+        let file_filter_edit = egui::TextEdit::singleline(&mut file_filter_text)
+            .hint_text("Filter by file...")
+            .desired_width(ui.available_width());
+
+        let file_filter_response = ui.add(file_filter_edit);
+
+        if file_filter_response.changed() {
+            if file_filter_text.is_empty() {
+                history_browser.clear_file_filter();
+            } else {
+                history_browser.set_file_filter(Some(file_filter_text));
+            }
+        }
+
+        if history_browser.is_searching() || history_browser.is_file_filtering() {
+            ui.horizontal(|ui| {
+                ui.label(format!("{} matches", history_browser.match_count()));
+                if ui.button("Clear All Filters").clicked() {
+                    history_browser.clear_search();
+                    history_browser.clear_file_filter();
+                }
+            });
+        }
+
+        ui.separator();
+
         let selected_index = history_browser.selected_index();
         let commits_len = history_browser.commits().len();
         let mut new_selection = None;
@@ -52,8 +94,14 @@ impl HistoryRenderer {
         egui::ScrollArea::vertical()
             .id_salt("commit_list_scroll")
             .show(ui, |ui| {
+                let mut visible_count = 0;
                 for index in 0..commits_len {
+                    if !history_browser.is_commit_visible(index) {
+                        continue;
+                    }
+
                     if let Some(commit) = history_browser.commits().get(index) {
+                        visible_count += 1;
                         let is_selected = index == selected_index;
                         let response = self.render_commit_item(ui, commit, is_selected);
 
@@ -68,20 +116,36 @@ impl HistoryRenderer {
                     }
                 }
 
-                if commits_len == 0 {
+                if visible_count == 0 {
                     ui.vertical_centered(|ui| {
                         ui.add_space(20.0);
-                        ui.label(
-                            egui::RichText::new("No commit history yet")
-                                .color(egui::Color32::GRAY)
-                                .size(16.0),
-                        );
-                        ui.add_space(10.0);
-                        ui.label(
-                            egui::RichText::new("Save the file to create your first auto-commit")
+                        if history_browser.is_searching() {
+                            ui.label(
+                                egui::RichText::new("No matching commits found")
+                                    .color(egui::Color32::GRAY)
+                                    .size(16.0),
+                            );
+                            ui.add_space(10.0);
+                            ui.label(
+                                egui::RichText::new("Try a different search query")
+                                    .color(egui::Color32::DARK_GRAY)
+                                    .size(12.0),
+                            );
+                        } else {
+                            ui.label(
+                                egui::RichText::new("No commit history yet")
+                                    .color(egui::Color32::GRAY)
+                                    .size(16.0),
+                            );
+                            ui.add_space(10.0);
+                            ui.label(
+                                egui::RichText::new(
+                                    "Save the file to create your first auto-commit",
+                                )
                                 .color(egui::Color32::DARK_GRAY)
                                 .size(12.0),
-                        );
+                            );
+                        }
                     });
                 }
             });
@@ -180,7 +244,7 @@ impl HistoryRenderer {
             }
 
             egui::CentralPanel::default().show_inside(ui, |ui| {
-                self.render_diff_view(ui, diff_content);
+                self.render_diff_view(ui, diff_content, history_browser.is_side_by_side());
             });
         } else {
             ui.centered_and_justified(|ui| {
@@ -229,17 +293,30 @@ impl HistoryRenderer {
             });
     }
 
-    fn render_diff_view(&self, ui: &mut egui::Ui, diff_content: Option<String>) {
-        ui.heading("Diff");
+    fn render_diff_view(
+        &self,
+        ui: &mut egui::Ui,
+        diff_content: Option<String>,
+        side_by_side: bool,
+    ) {
+        ui.heading(if side_by_side {
+            "Diff (Side-by-Side)"
+        } else {
+            "Diff"
+        });
         ui.separator();
 
         match diff_content {
             Some(diff) => {
-                egui::ScrollArea::both()
-                    .id_salt("diff_view_scroll")
-                    .show(ui, |ui| {
-                        self.render_diff_content(ui, &diff);
-                    });
+                if side_by_side {
+                    self.render_side_by_side_diff(ui, &diff);
+                } else {
+                    egui::ScrollArea::both()
+                        .id_salt("diff_view_scroll")
+                        .show(ui, |ui| {
+                            self.render_diff_content(ui, &diff);
+                        });
+                }
             }
             None => {
                 ui.centered_and_justified(|ui| {
@@ -321,6 +398,109 @@ impl HistoryRenderer {
                 );
             });
         }
+    }
+
+    fn render_side_by_side_diff(&self, ui: &mut egui::Ui, diff: &str) {
+        let font_id = egui::FontId::monospace(self.font_size);
+        let line_height = self.line_height;
+
+        let side_by_side_diff = SideBySideDiff::from_unified_diff(diff);
+
+        egui::ScrollArea::both()
+            .id_salt("side_by_side_diff_scroll")
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    ui.vertical(|ui| {
+                        ui.label(egui::RichText::new("Before").strong());
+                        ui.separator();
+
+                        for line in &side_by_side_diff.left_lines {
+                            self.render_side_by_side_line(ui, line, &font_id, line_height, true);
+                        }
+                    });
+
+                    ui.separator();
+
+                    ui.vertical(|ui| {
+                        ui.label(egui::RichText::new("After").strong());
+                        ui.separator();
+
+                        for line in &side_by_side_diff.right_lines {
+                            self.render_side_by_side_line(ui, line, &font_id, line_height, false);
+                        }
+                    });
+                });
+            });
+    }
+
+    fn render_side_by_side_line(
+        &self,
+        ui: &mut egui::Ui,
+        line: &editor_core::DiffLine,
+        font_id: &egui::FontId,
+        line_height: f32,
+        is_left: bool,
+    ) {
+        ui.horizontal(|ui| {
+            let line_num_text = if let Some(old_num) = line.old_line_num {
+                if is_left {
+                    format!("{:>4}", old_num + 1)
+                } else {
+                    "    ".to_string()
+                }
+            } else if let Some(new_num) = line.new_line_num {
+                if !is_left {
+                    format!("{:>4}", new_num + 1)
+                } else {
+                    "    ".to_string()
+                }
+            } else {
+                "    ".to_string()
+            };
+
+            ui.label(
+                egui::RichText::new(line_num_text)
+                    .font(font_id.clone())
+                    .color(egui::Color32::DARK_GRAY),
+            );
+
+            ui.separator();
+
+            let (text_color, bg_color) = match line.line_type {
+                DiffLineType::Addition => (
+                    egui::Color32::from_rgb(100, 255, 100),
+                    Some(egui::Color32::from_rgb(30, 60, 30)),
+                ),
+                DiffLineType::Deletion => (
+                    egui::Color32::from_rgb(255, 100, 100),
+                    Some(egui::Color32::from_rgb(60, 30, 30)),
+                ),
+                DiffLineType::Context => (egui::Color32::WHITE, None),
+                DiffLineType::FileHeader => (egui::Color32::LIGHT_BLUE, None),
+                DiffLineType::Hunk => (
+                    egui::Color32::from_rgb(100, 200, 255),
+                    Some(egui::Color32::from_rgb(30, 40, 50)),
+                ),
+                DiffLineType::Header => (egui::Color32::GRAY, None),
+            };
+
+            let response = ui.allocate_response(
+                egui::vec2(ui.available_width().max(400.0), line_height),
+                egui::Sense::hover(),
+            );
+
+            if let Some(bg) = bg_color {
+                ui.painter().rect_filled(response.rect, 0.0, bg);
+            }
+
+            ui.painter().text(
+                response.rect.left_top() + egui::vec2(4.0, 0.0),
+                egui::Align2::LEFT_TOP,
+                &line.content,
+                font_id.clone(),
+                text_color,
+            );
+        });
     }
 
     #[allow(dead_code)]

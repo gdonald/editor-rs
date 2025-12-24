@@ -234,9 +234,20 @@ impl EditorState {
             Command::CloseHistoryBrowser => self.close_history_browser(),
             Command::HistoryNavigateNext => self.history_navigate_next(),
             Command::HistoryNavigatePrevious => self.history_navigate_previous(),
+            Command::HistoryNavigateFirst => self.history_navigate_first(),
+            Command::HistoryNavigateLast => self.history_navigate_last(),
+            Command::HistoryPageUp => self.history_page_up(),
+            Command::HistoryPageDown => self.history_page_down(),
             Command::HistorySelectCommit(index) => self.history_select_commit(index),
             Command::HistoryToggleFileList => self.history_toggle_file_list(),
             Command::HistoryViewDiff => self.history_view_diff(),
+            Command::HistoryToggleSideBySide => self.history_toggle_side_by_side(),
+            Command::HistorySearch(query) => self.history_search(&query),
+            Command::HistoryClearSearch => self.history_clear_search(),
+            Command::HistoryFilterByFile(file_pattern) => {
+                self.history_filter_by_file(&file_pattern)
+            }
+            Command::HistoryClearFileFilter => self.history_clear_file_filter(),
             Command::HistoryRestoreCommit(commit_id) => self.history_restore_commit(&commit_id),
             Command::HistoryRestoreFile {
                 commit_id,
@@ -480,6 +491,58 @@ impl EditorState {
         }
     }
 
+    fn history_navigate_first(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.select_first();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_navigate_last(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.select_last();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_page_up(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.page_up();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_page_down(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.page_down();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
     fn history_select_commit(&mut self, index: usize) -> Result<()> {
         use crate::error::EditorError;
 
@@ -516,6 +579,71 @@ impl EditorState {
 
     fn history_view_diff(&mut self) -> Result<()> {
         Ok(())
+    }
+
+    fn history_toggle_side_by_side(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.toggle_side_by_side();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_search(&mut self, query: &str) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.set_search_query(Some(query.to_string()));
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_clear_search(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.clear_search();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_filter_by_file(&mut self, file_pattern: &str) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.set_file_filter(Some(file_pattern.to_string()));
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_clear_file_filter(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.clear_file_filter();
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
     }
 
     fn history_restore_commit(&mut self, commit_id: &str) -> Result<()> {

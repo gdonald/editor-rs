@@ -558,13 +558,13 @@
 - [x] Write tests for project vs file tracking
 
 ### 6.5.8 History Panel/Tab Integration
-- [ ] Create history panel/tab for TUI
-- [ ] Create history panel/tab for GUI
-- [ ] Implement side-by-side diff view
-- [ ] Implement timeline scrubbing/navigation
-- [ ] Implement search within history
-- [ ] Implement filter history by file
-- [ ] Write tests for history panel integration
+- [x] Create history panel/tab for TUI
+- [x] Create history panel/tab for GUI
+- [x] Implement side-by-side diff view
+- [x] Implement timeline scrubbing/navigation
+- [x] Implement search within history
+- [x] Implement filter history by file
+- [x] Write tests for history panel integration
 
 ### 6.5.9 Advanced History Features
 - [ ] Implement "compare any two points in time"

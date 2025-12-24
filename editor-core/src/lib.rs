@@ -3,6 +3,7 @@ pub mod buffer;
 pub mod clipboard;
 pub mod command;
 pub mod cursor;
+pub mod diff_parser;
 pub mod editor;
 pub mod error;
 pub mod git_history;
@@ -17,6 +18,7 @@ pub use buffer::{Buffer, Encoding, LineEnding};
 pub use clipboard::ClipboardManager;
 pub use command::{CaseMode, Command};
 pub use cursor::{CursorPosition, MultiCursor};
+pub use diff_parser::{DiffLine, DiffLineType, SideBySideDiff};
 pub use editor::{EditorState, VirtualViewport};
 pub use error::{EditorError, Result};
 pub use git_history::{
