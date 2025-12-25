@@ -46,7 +46,7 @@ fn test_renderer_basic_rendering() {
     let renderer = Renderer::new();
 
     let result = terminal.draw(|frame| {
-        renderer.render(frame, &editor_state);
+        renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
     });
 
     assert!(result.is_ok());
@@ -76,7 +76,7 @@ fn test_renderer_with_content() {
         .unwrap();
 
     let result = terminal.draw(|frame| {
-        renderer.render(frame, &editor_state);
+        renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
     });
 
     assert!(result.is_ok());
@@ -90,7 +90,7 @@ fn test_renderer_with_line_numbers() {
     let renderer = Renderer::new().with_line_numbers(true);
 
     let result = terminal.draw(|frame| {
-        renderer.render(frame, &editor_state);
+        renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
     });
 
     assert!(result.is_ok());
@@ -104,7 +104,7 @@ fn test_renderer_without_line_numbers() {
     let renderer = Renderer::new().with_line_numbers(false);
 
     let result = terminal.draw(|frame| {
-        renderer.render(frame, &editor_state);
+        renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
     });
 
     assert!(result.is_ok());
@@ -120,7 +120,7 @@ fn test_renderer_status_bar() {
     editor_state.set_status_message("Test status message".to_string());
 
     let result = terminal.draw(|frame| {
-        renderer.render(frame, &editor_state);
+        renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
     });
 
     assert!(result.is_ok());
@@ -141,7 +141,7 @@ fn test_renderer_cursor_position() {
         .unwrap();
 
     let result = terminal.draw(|frame| {
-        renderer.render(frame, &editor_state);
+        renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
     });
 
     assert!(result.is_ok());
@@ -157,7 +157,7 @@ fn test_renderer_history_browser_closed() {
     assert!(!editor_state.is_history_browser_open());
 
     let result = terminal.draw(|frame| {
-        renderer.render(frame, &editor_state);
+        renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
     });
 
     assert!(result.is_ok());
@@ -188,7 +188,7 @@ fn test_renderer_history_browser_render_empty() {
 
     if result.is_ok() && editor_state.is_history_browser_open() {
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
         assert!(draw_result.is_ok());
     }
@@ -226,7 +226,7 @@ fn test_renderer_history_browser_layout_rendering() {
 
     if result.is_ok() && editor_state.is_history_browser_open() {
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -269,7 +269,7 @@ fn test_renderer_history_commit_display_timestamp_formats() {
         }
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -308,7 +308,7 @@ fn test_renderer_history_commit_display_hash_short_form() {
         }
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -347,7 +347,7 @@ fn test_renderer_history_commit_display_message_truncation() {
         }
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -389,7 +389,7 @@ fn test_renderer_history_commit_display_selection_highlighting() {
         }
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -428,7 +428,7 @@ fn test_renderer_history_commit_display_visual_indicators() {
 
     if result.is_ok() && editor_state.is_history_browser_open() {
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -488,7 +488,7 @@ fn test_renderer_history_diff_view_rendering() {
         }
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -539,7 +539,7 @@ fn test_renderer_history_diff_view_line_indicators() {
         }
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -583,7 +583,7 @@ fn test_renderer_history_diff_view_scrolling() {
         renderer.reset_diff_scroll();
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());
@@ -620,7 +620,7 @@ fn test_renderer_history_diff_view_line_numbers() {
         assert!(diff_result.is_ok());
 
         let draw_result = terminal.draw(|frame| {
-            renderer.render(frame, &editor_state);
+            renderer.render(frame, &editor_state, &editor_tui::menu::MenuState::new());
         });
 
         assert!(draw_result.is_ok());

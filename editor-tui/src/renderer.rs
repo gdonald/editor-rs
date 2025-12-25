@@ -1,14 +1,16 @@
+use crate::menu::{MenuState, MenuType};
 use editor_core::EditorState;
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
-    widgets::{Block, Borders, Paragraph},
+    widgets::{Block, Borders, Clear, Paragraph},
     Frame,
 };
 
 pub struct Renderer {
-    show_line_numbers: bool,
+    pub show_line_numbers: bool,
+    pub show_status_bar: bool,
     diff_scroll_offset: usize,
 }
 
@@ -16,6 +18,7 @@ impl Renderer {
     pub fn new() -> Self {
         Self {
             show_line_numbers: true,
+            show_status_bar: true,
             diff_scroll_offset: 0,
         }
     }
@@ -23,6 +26,14 @@ impl Renderer {
     pub fn with_line_numbers(mut self, show: bool) -> Self {
         self.show_line_numbers = show;
         self
+    }
+
+    pub fn toggle_line_numbers(&mut self) {
+        self.show_line_numbers = !self.show_line_numbers;
+    }
+
+    pub fn toggle_status_bar(&mut self) {
+        self.show_status_bar = !self.show_status_bar;
     }
 
     pub fn scroll_diff_up(&mut self) {
@@ -37,16 +48,30 @@ impl Renderer {
         self.diff_scroll_offset = 0;
     }
 
-    pub fn render(&self, frame: &mut Frame, editor_state: &EditorState) {
+    pub fn render(&self, frame: &mut Frame, editor_state: &EditorState, menu_state: &MenuState) {
         let area = frame.size();
+
+        let status_bar_height = if self.show_status_bar { 1 } else { 0 };
+        let menu_bar_height = 1;
 
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Min(1), Constraint::Length(1)])
+            .constraints([
+                Constraint::Length(menu_bar_height),
+                Constraint::Min(1),
+                Constraint::Length(status_bar_height),
+            ])
             .split(area);
 
-        let editor_area = chunks[0];
-        let status_area = chunks[1];
+        let menu_area = chunks[0];
+        let editor_area = chunks[1];
+        let status_area = if self.show_status_bar {
+            Some(chunks[2])
+        } else {
+            None
+        };
+
+        self.render_menu_bar(frame, menu_state, menu_area);
 
         if editor_state.is_history_browser_open() {
             self.render_history_browser(frame, editor_state, editor_area);
@@ -55,7 +80,14 @@ impl Renderer {
         } else {
             self.render_editor_area(frame, editor_state, editor_area);
         }
-        self.render_status_bar(frame, editor_state, status_area);
+
+        if let Some(status_area) = status_area {
+            self.render_status_bar(frame, editor_state, status_area);
+        }
+
+        if menu_state.is_menu_open() {
+            self.render_open_menu(frame, menu_state, menu_area);
+        }
     }
 
     fn render_editor_area(&self, frame: &mut Frame, editor_state: &EditorState, area: Rect) {
@@ -672,6 +704,148 @@ impl Renderer {
 
         let dt = Local.timestamp_opt(timestamp, 0).unwrap();
         dt.format("%Y-%m-%d %H:%M:%S").to_string()
+    }
+
+    fn render_menu_bar(&self, frame: &mut Frame, menu_state: &MenuState, area: Rect) {
+        let menu_types = MenuType::all();
+        let mut spans = Vec::new();
+
+        for (idx, menu_type) in menu_types.iter().enumerate() {
+            let is_selected = menu_state.active && idx == menu_state.selected_menu;
+            let style = if is_selected {
+                Style::default()
+                    .fg(Color::Black)
+                    .bg(Color::White)
+                    .add_modifier(Modifier::BOLD)
+            } else {
+                Style::default().fg(Color::White)
+            };
+
+            spans.push(Span::styled(" ", Style::default()));
+            spans.push(Span::styled(menu_type.title(), style));
+            spans.push(Span::styled(" ", Style::default()));
+        }
+
+        let padding_width = area
+            .width
+            .saturating_sub(spans.iter().map(|s| s.content.len() as u16).sum());
+        if padding_width > 0 {
+            spans.push(Span::styled(
+                " ".repeat(padding_width as usize),
+                Style::default(),
+            ));
+        }
+
+        let menu_bar = Paragraph::new(Line::from(spans))
+            .style(Style::default().bg(Color::DarkGray).fg(Color::White));
+
+        frame.render_widget(menu_bar, area);
+    }
+
+    fn render_open_menu(&self, frame: &mut Frame, menu_state: &MenuState, menu_bar_area: Rect) {
+        let menu = match &menu_state.open_menu {
+            Some(m) => m,
+            None => return,
+        };
+
+        let menu_types = MenuType::all();
+        let mut x_offset = 1u16;
+        for (idx, menu_type) in menu_types.iter().enumerate() {
+            if idx == menu_state.selected_menu {
+                break;
+            }
+            x_offset += menu_type.title().len() as u16 + 2;
+        }
+
+        let max_label_width = menu
+            .items
+            .iter()
+            .map(|item| item.label.len())
+            .max()
+            .unwrap_or(10);
+        let max_shortcut_width = menu
+            .items
+            .iter()
+            .filter_map(|item| item.shortcut.as_ref().map(|s| s.len()))
+            .max()
+            .unwrap_or(0);
+
+        let menu_width = (max_label_width + max_shortcut_width + 4).min(40) as u16;
+        let menu_height = (menu.items.len() + 2).min(20) as u16;
+
+        let menu_area = Rect {
+            x: x_offset.min(menu_bar_area.width.saturating_sub(menu_width)),
+            y: menu_bar_area.y + 1,
+            width: menu_width,
+            height: menu_height,
+        };
+
+        frame.render_widget(Clear, menu_area);
+
+        let block = Block::default()
+            .borders(Borders::ALL)
+            .border_style(Style::default().fg(Color::White))
+            .style(Style::default().bg(Color::Rgb(30, 30, 30)));
+
+        let inner_area = block.inner(menu_area);
+        frame.render_widget(block, menu_area);
+
+        let mut lines = Vec::new();
+        for (idx, item) in menu.items.iter().enumerate() {
+            if item.is_separator() {
+                let separator = "─".repeat(inner_area.width as usize);
+                lines.push(Line::from(Span::styled(
+                    separator,
+                    Style::default().fg(Color::DarkGray),
+                )));
+            } else {
+                let is_selected = idx == menu.selected_index;
+                let bg_color = if is_selected {
+                    Color::Rgb(50, 50, 70)
+                } else {
+                    Color::Rgb(30, 30, 30)
+                };
+
+                let mut spans = Vec::new();
+
+                spans.push(Span::styled(" ", Style::default().bg(bg_color)));
+
+                let label_style = if is_selected {
+                    Style::default()
+                        .fg(Color::White)
+                        .bg(bg_color)
+                        .add_modifier(Modifier::BOLD)
+                } else {
+                    Style::default().fg(Color::White).bg(bg_color)
+                };
+                spans.push(Span::styled(item.label.clone(), label_style));
+
+                let padding_len = max_label_width.saturating_sub(item.label.len()) + 2;
+                spans.push(Span::styled(
+                    " ".repeat(padding_len),
+                    Style::default().bg(bg_color),
+                ));
+
+                if let Some(shortcut) = &item.shortcut {
+                    let shortcut_style = Style::default().fg(Color::DarkGray).bg(bg_color);
+                    spans.push(Span::styled(shortcut.clone(), shortcut_style));
+                }
+
+                let total_len: usize = spans.iter().map(|s| s.content.len()).sum();
+                let remaining = inner_area.width as usize - total_len;
+                if remaining > 0 {
+                    spans.push(Span::styled(
+                        " ".repeat(remaining),
+                        Style::default().bg(bg_color),
+                    ));
+                }
+
+                lines.push(Line::from(spans));
+            }
+        }
+
+        let paragraph = Paragraph::new(lines);
+        frame.render_widget(paragraph, inner_area);
     }
 }
 

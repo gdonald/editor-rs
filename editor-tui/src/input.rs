@@ -45,6 +45,7 @@ impl InputHandler {
         event: Event,
         is_history_browser_open: bool,
         is_history_stats_open: bool,
+        is_menu_active: bool,
     ) -> Option<InputAction> {
         match event {
             Event::Key(key_event) => {
@@ -52,6 +53,8 @@ impl InputHandler {
                     self.handle_history_browser_key_event(key_event)
                 } else if is_history_stats_open {
                     self.handle_history_stats_key_event(key_event)
+                } else if is_menu_active {
+                    self.handle_menu_key_event(key_event)
                 } else {
                     self.handle_key_event(key_event)
                 }
@@ -74,6 +77,13 @@ impl InputHandler {
             (code, _, _, _) if code == self.key_bindings.quit_key && ctrl => {
                 Some(InputAction::Quit)
             }
+
+            (KeyCode::Char('f'), false, true, false) => Some(InputAction::ActivateMenuBar),
+            (KeyCode::Char('e'), false, true, false) => Some(InputAction::ActivateMenuBar),
+            (KeyCode::Char('v'), false, true, false) => Some(InputAction::ActivateMenuBar),
+            (KeyCode::Char('s'), false, true, false) => Some(InputAction::ActivateMenuBar),
+            (KeyCode::Char('t'), false, true, false) => Some(InputAction::ActivateMenuBar),
+            (KeyCode::Char('h'), false, true, false) => Some(InputAction::ActivateMenuBar),
 
             (KeyCode::Char(c), false, false, false) if !has_any_ctrl_modifier => {
                 Some(InputAction::Command(Command::InsertChar(c)))
@@ -285,6 +295,21 @@ impl InputHandler {
             _ => None,
         }
     }
+
+    fn handle_menu_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
+        let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
+
+        match (key_event.code, ctrl) {
+            (KeyCode::Up, false) => Some(InputAction::MenuUp),
+            (KeyCode::Down, false) => Some(InputAction::MenuDown),
+            (KeyCode::Left, false) => Some(InputAction::MenuLeft),
+            (KeyCode::Right, false) => Some(InputAction::MenuRight),
+            (KeyCode::Enter, false) => Some(InputAction::MenuSelect),
+            (KeyCode::Esc, false) => Some(InputAction::DeactivateMenuBar),
+            (code, _) if code == self.key_bindings.quit_key && ctrl => Some(InputAction::Quit),
+            _ => None,
+        }
+    }
 }
 
 impl Default for InputHandler {
@@ -305,4 +330,12 @@ pub enum InputAction {
     Resize,
     CloseHistoryStats,
     SetBaseCommit,
+    MenuAction(crate::menu::MenuAction),
+    ActivateMenuBar,
+    DeactivateMenuBar,
+    MenuUp,
+    MenuDown,
+    MenuLeft,
+    MenuRight,
+    MenuSelect,
 }

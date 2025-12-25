@@ -624,16 +624,16 @@
 - [x] Write tests for rendering logic
 
 ### 8.4 TUI Menu System
-- [ ] Implement menu bar (File, Edit, View, Search, Tools, Help)
-- [ ] Implement menu keyboard navigation (Alt+F for File, etc.)
+- [x] Implement menu bar (File, Edit, View, Search, Tools, Help)
+- [x] Implement menu keyboard navigation (Alt+F for File, etc.)
 - [ ] Implement menu mouse support (click to open/select)
-- [ ] Implement File menu (New, Open, Save, Save As, Close, Quit)
-- [ ] Implement Edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
-- [ ] Implement View menu (Toggle Line Numbers, Toggle Status Bar, Zoom In/Out)
-- [ ] Implement Search menu (Find, Replace, Go to Line, Next/Previous Match)
-- [ ] Implement Tools menu (Toggle Comments, Change Case, Sort Lines)
-- [ ] Implement Help menu (Keyboard Shortcuts, About)
-- [ ] Write tests for TUI menu system
+- [x] Implement File menu (New, Open, Save, Save As, Close, Quit)
+- [x] Implement Edit menu (Undo, Redo, Cut, Copy, Paste, Select All)
+- [x] Implement View menu (Toggle Line Numbers, Toggle Status Bar, Zoom In/Out)
+- [x] Implement Search menu (Find, Replace, Go to Line, Next/Previous Match)
+- [x] Implement Tools menu (Toggle Comments, Change Case, Sort Lines)
+- [x] Implement Help menu (Keyboard Shortcuts, About)
+- [x] Write tests for TUI menu system
 
 ### 8.5 TUI Features
 - [ ] Implement command palette/prompt
