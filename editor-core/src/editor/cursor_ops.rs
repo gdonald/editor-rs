@@ -1,4 +1,5 @@
-use super::state::{is_word_char, EditorState};
+use super::state::EditorState;
+use super::state_utils::is_word_char;
 use crate::cursor::CursorPosition;
 use crate::error::{EditorError, Result};
 
