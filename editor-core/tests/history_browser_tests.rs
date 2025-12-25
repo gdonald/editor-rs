@@ -8,6 +8,7 @@ fn create_test_commits(count: usize) -> Vec<CommitInfo> {
             author_email: "test@example.com".to_string(),
             timestamp: 1000000 + i as i64,
             message: format!("Commit message {}", i),
+            annotation: None,
         })
         .collect()
 }
@@ -824,4 +825,81 @@ fn test_set_commits_resets_filters() {
     assert_eq!(browser.len(), 10);
     assert!(browser.search_query().is_none());
     assert!(browser.file_filter().is_none());
+}
+
+#[test]
+fn test_get_commit_graph() {
+    let commits = create_test_commits(3);
+    let browser = HistoryBrowser::with_commits(commits);
+
+    let graph = browser.get_commit_graph();
+    assert_eq!(graph.len(), 3);
+    assert_eq!(graph[0].commit.id, "commit_0");
+    assert_eq!(graph[1].commit.id, "commit_1");
+    assert_eq!(graph[2].commit.id, "commit_2");
+}
+
+#[test]
+fn test_format_commit_line_without_annotation() {
+    let commits = create_test_commits(1);
+    let browser = HistoryBrowser::with_commits(commits);
+
+    let lines = browser.format_commit_line(0, false).unwrap();
+    assert_eq!(lines.len(), 1);
+    assert!(lines[0].starts_with("* commit_"));
+    assert!(lines[0].contains("Commit message 0"));
+}
+
+#[test]
+fn test_format_commit_line_with_annotation() {
+    let mut commits = create_test_commits(1);
+    commits[0].annotation = Some("Test annotation".to_string());
+    let browser = HistoryBrowser::with_commits(commits);
+
+    let lines = browser.format_commit_line(0, true).unwrap();
+    assert_eq!(lines.len(), 2);
+    assert!(lines[0].contains("Commit message 0"));
+    assert!(lines[1].contains("📝 Test annotation"));
+}
+
+#[test]
+fn test_format_commit_line_invalid_index() {
+    let commits = create_test_commits(1);
+    let browser = HistoryBrowser::with_commits(commits);
+
+    let lines = browser.format_commit_line(5, false);
+    assert!(lines.is_none());
+}
+
+#[test]
+fn test_format_all_commit_lines() {
+    let commits = create_test_commits(3);
+    let browser = HistoryBrowser::with_commits(commits);
+
+    let all_lines = browser.format_all_commit_lines(false);
+    assert_eq!(all_lines.len(), 3);
+
+    for (i, lines) in all_lines.iter().enumerate() {
+        assert_eq!(lines.len(), 1);
+        assert!(lines[0].contains(&format!("Commit message {}", i)));
+    }
+}
+
+#[test]
+fn test_format_all_commit_lines_with_annotations() {
+    let mut commits = create_test_commits(3);
+    commits[0].annotation = Some("Note 1".to_string());
+    commits[2].annotation = Some("Note 3".to_string());
+    let browser = HistoryBrowser::with_commits(commits);
+
+    let all_lines = browser.format_all_commit_lines(true);
+    assert_eq!(all_lines.len(), 3);
+
+    assert_eq!(all_lines[0].len(), 2);
+    assert!(all_lines[0][1].contains("📝 Note 1"));
+
+    assert_eq!(all_lines[1].len(), 1);
+
+    assert_eq!(all_lines[2].len(), 2);
+    assert!(all_lines[2][1].contains("📝 Note 3"));
 }

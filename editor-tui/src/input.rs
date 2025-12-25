@@ -266,6 +266,10 @@ impl InputHandler {
             (KeyCode::Char('f'), false) => {
                 Some(InputAction::Command(Command::HistoryToggleFileList))
             }
+            (KeyCode::Char('b'), false) => Some(InputAction::SetBaseCommit),
+            (KeyCode::Char('c'), false) => {
+                Some(InputAction::Command(Command::HistoryClearBaseCommit))
+            }
             (code, _) if code == self.key_bindings.quit_key && ctrl => Some(InputAction::Quit),
             _ => None,
         }
@@ -300,4 +304,5 @@ pub enum InputAction {
     SelectAll,
     Resize,
     CloseHistoryStats,
+    SetBaseCommit,
 }

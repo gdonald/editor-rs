@@ -254,6 +254,15 @@ impl EditorState {
                 file_path,
             } => self.history_restore_file(&commit_id, &file_path),
             Command::HistoryPreviewRestore(commit_id) => self.history_preview_restore(&commit_id),
+            Command::HistorySetBaseCommit(index) => self.history_set_base_commit(index),
+            Command::HistoryClearBaseCommit => self.history_clear_base_commit(),
+            Command::HistoryAddAnnotation {
+                commit_id,
+                annotation,
+            } => self.history_add_annotation(&commit_id, annotation.clone()),
+            Command::HistoryRemoveAnnotation(commit_id) => {
+                self.history_remove_annotation(&commit_id)
+            }
             Command::ShowHistoryStats => self.show_history_stats(),
             Command::CleanupHistory => self.cleanup_history(),
 
@@ -737,6 +746,98 @@ impl EditorState {
             commit_id,
             content.len()
         ));
+        Ok(())
+    }
+
+    fn history_set_base_commit(&mut self, index: usize) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            if browser.set_base_commit(Some(index)) {
+                self.set_status_message(format!("Set base commit to index {}", index));
+                Ok(())
+            } else {
+                Err(EditorError::InvalidOperation(format!(
+                    "Invalid commit index: {}",
+                    index
+                )))
+            }
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_clear_base_commit(&mut self) -> Result<()> {
+        use crate::error::EditorError;
+
+        if let Some(browser) = &mut self.history_browser {
+            browser.set_base_commit(None);
+            self.set_status_message("Cleared base commit".to_string());
+            Ok(())
+        } else {
+            Err(EditorError::InvalidOperation(
+                "History browser is not open".to_string(),
+            ))
+        }
+    }
+
+    fn history_add_annotation(&mut self, commit_id: &str, annotation: String) -> Result<()> {
+        use crate::error::EditorError;
+
+        let file_path = self
+            .buffer()
+            .file_path()
+            .ok_or_else(|| {
+                EditorError::InvalidOperation(
+                    "Cannot add annotation: buffer has no file path".to_string(),
+                )
+            })?
+            .to_path_buf();
+
+        let project_path = file_path
+            .parent()
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file path".to_string()))?;
+
+        self.git_history
+            .add_annotation(project_path, commit_id, annotation)?;
+
+        if let Some(browser) = &mut self.history_browser {
+            let commits = self.git_history.list_commits(project_path)?;
+            browser.set_commits(commits);
+        }
+
+        self.set_status_message(format!("Added annotation to commit {}", commit_id));
+        Ok(())
+    }
+
+    fn history_remove_annotation(&mut self, commit_id: &str) -> Result<()> {
+        use crate::error::EditorError;
+
+        let file_path = self
+            .buffer()
+            .file_path()
+            .ok_or_else(|| {
+                EditorError::InvalidOperation(
+                    "Cannot remove annotation: buffer has no file path".to_string(),
+                )
+            })?
+            .to_path_buf();
+
+        let project_path = file_path
+            .parent()
+            .ok_or_else(|| EditorError::InvalidOperation("Invalid file path".to_string()))?;
+
+        self.git_history
+            .remove_annotation(project_path, commit_id)?;
+
+        if let Some(browser) = &mut self.history_browser {
+            let commits = self.git_history.list_commits(project_path)?;
+            browser.set_commits(commits);
+        }
+
+        self.set_status_message(format!("Removed annotation from commit {}", commit_id));
         Ok(())
     }
 

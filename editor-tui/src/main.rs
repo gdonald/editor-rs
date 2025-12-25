@@ -94,6 +94,16 @@ fn run_event_loop(
                     editor_tui::input::InputAction::CloseHistoryStats => {
                         editor_state.close_history_stats();
                     }
+                    editor_tui::input::InputAction::SetBaseCommit => {
+                        if let Some(browser) = editor_state.history_browser() {
+                            let index = browser.selected_index();
+                            if let Err(e) = editor_state
+                                .execute_command(editor_core::Command::HistorySetBaseCommit(index))
+                            {
+                                editor_state.set_status_message(format!("Error: {}", e));
+                            }
+                        }
+                    }
                 }
             }
         }

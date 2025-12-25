@@ -133,6 +133,13 @@ pub enum Command {
         file_path: String,
     },
     HistoryPreviewRestore(String),
+    HistorySetBaseCommit(usize),
+    HistoryClearBaseCommit,
+    HistoryAddAnnotation {
+        commit_id: String,
+        annotation: String,
+    },
+    HistoryRemoveAnnotation(String),
     ShowHistoryStats,
     CleanupHistory,
     ExportHistory(PathBuf),

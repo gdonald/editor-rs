@@ -222,6 +222,8 @@ impl InputHandler {
             egui::Key::Escape => Some(InputAction::Command(Command::CloseHistoryBrowser)),
             egui::Key::Q if !ctrl => Some(InputAction::Command(Command::CloseHistoryBrowser)),
             egui::Key::F => Some(InputAction::Command(Command::HistoryToggleFileList)),
+            egui::Key::B => Some(InputAction::SetBaseCommit),
+            egui::Key::C => Some(InputAction::Command(Command::HistoryClearBaseCommit)),
             _ => None,
         }
     }
@@ -301,4 +303,5 @@ pub enum InputAction {
     GotoLine,
     SelectAll,
     CloseHistoryStats,
+    SetBaseCommit,
 }

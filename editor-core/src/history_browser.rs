@@ -1,3 +1,4 @@
+use crate::git_history::{format_graph_line, generate_commit_graph, CommitGraphNode};
 use crate::CommitInfo;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -428,6 +429,25 @@ impl HistoryBrowser {
             self.selected_index = self.filtered_indices.as_ref().unwrap()[0];
             self.update_current_page();
         }
+    }
+
+    pub fn get_commit_graph(&self) -> Vec<CommitGraphNode> {
+        generate_commit_graph(&self.commits)
+    }
+
+    pub fn format_commit_line(&self, index: usize, show_annotation: bool) -> Option<Vec<String>> {
+        let graph = self.get_commit_graph();
+        graph
+            .get(index)
+            .map(|node| format_graph_line(node, show_annotation))
+    }
+
+    pub fn format_all_commit_lines(&self, show_annotations: bool) -> Vec<Vec<String>> {
+        let graph = self.get_commit_graph();
+        graph
+            .iter()
+            .map(|node| format_graph_line(node, show_annotations))
+            .collect()
     }
 }
 

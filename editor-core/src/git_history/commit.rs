@@ -226,6 +226,8 @@ impl GitHistoryManager {
             return Ok(Vec::new());
         }
 
+        let annotations = self.load_annotations(project_path).unwrap_or_default();
+
         let mut commits = Vec::new();
 
         for oid_result in revwalk {
@@ -234,8 +236,11 @@ impl GitHistoryManager {
                 .find_commit(oid)
                 .map_err(|e| EditorError::Git(e.to_string()))?;
 
+            let commit_id = oid.to_string();
+            let annotation = annotations.get(&commit_id).map(|s| s.to_string());
+
             commits.push(CommitInfo {
-                id: oid.to_string(),
+                id: commit_id,
                 author_name: commit.author().name().unwrap_or("Unknown").to_string(),
                 author_email: commit
                     .author()
@@ -244,6 +249,7 @@ impl GitHistoryManager {
                     .to_string(),
                 timestamp: commit.time().seconds(),
                 message: commit.message().unwrap_or("").to_string(),
+                annotation,
             });
         }
 
@@ -263,12 +269,15 @@ impl GitHistoryManager {
         let timestamp = commit.time().seconds();
         let message = commit.message().unwrap_or("").to_string();
 
+        let annotation = self.get_annotation(project_path, commit_id).unwrap_or(None);
+
         Ok(CommitInfo {
             id: oid.to_string(),
             author_name,
             author_email,
             timestamp,
             message,
+            annotation,
         })
     }
 

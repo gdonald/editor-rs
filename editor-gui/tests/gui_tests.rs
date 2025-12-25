@@ -88,6 +88,7 @@ fn test_history_renderer_with_commits() {
         author_email: "test@example.com".to_string(),
         timestamp: 1234567890,
         message: "Test commit message".to_string(),
+        annotation: None,
     }];
     let _history_browser = HistoryBrowser::with_commits(commits);
 }
@@ -102,6 +103,7 @@ fn test_history_renderer_with_multiple_commits() {
             author_email: "alice@example.com".to_string(),
             timestamp: 1234567890,
             message: "First commit".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "def456ghi789".to_string(),
@@ -109,6 +111,7 @@ fn test_history_renderer_with_multiple_commits() {
             author_email: "bob@example.com".to_string(),
             timestamp: 1234567900,
             message: "Second commit".to_string(),
+            annotation: None,
         },
     ];
     let history_browser = HistoryBrowser::with_commits(commits);
@@ -126,6 +129,7 @@ fn test_history_renderer_commit_selection() {
             author_email: "author1@example.com".to_string(),
             timestamp: 1000000000,
             message: "Commit 1".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "commit2".to_string(),
@@ -133,6 +137,7 @@ fn test_history_renderer_commit_selection() {
             author_email: "author2@example.com".to_string(),
             timestamp: 1000000100,
             message: "Commit 2".to_string(),
+            annotation: None,
         },
     ];
     let mut history_browser = HistoryBrowser::with_commits(commits);
@@ -156,6 +161,7 @@ fn test_history_renderer_timestamp_formatting() {
         author_email: "test@test.com".to_string(),
         timestamp: 1609459200,
         message: "New Year 2021 commit".to_string(),
+        annotation: None,
     }];
     let _history_browser = HistoryBrowser::with_commits(commits);
 }
@@ -169,6 +175,7 @@ fn test_history_renderer_short_commit_id() {
         author_email: "test@test.com".to_string(),
         timestamp: 1234567890,
         message: "Short ID commit".to_string(),
+        annotation: None,
     }];
     let _history_browser = HistoryBrowser::with_commits(commits);
 }
@@ -182,6 +189,7 @@ fn test_history_renderer_long_commit_id() {
         author_email: "test@test.com".to_string(),
         timestamp: 1234567890,
         message: "Long ID commit".to_string(),
+        annotation: None,
     }];
     let _history_browser = HistoryBrowser::with_commits(commits);
 }
@@ -195,6 +203,7 @@ fn test_history_renderer_multiline_commit_message() {
         author_email: "test@test.com".to_string(),
         timestamp: 1234567890,
         message: "First line\nSecond line\nThird line".to_string(),
+        annotation: None,
     }];
     let _history_browser = HistoryBrowser::with_commits(commits);
 }
@@ -208,6 +217,7 @@ fn test_history_renderer_empty_commit_message() {
         author_email: "test@test.com".to_string(),
         timestamp: 1234567890,
         message: "".to_string(),
+        annotation: None,
     }];
     let _history_browser = HistoryBrowser::with_commits(commits);
 }
@@ -222,6 +232,7 @@ fn test_history_renderer_diff_view_mode() {
         author_email: "test@test.com".to_string(),
         timestamp: 1234567890,
         message: "Test commit".to_string(),
+        annotation: None,
     }];
     let mut history_browser = HistoryBrowser::with_commits(commits);
 
@@ -266,6 +277,7 @@ fn test_history_browser_with_selected_commit() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567890,
             message: "First commit".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "commit2".to_string(),
@@ -273,6 +285,7 @@ fn test_history_browser_with_selected_commit() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567900,
             message: "Second commit".to_string(),
+            annotation: None,
         },
     ];
     let mut history_browser = HistoryBrowser::with_commits(commits);
@@ -293,6 +306,7 @@ fn test_history_diff_view_get_diff_commits() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567890,
             message: "First commit".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "commit2".to_string(),
@@ -300,6 +314,7 @@ fn test_history_diff_view_get_diff_commits() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567900,
             message: "Second commit".to_string(),
+            annotation: None,
         },
     ];
     let history_browser = HistoryBrowser::with_commits(commits);
@@ -321,6 +336,7 @@ fn test_gui_history_keyboard_navigation_up_down() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567890,
             message: "First commit".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "commit2".to_string(),
@@ -328,6 +344,7 @@ fn test_gui_history_keyboard_navigation_up_down() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567900,
             message: "Second commit".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "commit3".to_string(),
@@ -335,6 +352,7 @@ fn test_gui_history_keyboard_navigation_up_down() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567910,
             message: "Third commit".to_string(),
+            annotation: None,
         },
     ];
     let mut history_browser = HistoryBrowser::with_commits(commits);
@@ -363,6 +381,7 @@ fn test_gui_history_keyboard_enter_views_diff() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567890,
             message: "First commit".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "commit2".to_string(),
@@ -370,6 +389,7 @@ fn test_gui_history_keyboard_enter_views_diff() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567900,
             message: "Second commit".to_string(),
+            annotation: None,
         },
     ];
     let mut history_browser = HistoryBrowser::with_commits(commits);
@@ -396,6 +416,7 @@ fn test_gui_history_mouse_click_selects_commit() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567890,
             message: "First commit".to_string(),
+            annotation: None,
         },
         CommitInfo {
             id: "commit2".to_string(),
@@ -403,6 +424,7 @@ fn test_gui_history_mouse_click_selects_commit() {
             author_email: "author@example.com".to_string(),
             timestamp: 1234567900,
             message: "Second commit".to_string(),
+            annotation: None,
         },
     ];
     let mut history_browser = HistoryBrowser::with_commits(commits);

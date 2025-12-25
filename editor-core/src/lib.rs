@@ -22,9 +22,10 @@ pub use diff_parser::{DiffLine, DiffLineType, SideBySideDiff};
 pub use editor::{EditorState, VirtualViewport};
 pub use error::{EditorError, Result};
 pub use git_history::{
-    create_signature, ChangeStatus, CleanupStats, CommitInfo, CommitResult, FileChange,
-    FileSizeInfo, FileStats, GcConfig, GitHistoryManager, HistoryStats, IntegrityReport,
-    LargeFileConfig, LargeFileStrategy, RetentionPolicy, TrackingMode,
+    create_signature, format_graph_line, generate_commit_graph, ChangeStatus, CleanupStats,
+    CommitAnnotations, CommitGraphNode, CommitInfo, CommitResult, FileChange, FileSizeInfo,
+    FileStats, GcConfig, GitHistoryManager, HistoryStats, IntegrityReport, LargeFileConfig,
+    LargeFileStrategy, RetentionPolicy, TrackingMode,
 };
 pub use history::{Edit, History, HistoryEntry};
 pub use history_browser::{DiffViewMode, HistoryBrowser};

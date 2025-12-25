@@ -567,12 +567,12 @@
 - [x] Write tests for history panel integration
 
 ### 6.5.9 Advanced History Features
-- [ ] Implement "compare any two points in time"
-- [ ] Implement history annotations (user can add notes to commits)
-- [ ] Implement history export (export history as regular git repo)
-- [ ] Implement history statistics/insights
-- [ ] Implement visual commit graph
-- [ ] Write tests for advanced history features
+- [x] Implement "compare any two points in time"
+- [x] Implement history annotations (user can add notes to commits)
+- [x] Implement history export (export history as regular git repo)
+- [x] Implement history statistics/insights
+- [x] Implement visual commit graph
+- [x] Write tests for advanced history features
 
 ## Phase 7: Syntax Highlighting (Optional for v1)
 

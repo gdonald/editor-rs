@@ -176,6 +176,18 @@ impl EditorApp {
             InputAction::CloseHistoryStats => {
                 self.editor_state.close_history_stats();
             }
+            InputAction::SetBaseCommit => {
+                if let Some(browser) = self.editor_state.history_browser() {
+                    let index = browser.selected_index();
+                    if let Err(e) = self
+                        .editor_state
+                        .execute_command(editor_core::Command::HistorySetBaseCommit(index))
+                    {
+                        self.editor_state
+                            .set_status_message(format!("Error: {}", e));
+                    }
+                }
+            }
         }
     }
 }

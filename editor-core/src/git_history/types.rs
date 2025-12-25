@@ -9,6 +9,7 @@ pub struct CommitInfo {
     pub author_email: String,
     pub timestamp: i64,
     pub message: String,
+    pub annotation: Option<String>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

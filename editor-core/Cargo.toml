@@ -10,6 +10,7 @@ repository.workspace = true
 ropey.workspace = true
 notify.workspace = true
 serde.workspace = true
+serde_json.workspace = true
 toml.workspace = true
 arboard.workspace = true
 regex.workspace = true
