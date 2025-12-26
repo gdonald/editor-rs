@@ -638,11 +638,11 @@
 ### 8.5 TUI Features
 
 #### 8.5.1 Dialog Infrastructure
-- [ ] Complete dialog module integration with main event loop
-- [ ] Add dialog state management to main.rs
-- [ ] Update renderer to handle dialog rendering
-- [ ] Fix test files to match new handle_event signature (5 parameters)
-- [ ] Write tests for dialog input handling
+- [x] Complete dialog module integration with main event loop
+- [x] Add dialog state management to main.rs
+- [x] Update renderer to handle dialog rendering
+- [x] Fix test files to match new handle_event signature (5 parameters)
+- [x] Write tests for dialog input handling
 
 #### 8.5.2 Help/Shortcuts Dialog (Simplest - Quick Win)
 - [ ] Wire Help dialog to Ctrl+? or F1 key

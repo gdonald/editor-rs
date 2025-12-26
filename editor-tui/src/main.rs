@@ -4,6 +4,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use editor_core::EditorState;
+use editor_tui::dialog::Dialog;
 use editor_tui::input::InputHandler;
 use editor_tui::menu::MenuState;
 use editor_tui::renderer::Renderer;
@@ -16,6 +17,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut input_handler = InputHandler::new();
     let mut renderer = Renderer::new();
     let mut menu_state = MenuState::new();
+    let mut dialog: Option<Dialog> = None;
 
     let result = run_event_loop(
         &mut terminal,
@@ -23,6 +25,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &mut input_handler,
         &mut renderer,
         &mut menu_state,
+        &mut dialog,
     );
 
     cleanup_terminal(terminal)?;
@@ -54,10 +57,11 @@ fn run_event_loop(
     input_handler: &mut InputHandler,
     renderer: &mut Renderer,
     menu_state: &mut MenuState,
+    dialog: &mut Option<Dialog>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         terminal.draw(|frame| {
-            renderer.render(frame, editor_state, menu_state, None);
+            renderer.render(frame, editor_state, menu_state, dialog.as_ref());
         })?;
 
         if event::poll(std::time::Duration::from_millis(100))? {
@@ -65,12 +69,13 @@ fn run_event_loop(
             let is_history_browser_open = editor_state.is_history_browser_open();
             let is_history_stats_open = editor_state.is_history_stats_open();
             let is_menu_active = menu_state.active;
+            let is_dialog_open = dialog.is_some();
             if let Some(action) = input_handler.handle_event(
                 event,
                 is_history_browser_open,
                 is_history_stats_open,
                 is_menu_active,
-                false,
+                is_dialog_open,
             ) {
                 match action {
                     editor_tui::input::InputAction::Quit => break,
@@ -84,16 +89,16 @@ fn run_event_loop(
                             .set_status_message("Open file dialog not yet implemented".to_string());
                     }
                     editor_tui::input::InputAction::Search => {
-                        editor_state
-                            .set_status_message("Search dialog not yet implemented".to_string());
+                        use editor_tui::dialog::{Dialog, DialogType};
+                        *dialog = Some(Dialog::new(DialogType::Search));
                     }
                     editor_tui::input::InputAction::Replace => {
-                        editor_state
-                            .set_status_message("Replace dialog not yet implemented".to_string());
+                        use editor_tui::dialog::{Dialog, DialogType};
+                        *dialog = Some(Dialog::new(DialogType::Replace));
                     }
                     editor_tui::input::InputAction::GotoLine => {
-                        editor_state
-                            .set_status_message("Goto line dialog not yet implemented".to_string());
+                        use editor_tui::dialog::{Dialog, DialogType};
+                        *dialog = Some(Dialog::new(DialogType::GotoLine));
                     }
                     editor_tui::input::InputAction::SelectAll => {
                         editor_state
@@ -140,23 +145,59 @@ fn run_event_loop(
                     editor_tui::input::InputAction::MenuSelect => {
                         if let Some(menu_action) = menu_state.get_selected_action() {
                             menu_state.deactivate();
-                            handle_menu_action(menu_action, editor_state, renderer);
+                            handle_menu_action(menu_action, editor_state, renderer, dialog);
                         }
                     }
                     editor_tui::input::InputAction::MenuAction(menu_action) => {
                         menu_state.deactivate();
-                        handle_menu_action(menu_action, editor_state, renderer);
+                        handle_menu_action(menu_action, editor_state, renderer, dialog);
                     }
-                    editor_tui::input::InputAction::DialogInsertChar(_) => {}
-                    editor_tui::input::InputAction::DialogBackspace => {}
-                    editor_tui::input::InputAction::DialogDelete => {}
-                    editor_tui::input::InputAction::DialogMoveCursorLeft => {}
-                    editor_tui::input::InputAction::DialogMoveCursorRight => {}
-                    editor_tui::input::InputAction::DialogMoveToStart => {}
-                    editor_tui::input::InputAction::DialogMoveToEnd => {}
-                    editor_tui::input::InputAction::DialogConfirm => {}
-                    editor_tui::input::InputAction::DialogCancel => {}
-                    editor_tui::input::InputAction::DialogSwitchField => {}
+                    editor_tui::input::InputAction::DialogInsertChar(c) => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.insert_char(c);
+                        }
+                    }
+                    editor_tui::input::InputAction::DialogBackspace => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.backspace();
+                        }
+                    }
+                    editor_tui::input::InputAction::DialogDelete => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.delete_char();
+                        }
+                    }
+                    editor_tui::input::InputAction::DialogMoveCursorLeft => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.move_cursor_left();
+                        }
+                    }
+                    editor_tui::input::InputAction::DialogMoveCursorRight => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.move_cursor_right();
+                        }
+                    }
+                    editor_tui::input::InputAction::DialogMoveToStart => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.move_to_start();
+                        }
+                    }
+                    editor_tui::input::InputAction::DialogMoveToEnd => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.move_to_end();
+                        }
+                    }
+                    editor_tui::input::InputAction::DialogConfirm => {
+                        handle_dialog_confirm(dialog, editor_state);
+                    }
+                    editor_tui::input::InputAction::DialogCancel => {
+                        *dialog = None;
+                    }
+                    editor_tui::input::InputAction::DialogSwitchField => {
+                        if let Some(ref mut dlg) = dialog {
+                            dlg.switch_field();
+                        }
+                    }
                 }
             }
         }
@@ -165,11 +206,52 @@ fn run_event_loop(
     Ok(())
 }
 
+fn handle_dialog_confirm(dialog: &mut Option<Dialog>, editor_state: &mut EditorState) {
+    use editor_core::Command;
+    use editor_tui::dialog::DialogType;
+
+    if let Some(dlg) = dialog.take() {
+        match dlg.dialog_type {
+            DialogType::Search => {
+                if !dlg.input.is_empty() {
+                    if let Err(e) = editor_state.execute_command(Command::Search(dlg.input.clone()))
+                    {
+                        editor_state.set_status_message(format!("Error: {}", e));
+                    }
+                }
+            }
+            DialogType::Replace => {
+                if !dlg.input.is_empty() {
+                    let replace_text = dlg.replace_input.unwrap_or_default();
+                    if let Err(e) = editor_state.execute_command(Command::ReplaceAll {
+                        find: dlg.input,
+                        replace: replace_text,
+                    }) {
+                        editor_state.set_status_message(format!("Error: {}", e));
+                    }
+                }
+            }
+            DialogType::GotoLine => {
+                if let Ok(line_number) = dlg.input.parse::<usize>() {
+                    if let Err(e) = editor_state.execute_command(Command::GotoLine(line_number)) {
+                        editor_state.set_status_message(format!("Error: {}", e));
+                    }
+                } else {
+                    editor_state.set_status_message("Invalid line number".to_string());
+                }
+            }
+            DialogType::Help => {}
+        }
+    }
+}
+
 fn handle_menu_action(
     action: editor_tui::menu::MenuAction,
     editor_state: &mut EditorState,
     renderer: &mut Renderer,
+    dialog: &mut Option<Dialog>,
 ) {
+    use editor_tui::dialog::DialogType;
     use editor_tui::menu::MenuAction;
 
     match action {
@@ -188,19 +270,19 @@ fn handle_menu_action(
             std::process::exit(0);
         }
         MenuAction::Search => {
-            editor_state.set_status_message("Search dialog not yet implemented".to_string());
+            *dialog = Some(Dialog::new(DialogType::Search));
         }
         MenuAction::Replace => {
-            editor_state.set_status_message("Replace dialog not yet implemented".to_string());
+            *dialog = Some(Dialog::new(DialogType::Replace));
         }
         MenuAction::GotoLine => {
-            editor_state.set_status_message("Goto line dialog not yet implemented".to_string());
+            *dialog = Some(Dialog::new(DialogType::GotoLine));
         }
         MenuAction::SelectAll => {
             editor_state.set_status_message("Select all not yet implemented".to_string());
         }
         MenuAction::ShowHelp => {
-            editor_state.set_status_message("Help not yet implemented".to_string());
+            *dialog = Some(Dialog::new(DialogType::Help));
         }
         MenuAction::ShowAbout => {
             editor_state.set_status_message("About: Editor-rs v0.1.0".to_string());
