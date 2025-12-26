@@ -1,3 +1,4 @@
+use crate::dialog::Dialog;
 use crate::menu::{MenuState, MenuType};
 use editor_core::EditorState;
 use ratatui::{
@@ -48,7 +49,13 @@ impl Renderer {
         self.diff_scroll_offset = 0;
     }
 
-    pub fn render(&self, frame: &mut Frame, editor_state: &EditorState, menu_state: &MenuState) {
+    pub fn render(
+        &self,
+        frame: &mut Frame,
+        editor_state: &EditorState,
+        menu_state: &MenuState,
+        dialog: Option<&Dialog>,
+    ) {
         let area = frame.size();
 
         let status_bar_height = if self.show_status_bar { 1 } else { 0 };
@@ -87,6 +94,10 @@ impl Renderer {
 
         if menu_state.is_menu_open() {
             self.render_open_menu(frame, menu_state, menu_area);
+        }
+
+        if let Some(dialog) = dialog {
+            dialog.render(frame, area);
         }
     }
 

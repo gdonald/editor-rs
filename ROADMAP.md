@@ -636,14 +636,77 @@
 - [x] Write tests for TUI menu system
 
 ### 8.5 TUI Features
-- [ ] Implement command palette/prompt
-- [ ] Implement file browser/picker
-- [ ] Implement quick open (fuzzy file finder)
-- [ ] Implement search UI
-- [ ] Implement replace UI
-- [ ] Implement help/shortcuts display
-- [ ] Implement symbol outline/navigation
-- [ ] Write tests for TUI features
+
+#### 8.5.1 Dialog Infrastructure
+- [ ] Complete dialog module integration with main event loop
+- [ ] Add dialog state management to main.rs
+- [ ] Update renderer to handle dialog rendering
+- [ ] Fix test files to match new handle_event signature (5 parameters)
+- [ ] Write tests for dialog input handling
+
+#### 8.5.2 Help/Shortcuts Dialog (Simplest - Quick Win)
+- [ ] Wire Help dialog to Ctrl+? or F1 key
+- [ ] Connect Help menu item to dialog
+- [ ] Test Help dialog display and navigation
+
+#### 8.5.3 Goto Line Dialog
+- [ ] Wire Goto Line dialog to Ctrl+G
+- [ ] Implement line number validation
+- [ ] Connect dialog confirm to GotoLine command
+- [ ] Test Goto Line functionality
+
+#### 8.5.4 Search Dialog
+- [ ] Wire Search dialog to Ctrl+F
+- [ ] Connect Search menu item to dialog
+- [ ] Implement search dialog confirm action
+- [ ] Connect to existing Search command
+- [ ] Add search options UI (case sensitive, regex, whole word toggles)
+- [ ] Test search dialog integration
+
+#### 8.5.5 Replace Dialog
+- [ ] Wire Replace dialog to Ctrl+H
+- [ ] Connect Replace menu item to dialog
+- [ ] Implement replace dialog with two input fields
+- [ ] Add Tab key to switch between search/replace fields
+- [ ] Connect to existing ReplaceAll command
+- [ ] Add replace options (confirm each, replace all)
+- [ ] Test replace dialog integration
+
+#### 8.5.6 Command Palette
+- [ ] Design CommandPalette structure
+- [ ] Create list of all available commands with descriptions
+- [ ] Implement command palette rendering
+- [ ] Add fuzzy search/filtering of commands
+- [ ] Wire command palette to Ctrl+Shift+P
+- [ ] Connect selected commands to execution
+- [ ] Test command palette functionality
+
+#### 8.5.7 File Browser/Picker
+- [ ] Design FileBrowser structure
+- [ ] Implement directory tree traversal
+- [ ] Implement file browser rendering (tree view)
+- [ ] Add keyboard navigation (up/down, enter to select/open dir)
+- [ ] Add file type filtering
+- [ ] Connect to Open command
+- [ ] Test file browser/picker
+
+#### 8.5.8 Quick Open (Fuzzy File Finder)
+- [ ] Design QuickOpen structure
+- [ ] Implement file indexing for current directory
+- [ ] Implement fuzzy matching algorithm
+- [ ] Create quick open dialog rendering
+- [ ] Wire to Ctrl+P
+- [ ] Show ranked results based on fuzzy match
+- [ ] Test fuzzy file finder
+
+#### 8.5.9 Symbol Outline/Navigation
+- [ ] Design SymbolOutline structure
+- [ ] Implement basic symbol parsing (functions, structs, traits)
+- [ ] Create symbol outline panel rendering
+- [ ] Add symbol list navigation
+- [ ] Implement jump to symbol on selection
+- [ ] Wire to dedicated key or menu item
+- [ ] Test symbol outline/navigation
 
 ## Phase 9: GUI Frontend Implementation
 

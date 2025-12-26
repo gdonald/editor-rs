@@ -57,7 +57,7 @@ fn run_event_loop(
 ) -> Result<(), Box<dyn std::error::Error>> {
     loop {
         terminal.draw(|frame| {
-            renderer.render(frame, editor_state, menu_state);
+            renderer.render(frame, editor_state, menu_state, None);
         })?;
 
         if event::poll(std::time::Duration::from_millis(100))? {
@@ -70,6 +70,7 @@ fn run_event_loop(
                 is_history_browser_open,
                 is_history_stats_open,
                 is_menu_active,
+                false,
             ) {
                 match action {
                     editor_tui::input::InputAction::Quit => break,
@@ -146,6 +147,16 @@ fn run_event_loop(
                         menu_state.deactivate();
                         handle_menu_action(menu_action, editor_state, renderer);
                     }
+                    editor_tui::input::InputAction::DialogInsertChar(_) => {}
+                    editor_tui::input::InputAction::DialogBackspace => {}
+                    editor_tui::input::InputAction::DialogDelete => {}
+                    editor_tui::input::InputAction::DialogMoveCursorLeft => {}
+                    editor_tui::input::InputAction::DialogMoveCursorRight => {}
+                    editor_tui::input::InputAction::DialogMoveToStart => {}
+                    editor_tui::input::InputAction::DialogMoveToEnd => {}
+                    editor_tui::input::InputAction::DialogConfirm => {}
+                    editor_tui::input::InputAction::DialogCancel => {}
+                    editor_tui::input::InputAction::DialogSwitchField => {}
                 }
             }
         }

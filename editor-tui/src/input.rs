@@ -46,10 +46,13 @@ impl InputHandler {
         is_history_browser_open: bool,
         is_history_stats_open: bool,
         is_menu_active: bool,
+        is_dialog_open: bool,
     ) -> Option<InputAction> {
         match event {
             Event::Key(key_event) => {
-                if is_history_browser_open {
+                if is_dialog_open {
+                    self.handle_dialog_key_event(key_event)
+                } else if is_history_browser_open {
                     self.handle_history_browser_key_event(key_event)
                 } else if is_history_stats_open {
                     self.handle_history_stats_key_event(key_event)
@@ -310,6 +313,25 @@ impl InputHandler {
             _ => None,
         }
     }
+
+    fn handle_dialog_key_event(&mut self, key_event: KeyEvent) -> Option<InputAction> {
+        let ctrl = key_event.modifiers.contains(KeyModifiers::CONTROL);
+
+        match (key_event.code, ctrl) {
+            (KeyCode::Char(c), false) => Some(InputAction::DialogInsertChar(c)),
+            (KeyCode::Backspace, false) => Some(InputAction::DialogBackspace),
+            (KeyCode::Delete, false) => Some(InputAction::DialogDelete),
+            (KeyCode::Left, false) => Some(InputAction::DialogMoveCursorLeft),
+            (KeyCode::Right, false) => Some(InputAction::DialogMoveCursorRight),
+            (KeyCode::Home, false) => Some(InputAction::DialogMoveToStart),
+            (KeyCode::End, false) => Some(InputAction::DialogMoveToEnd),
+            (KeyCode::Enter, false) => Some(InputAction::DialogConfirm),
+            (KeyCode::Esc, false) => Some(InputAction::DialogCancel),
+            (KeyCode::Tab, false) => Some(InputAction::DialogSwitchField),
+            (code, _) if code == self.key_bindings.quit_key && ctrl => Some(InputAction::Quit),
+            _ => None,
+        }
+    }
 }
 
 impl Default for InputHandler {
@@ -338,4 +360,14 @@ pub enum InputAction {
     MenuLeft,
     MenuRight,
     MenuSelect,
+    DialogInsertChar(char),
+    DialogBackspace,
+    DialogDelete,
+    DialogMoveCursorLeft,
+    DialogMoveCursorRight,
+    DialogMoveToStart,
+    DialogMoveToEnd,
+    DialogConfirm,
+    DialogCancel,
+    DialogSwitchField,
 }
